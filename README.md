@@ -123,18 +123,37 @@ This plugin is a TypeScript-focused alternative to the official [eslint-plugin-l
 
 3. **Modern ESLint**: Built for ESLint 9's flat config from the ground up.
 
-### Rule Mapping
+### Rule Mapping and Options Compatibility
 
-| eslint-plugin-lingui | eslint-plugin-lingui-typescript |
-|---------------------|--------------------------------|
-| `lingui/no-unlocalized-strings` | `lingui-ts/no-unlocalized-strings` |
-| `lingui/t-call-in-function` | `lingui-ts/t-call-in-function` |
-| `lingui/no-single-variables-to-translate` | `lingui-ts/no-single-variables-to-translate` |
-| `lingui/no-expression-in-message` | `lingui-ts/no-expression-in-message` |
-| `lingui/no-single-tag-to-translate` | `lingui-ts/no-single-tag-to-translate` |
-| `lingui/text-restrictions` | `lingui-ts/text-restrictions` |
-| `lingui/consistent-plural-format` | `lingui-ts/consistent-plural-format` |
-| — | `lingui-ts/no-nested-macros` (new) |
+| eslint-plugin-lingui | eslint-plugin-lingui-typescript | Options |
+|---------------------|--------------------------------|---------|
+| `lingui/no-unlocalized-strings` | `lingui-ts/no-unlocalized-strings` | ⚠️ Different (see below) |
+| `lingui/t-call-in-function` | `lingui-ts/t-call-in-function` | ✅ None |
+| `lingui/no-single-variables-to-translate` | `lingui-ts/no-single-variables-to-translate` | ✅ None |
+| `lingui/no-expression-in-message` | `lingui-ts/no-expression-in-message` | ✅ None |
+| `lingui/no-single-tag-to-translate` | `lingui-ts/no-single-tag-to-translate` | ✅ None |
+| `lingui/text-restrictions` | `lingui-ts/text-restrictions` | ✅ Compatible (`rules`), + `minLength` |
+| `lingui/consistent-plural-format` | `lingui-ts/consistent-plural-format` | ✅ Compatible (`style`) |
+| `lingui/no-trans-inside-trans` | `lingui-ts/no-nested-macros` | ✅ Extended (all macros) |
+
+### Options Changes for `no-unlocalized-strings`
+
+The `no-unlocalized-strings` rule has different options because TypeScript types replace most manual configuration:
+
+| Original Option | This Plugin | Notes |
+|-----------------|-------------|-------|
+| `useTsTypes` | — | Always enabled (TypeScript required) |
+| `ignore` (array of regex) | `ignorePattern` (single regex) | Simplified |
+| `ignoreFunctions` | `ignoreFunctions` | ✅ Compatible (wildcards work slightly differently) |
+| `ignoreNames` (with regex support) | `ignoreNames` | Simplified (no regex, plain strings only) |
+| — | `ignoreProperties` | New: separate option for JSX attributes and object properties |
+| `ignoreMethodsOnTypes` | — | Not needed (TypeScript handles this automatically) |
+
+**What you can remove from your config:**
+- `useTsTypes: true` — always enabled
+- Most `ignoreFunctions` entries for DOM APIs — auto-detected via types
+- Most `ignoreNames` entries for typed parameters — auto-detected via types
+- `ignoreMethodsOnTypes` — handled automatically
 
 ### Migration Steps
 
