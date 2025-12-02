@@ -70,6 +70,19 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     'type Status = "loading" | "error"',
     "interface Props { variant: 'primary' | 'secondary' }",
 
+    // Native Intl methods - locale strings
+    'date.toLocaleDateString("de-DE")',
+    'date.toLocaleTimeString("en-US")',
+    'number.toLocaleString("de-DE")',
+    '"hello".localeCompare("world", "de")',
+
+    // Native Intl methods - option values
+    'date.toLocaleDateString("de-DE", { weekday: "long" })',
+    'date.toLocaleDateString("de-DE", { month: "short", year: "numeric" })',
+    'new Intl.DateTimeFormat("en", { dateStyle: "full" })',
+    'new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" })',
+    'new Intl.RelativeTimeFormat("en", { numeric: "auto" })',
+
     // Ignore pattern
     {
       code: 'const x = "test_id_123"',

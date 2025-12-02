@@ -22,6 +22,29 @@ const DEFAULT_IGNORE_FUNCTIONS = [
   "import"
 ]
 
+/**
+ * Native Intl methods that accept locale strings and option values.
+ * These are never user-visible translatable strings.
+ */
+const INTL_METHODS = new Set([
+  // String/Number/Date locale methods
+  "toLocaleString",
+  "toLocaleDateString",
+  "toLocaleTimeString",
+  "toLocaleUpperCase",
+  "toLocaleLowerCase",
+  "localeCompare",
+  // Intl constructors (used as Intl.X())
+  "DateTimeFormat",
+  "NumberFormat",
+  "Collator",
+  "PluralRules",
+  "RelativeTimeFormat",
+  "ListFormat",
+  "DisplayNames",
+  "Segmenter"
+])
+
 const DEFAULT_IGNORE_PROPERTIES = [
   "className",
   "styleName",
@@ -142,19 +165,57 @@ function isIgnoredFunctionArgument(node: TSESTree.Node, ignoreFunctions: string[
 
   const callee = parent.callee
   let calleeName: string | null = null
+  let methodName: string | null = null
 
   if (callee.type === AST_NODE_TYPES.Identifier) {
     calleeName = callee.name
   } else if (callee.type === AST_NODE_TYPES.MemberExpression) {
-    if (
-      callee.object.type === AST_NODE_TYPES.Identifier &&
-      callee.property.type === AST_NODE_TYPES.Identifier
-    ) {
-      calleeName = `${callee.object.name}.${callee.property.name}`
+    if (callee.property.type === AST_NODE_TYPES.Identifier) {
+      methodName = callee.property.name
+
+      // Build full name for object.method pattern
+      if (callee.object.type === AST_NODE_TYPES.Identifier) {
+        calleeName = `${callee.object.name}.${methodName}`
+      }
     }
   }
 
-  return calleeName !== null && ignoreFunctions.includes(calleeName)
+  // Check explicit ignore list
+  if (calleeName !== null && ignoreFunctions.includes(calleeName)) {
+    return true
+  }
+
+  // Check native Intl methods (e.g., date.toLocaleDateString(), Intl.DateTimeFormat())
+  if (methodName !== null && INTL_METHODS.has(methodName)) {
+    return true
+  }
+
+  return false
+}
+
+/**
+ * Checks if a node is inside an argument to an Intl method.
+ * This catches cases like: date.toLocaleDateString("de-DE", { weekday: "long" })
+ * where "long" is inside an options object.
+ */
+function isInsideIntlMethodArgument(node: TSESTree.Node): boolean {
+  let current: TSESTree.Node | undefined = node.parent ?? undefined
+
+  while (current !== undefined) {
+    if (current.type === AST_NODE_TYPES.CallExpression) {
+      const callee = current.callee
+      if (
+        callee.type === AST_NODE_TYPES.MemberExpression &&
+        callee.property.type === AST_NODE_TYPES.Identifier &&
+        INTL_METHODS.has(callee.property.name)
+      ) {
+        return true
+      }
+    }
+    current = current.parent ?? undefined
+  }
+
+  return false
 }
 
 /**
@@ -331,6 +392,11 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
 
       // Check ignored functions
       if (isIgnoredFunctionArgument(node, options.ignoreFunctions)) {
+        return
+      }
+
+      // Check if inside Intl method argument (e.g., { weekday: "long" })
+      if (isInsideIntlMethodArgument(node)) {
         return
       }
 

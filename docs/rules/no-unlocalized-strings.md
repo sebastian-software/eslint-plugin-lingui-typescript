@@ -119,6 +119,21 @@ Default: `null`
 }
 ```
 
+## Native Intl Methods
+
+Strings passed to native JavaScript Intl methods are automatically ignored since they're technical locale/format values:
+
+```tsx
+// All ignored - locale and option strings are technical
+date.toLocaleDateString("de-DE", { weekday: "long" })
+new Intl.DateTimeFormat("en", { dateStyle: "full" })
+new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" })
+number.toLocaleString("en-US")
+"text".localeCompare("other", "de")
+```
+
+Supported methods: `toLocaleString`, `toLocaleDateString`, `toLocaleTimeString`, `toLocaleUpperCase`, `toLocaleLowerCase`, `localeCompare`, and all `Intl.*` constructors.
+
 ## Heuristics
 
 The rule uses heuristics to determine if a string looks like UI text:
