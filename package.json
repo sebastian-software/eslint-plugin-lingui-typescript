@@ -7,11 +7,11 @@
   "types": "./dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nicosommi/eslint-plugin-lingui-typescript.git"
+    "url": "git+https://github.com/sebastian-software/eslint-plugin-lingui-typescript.git"
   },
-  "homepage": "https://github.com/nicosommi/eslint-plugin-lingui-typescript#readme",
+  "homepage": "https://github.com/sebastian-software/eslint-plugin-lingui-typescript#readme",
   "bugs": {
-    "url": "https://github.com/nicosommi/eslint-plugin-lingui-typescript/issues"
+    "url": "https://github.com/sebastian-software/eslint-plugin-lingui-typescript/issues"
   },
   "exports": {
     ".": {
