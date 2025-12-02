@@ -58,7 +58,7 @@ Or configure rules manually:
     "lingui-ts": linguiPlugin
   },
   rules: {
-    "lingui-ts/no-unlocalized-strings": "warn",
+    "lingui-ts/no-unlocalized-strings": "error",
     "lingui-ts/no-single-variable-message": "error"
   }
 }
@@ -68,19 +68,14 @@ Or configure rules manually:
 
 | Rule | Description | Recommended |
 |------|-------------|:-----------:|
-| [consistent-plural-format](docs/rules/consistent-plural-format.md) | Ensure consistent plural usage | ✅ |
-| [no-complex-expressions-in-message](docs/rules/no-complex-expressions-in-message.md) | Restrict complexity of expressions in messages | ✅ |
-| [no-nested-macros](docs/rules/no-nested-macros.md) | Disallow nesting Lingui macros | ✅ |
-| [no-single-tag-message](docs/rules/no-single-tag-message.md) | Disallow messages with only a single markup tag | ✅ |
-| [no-single-variable-message](docs/rules/no-single-variable-message.md) | Disallow messages that consist only of a single variable | ✅ |
-| [no-unlocalized-strings](docs/rules/no-unlocalized-strings.md) | Detect unlocalized user-visible strings | ⚠️ |
-| [valid-t-call-location](docs/rules/valid-t-call-location.md) | Enforce `t` calls inside functions | ✅ |
-
-### Optional Rules
-
-| Rule | Description |
-|------|-------------|
-| [text-restrictions](docs/rules/text-restrictions.md) | Enforce project-specific text restrictions |
+| [no-unlocalized-strings](docs/rules/no-unlocalized-strings.md) | Detects user-visible strings not wrapped in Lingui macros. Uses TypeScript types to automatically ignore technical strings like union types and Intl API arguments. | ✅ |
+| [no-single-variable-message](docs/rules/no-single-variable-message.md) | Disallows messages that consist only of a single variable without surrounding text. Such messages provide no context for translators. | ✅ |
+| [no-single-tag-message](docs/rules/no-single-tag-message.md) | Disallows `<Trans>` components that contain only a single JSX element without text. The wrapped element should be translated directly instead. | ✅ |
+| [no-nested-macros](docs/rules/no-nested-macros.md) | Prevents nesting Lingui macros inside each other (e.g., `t` inside `<Trans>`). Nested macros create invalid message catalogs and confuse translators. | ✅ |
+| [no-complex-expressions-in-message](docs/rules/no-complex-expressions-in-message.md) | Restricts embedded expressions in messages to simple identifiers and member access. Complex expressions like function calls or ternaries should be extracted to variables. | ✅ |
+| [valid-t-call-location](docs/rules/valid-t-call-location.md) | Ensures `t` macro calls are inside functions, not at module scope. Module-level calls execute before i18n is initialized and won't update on locale change. | ✅ |
+| [consistent-plural-format](docs/rules/consistent-plural-format.md) | Validates `<Plural>` component usage by ensuring required plural keys (`one`, `other`) are present. Helps maintain consistent pluralization across the codebase. | ✅ |
+| [text-restrictions](docs/rules/text-restrictions.md) | Enforces project-specific text restrictions like disallowed patterns or minimum length. Requires configuration to be useful. | — |
 
 ## License
 

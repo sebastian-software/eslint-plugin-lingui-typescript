@@ -43,7 +43,7 @@ plugin.configs = {
       "lingui-ts/no-nested-macros": "error",
       "lingui-ts/no-single-tag-message": "error",
       "lingui-ts/no-single-variable-message": "error",
-      "lingui-ts/no-unlocalized-strings": "warn",
+      "lingui-ts/no-unlocalized-strings": "error",
       "lingui-ts/valid-t-call-location": "error"
       // text-restrictions not in recommended (requires configuration)
     }
