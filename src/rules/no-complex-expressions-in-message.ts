@@ -10,7 +10,7 @@ interface Options {
   maxExpressionDepth: number | null
 }
 
-const DEFAULT_ALLOWED_CALLEES = ["i18n.number", "i18n.date", "i18n.plural", "i18n.select"]
+const DEFAULT_ALLOWED_CALLEES = ["i18n.number", "i18n.date"]
 
 /**
  * Gets the string representation of a callee (e.g., "i18n.number", "Math.random").

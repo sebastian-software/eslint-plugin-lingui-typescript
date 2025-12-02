@@ -30,11 +30,11 @@ ruleTester.run("no-complex-expressions-in-message", noComplexExpressionsInMessag
     "<Trans>Hello {name}</Trans>",
     "<Trans>You have {count} items</Trans>",
 
-    // Allowed callees (default: i18n.number, i18n.date, etc.)
+    // Allowed callees (default: i18n.number, i18n.date)
     "t`Price: ${i18n.number(price)}`",
     "t`Date: ${i18n.date(date)}`",
     "<Trans>Price: {i18n.number(price)}</Trans>",
-    "<Trans>Items: {i18n.plural(count, { one: '#', other: '#' })}</Trans>",
+    "<Trans>Date: {i18n.date(date)}</Trans>",
 
     // Member expressions when allowed
     {

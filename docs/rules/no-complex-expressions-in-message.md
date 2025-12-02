@@ -48,7 +48,7 @@ t`Hello ${name}`
 // Whitelisted Lingui helpers
 t`Price: ${i18n.number(price)}`
 t`Date: ${i18n.date(date)}`
-<Trans>Items: {i18n.plural(count, { one: '#', other: '#' })}</Trans>
+<Trans>Price: {i18n.number(price)}</Trans>
 
 // Extract complex logic first
 const displayPrice = price * 1.2
@@ -64,7 +64,7 @@ const formattedDate = formatDate(date)
 
 Array of function names that are allowed. Format: dot-separated strings.
 
-Default: `["i18n.number", "i18n.date", "i18n.plural", "i18n.select"]`
+Default: `["i18n.number", "i18n.date"]`
 
 ```ts
 {

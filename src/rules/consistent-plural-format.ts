@@ -11,57 +11,18 @@ interface Options {
 const DEFAULT_REQUIRED_KEYS = ["one", "other"]
 
 /**
- * Extracts property keys from an object expression.
+ * Extracts attribute names from a JSX opening element.
  */
-function getObjectKeys(node: TSESTree.ObjectExpression): string[] {
-  const keys: string[] = []
+function getJSXAttributeNames(node: TSESTree.JSXOpeningElement): string[] {
+  const names: string[] = []
 
-  for (const property of node.properties) {
-    if (property.type === AST_NODE_TYPES.Property) {
-      if (property.key.type === AST_NODE_TYPES.Identifier) {
-        keys.push(property.key.name)
-      } else if (property.key.type === AST_NODE_TYPES.Literal && typeof property.key.value === "string") {
-        keys.push(property.key.value)
-      }
+  for (const attr of node.attributes) {
+    if (attr.type === AST_NODE_TYPES.JSXAttribute && attr.name.type === AST_NODE_TYPES.JSXIdentifier) {
+      names.push(attr.name.name)
     }
   }
 
-  return keys
-}
-
-/**
- * Checks if a call expression is a plural helper call.
- */
-function isPluralCall(node: TSESTree.CallExpression): boolean {
-  // Check for: plural(...)
-  if (node.callee.type === AST_NODE_TYPES.Identifier && node.callee.name === "plural") {
-    return true
-  }
-
-  // Check for: i18n.plural(...)
-  if (
-    node.callee.type === AST_NODE_TYPES.MemberExpression &&
-    node.callee.property.type === AST_NODE_TYPES.Identifier &&
-    node.callee.property.name === "plural"
-  ) {
-    return true
-  }
-
-  return false
-}
-
-/**
- * Gets the options object from a plural call.
- * plural(count, { one: '...', other: '...' })
- */
-function getPluralOptionsObject(node: TSESTree.CallExpression): TSESTree.ObjectExpression | null {
-  // Expected format: plural(value, { ... }) or plural({ value, ... })
-  for (const arg of node.arguments) {
-    if (arg.type === AST_NODE_TYPES.ObjectExpression) {
-      return arg
-    }
-  }
-  return null
+  return names
 }
 
 export const consistentPluralFormat = createRule<[Options], MessageId>({
@@ -69,10 +30,10 @@ export const consistentPluralFormat = createRule<[Options], MessageId>({
   meta: {
     type: "problem",
     docs: {
-      description: "Ensure consistent plural usage with required keys"
+      description: "Ensure <Plural> component has required plural category props"
     },
     messages: {
-      missingPluralKey: "Plural is missing required key '{{key}}'"
+      missingPluralKey: "<Plural> is missing required prop '{{key}}'"
     },
     schema: [
       {
@@ -95,20 +56,21 @@ export const consistentPluralFormat = createRule<[Options], MessageId>({
   ],
   create(context, [options]) {
     return {
-      CallExpression(node): void {
-        if (!isPluralCall(node)) {
+      JSXElement(node): void {
+        const openingElement = node.openingElement
+
+        // Check for <Plural> component
+        if (
+          openingElement.name.type !== AST_NODE_TYPES.JSXIdentifier ||
+          openingElement.name.name !== "Plural"
+        ) {
           return
         }
 
-        const optionsObject = getPluralOptionsObject(node)
-        if (optionsObject === null) {
-          return
-        }
-
-        const providedKeys = getObjectKeys(optionsObject)
+        const providedProps = getJSXAttributeNames(openingElement)
 
         for (const requiredKey of options.requiredKeys) {
-          if (!providedKeys.includes(requiredKey)) {
+          if (!providedProps.includes(requiredKey)) {
             context.report({
               node,
               messageId: "missingPluralKey",
@@ -120,4 +82,3 @@ export const consistentPluralFormat = createRule<[Options], MessageId>({
     }
   }
 })
-

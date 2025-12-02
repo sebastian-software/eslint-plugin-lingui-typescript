@@ -11,75 +11,70 @@ const ruleTester = new RuleTester({
   languageOptions: {
     parserOptions: {
       ecmaVersion: 2022,
-      sourceType: "module"
+      sourceType: "module",
+      ecmaFeatures: {
+        jsx: true
+      }
     }
   }
 })
 
 ruleTester.run("consistent-plural-format", consistentPluralFormat, {
   valid: [
-    // All required keys present (default: one, other)
-    "plural(count, { one: '# item', other: '# items' })",
-    "plural(count, { one: 'One', other: 'Many', zero: 'None' })",
+    // All required props present (default: one, other)
+    '<Plural value={count} one="# item" other="# items" />',
+    '<Plural value={count} one="One" other="Many" zero="None" />',
 
-    // With i18n prefix
-    "i18n.plural(count, { one: '# item', other: '# items' })",
+    // With expressions
+    "<Plural value={count} one={oneMsg} other={otherMsg} />",
 
     // Custom required keys
     {
-      code: "plural(count, { other: 'items' })",
+      code: '<Plural value={count} other="items" />',
       options: [{ requiredKeys: ["other"] }]
     },
     {
-      code: "plural(count, { one: '#', other: '#', zero: 'none' })",
+      code: '<Plural value={count} one="#" other="#" zero="none" />',
       options: [{ requiredKeys: ["one", "other", "zero"] }]
     },
 
-    // Non-plural calls should be ignored
-    "select(value, { male: 'He', female: 'She', other: 'They' })",
-    "someOtherFunction({ one: 'x' })",
-
-    // No object argument (edge case)
-    "plural(count)"
+    // Non-Plural components should be ignored
+    '<Select value={gender} male="He" female="She" other="They" />',
+    '<div one="x" />',
+    "<Trans>Hello</Trans>"
   ],
   invalid: [
     // Missing 'other' (default required)
     {
-      code: "plural(count, { one: '# item' })",
+      code: '<Plural value={count} one="# item" />',
       errors: [{ messageId: "missingPluralKey", data: { key: "other" } }]
     },
 
     // Missing 'one' (default required)
     {
-      code: "plural(count, { other: '# items' })",
+      code: '<Plural value={count} other="# items" />',
       errors: [{ messageId: "missingPluralKey", data: { key: "one" } }]
     },
 
     // Missing both default required keys
     {
-      code: "plural(count, { zero: 'None' })",
+      code: '<Plural value={count} zero="None" />',
       errors: [
         { messageId: "missingPluralKey", data: { key: "one" } },
         { messageId: "missingPluralKey", data: { key: "other" } }
       ]
     },
 
-    // With i18n prefix
-    {
-      code: "i18n.plural(count, { one: '# item' })",
-      errors: [{ messageId: "missingPluralKey", data: { key: "other" } }]
-    },
-
     // Custom required keys missing
     {
-      code: "plural(count, { one: '#', other: '#' })",
+      code: '<Plural value={count} one="#" other="#" />',
       options: [{ requiredKeys: ["one", "other", "zero"] }],
       errors: [{ messageId: "missingPluralKey", data: { key: "zero" } }]
     },
 
-    // Empty object
+    // Only value prop
     {
-      code: "plural(count, {})",
+      code: "<Plural value={count} />",
       errors: [
         { messageId: "missingPluralKey", data: { key: "one" } },
         { messageId: "missingPluralKey", data: { key: "other" } }
@@ -87,4 +82,3 @@ ruleTester.run("consistent-plural-format", consistentPluralFormat, {
     }
   ]
 })
-
