@@ -4,6 +4,7 @@
  * @packageDocumentation
  */
 
+import { noComplexExpressionsInMessage } from "./rules/no-complex-expressions-in-message.js"
 import { noNestedMacros } from "./rules/no-nested-macros.js"
 import { noSingleTagMessage } from "./rules/no-single-tag-message.js"
 import { noSingleVariableMessage } from "./rules/no-single-variable-message.js"
@@ -14,6 +15,7 @@ const plugin = {
     version: "1.0.0"
   },
   rules: {
+    "no-complex-expressions-in-message": noComplexExpressionsInMessage,
     "no-nested-macros": noNestedMacros,
     "no-single-tag-message": noSingleTagMessage,
     "no-single-variable-message": noSingleVariableMessage
@@ -28,6 +30,7 @@ plugin.configs = {
       "lingui-ts": plugin
     },
     rules: {
+      "lingui-ts/no-complex-expressions-in-message": "error",
       "lingui-ts/no-nested-macros": "error",
       "lingui-ts/no-single-tag-message": "error",
       "lingui-ts/no-single-variable-message": "error"
