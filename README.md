@@ -6,12 +6,35 @@
 
 ESLint plugin for [Lingui](https://lingui.dev/) with TypeScript type-aware rules.
 
+## Why TypeScript?
+
+Traditional i18n linters rely on heuristics and manual whitelists to distinguish user-visible text from technical strings. This leads to false positives and constant configuration tweaking.
+
+This plugin leverages TypeScript's type system to **automatically** recognize technical strings:
+
+```ts
+// ✅ Automatically ignored - TypeScript knows these are technical
+document.createElement("div")                    // keyof HTMLElementTagNameMap
+element.addEventListener("click", handler)       // keyof GlobalEventHandlersEventMap
+fetch(url, { mode: "cors" })                     // RequestMode
+date.toLocaleDateString("de-DE", { weekday: "long" })  // Intl.DateTimeFormatOptions
+
+type Status = "idle" | "loading" | "error"
+const status: Status = "loading"                 // String literal union
+
+// ❌ Reported - actual user-visible text
+const message = "Welcome to our app"
+<button>Save changes</button>
+```
+
+**No configuration needed** for DOM APIs, Intl methods, or your own string literal union types. TypeScript already knows!
+
 ## Features
 
 - 🔍 Detects incorrect usage of Lingui translation macros
 - 📝 Enforces simple, safe expressions inside translated messages
 - 🎯 Detects missing localization of user-visible text
-- 🧠 Uses TypeScript types to distinguish UI text from technical strings
+- 🧠 Zero-config recognition of technical strings via TypeScript types
 
 ## Requirements
 
