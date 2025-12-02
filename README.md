@@ -133,8 +133,8 @@ This plugin is a TypeScript-focused alternative to the official [eslint-plugin-l
 | `lingui/no-expression-in-message` | `lingui-ts/no-expression-in-message` |
 | `lingui/no-single-tag-to-translate` | `lingui-ts/no-single-tag-to-translate` |
 | `lingui/text-restrictions` | `lingui-ts/text-restrictions` |
+| `lingui/consistent-plural-format` | `lingui-ts/consistent-plural-format` |
 | — | `lingui-ts/no-nested-macros` (new) |
-| — | `lingui-ts/consistent-plural-format` (new) |
 
 ### Migration Steps
 
