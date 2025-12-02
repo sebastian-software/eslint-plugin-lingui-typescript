@@ -4,6 +4,7 @@
  * @packageDocumentation
  */
 
+import { consistentPluralFormat } from "./rules/consistent-plural-format.js"
 import { noComplexExpressionsInMessage } from "./rules/no-complex-expressions-in-message.js"
 import { noNestedMacros } from "./rules/no-nested-macros.js"
 import { noSingleTagMessage } from "./rules/no-single-tag-message.js"
@@ -17,6 +18,7 @@ const plugin = {
     version: "1.0.0"
   },
   rules: {
+    "consistent-plural-format": consistentPluralFormat,
     "no-complex-expressions-in-message": noComplexExpressionsInMessage,
     "no-nested-macros": noNestedMacros,
     "no-single-tag-message": noSingleTagMessage,
@@ -34,6 +36,7 @@ plugin.configs = {
       "lingui-ts": plugin
     },
     rules: {
+      "lingui-ts/consistent-plural-format": "error",
       "lingui-ts/no-complex-expressions-in-message": "error",
       "lingui-ts/no-nested-macros": "error",
       "lingui-ts/no-single-tag-message": "error",

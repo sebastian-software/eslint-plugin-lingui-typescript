@@ -52,6 +52,7 @@ export default [
 
 | Rule | Description | Recommended |
 |------|-------------|:-----------:|
+| [consistent-plural-format](docs/rules/consistent-plural-format.md) | Ensure consistent plural usage | ✅ |
 | [no-complex-expressions-in-message](docs/rules/no-complex-expressions-in-message.md) | Restrict complexity of expressions in messages | ✅ |
 | [no-nested-macros](docs/rules/no-nested-macros.md) | Disallow nesting Lingui macros | ✅ |
 | [no-single-tag-message](docs/rules/no-single-tag-message.md) | Disallow messages with only a single markup tag | ✅ |
@@ -66,8 +67,7 @@ export default [
 
 ### Planned Rules
 
-- `no-unlocalized-strings` — Detect user-visible strings not wrapped in Lingui
-- `consistent-plural-format` — Ensure consistent plural usage
+- `no-unlocalized-strings` — Detect user-visible strings not wrapped in Lingui (TypeScript type-aware)
 
 ## License
 
