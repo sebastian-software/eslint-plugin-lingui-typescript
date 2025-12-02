@@ -58,10 +58,15 @@ export default [
 | [no-single-variable-message](docs/rules/no-single-variable-message.md) | Disallow messages that consist only of a single variable | ✅ |
 | [valid-t-call-location](docs/rules/valid-t-call-location.md) | Enforce `t` calls inside functions | ✅ |
 
+### Optional Rules
+
+| Rule | Description |
+|------|-------------|
+| [text-restrictions](docs/rules/text-restrictions.md) | Enforce project-specific text restrictions |
+
 ### Planned Rules
 
 - `no-unlocalized-strings` — Detect user-visible strings not wrapped in Lingui
-- `text-restrictions` — Enforce project-specific text restrictions
 - `consistent-plural-format` — Ensure consistent plural usage
 
 ## License
