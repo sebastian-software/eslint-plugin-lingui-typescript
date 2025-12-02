@@ -53,6 +53,9 @@ const DEFAULT_IGNORE_NAMES = ["__DEV__", "NODE_ENV"]
 // Lingui Context Detection
 // ============================================================================
 
+/** Known Lingui package prefixes */
+const LINGUI_PACKAGES = ["@lingui/macro", "@lingui/react", "@lingui/core"]
+
 /** Tagged template macros from Lingui */
 const LINGUI_TAGGED_TEMPLATES = new Set(["t"])
 
@@ -63,7 +66,77 @@ const LINGUI_JSX_COMPONENTS = new Set(["Trans", "Plural", "Select", "SelectOrdin
 const LINGUI_FUNCTION_MACROS = new Set(["msg", "defineMessage", "plural", "select", "selectOrdinal"])
 
 /**
+ * Checks if a symbol originates from a Lingui package using TypeScript's type system.
+ *
+ * This is more reliable than just checking the name because:
+ * - It works with re-exports
+ * - It doesn't match unrelated functions with the same name
+ * - It handles aliased imports
+ *
+ * Returns:
+ * - true: Definitely from Lingui
+ * - false: Definitely NOT from Lingui (different module) or unknown
+ * - null: No type info available (use name-based fallback)
+ */
+function isLinguiSymbol(
+  node: TSESTree.Node,
+  typeChecker: ts.TypeChecker,
+  parserServices: ReturnType<typeof ESLintUtils.getParserServices>
+): boolean | null {
+  try {
+    const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node)
+    const symbol = typeChecker.getSymbolAtLocation(tsNode)
+
+    if (symbol === undefined) {
+      // No symbol info - use name-based fallback
+      return null
+    }
+
+    // Follow aliases to get the original declaration
+    const resolvedSymbol = symbol.flags & 2097152 ? typeChecker.getAliasedSymbol(symbol) : symbol
+
+    const declarations = resolvedSymbol.getDeclarations()
+    if (declarations === undefined || declarations.length === 0) {
+      // No declarations - use name-based fallback
+      return null
+    }
+
+    // Check if any declaration comes from a Lingui package
+    for (const decl of declarations) {
+      const sourceFile = decl.getSourceFile()
+      const fileName = sourceFile.fileName
+
+      if (LINGUI_PACKAGES.some((pkg) => fileName.includes(`node_modules/${pkg}/`))) {
+        return true
+      }
+    }
+
+    // Has declarations but none from Lingui - this is NOT a Lingui symbol
+    // However, if declarations are only from the current file (no module info),
+    // we should fallback to name matching
+    const hasExternalDeclaration = declarations.some((decl) => {
+      const fileName = decl.getSourceFile().fileName
+      return fileName.includes("node_modules/")
+    })
+
+    if (hasExternalDeclaration) {
+      // Definitely from a different package
+      return false
+    }
+
+    // Local declaration or ambient - use name-based fallback
+    return null
+  } catch {
+    // Type checking can fail, fall back to name-based matching
+    return null
+  }
+}
+
+/**
  * Checks if a node is inside any Lingui localization context.
+ *
+ * Uses TypeScript type information to verify that macros actually come from Lingui,
+ * with a fallback to name-based matching for edge cases.
  *
  * This includes:
  * - Tagged templates: t`Hello`
@@ -71,7 +144,11 @@ const LINGUI_FUNCTION_MACROS = new Set(["msg", "defineMessage", "plural", "selec
  * - Function macros: msg(), defineMessage(), plural(), select(), selectOrdinal()
  * - Runtime API: i18n.t(), i18n._()
  */
-function isInsideLinguiContext(node: TSESTree.Node): boolean {
+function isInsideLinguiContext(
+  node: TSESTree.Node,
+  typeChecker: ts.TypeChecker,
+  parserServices: ReturnType<typeof ESLintUtils.getParserServices>
+): boolean {
   let current: TSESTree.Node | undefined = node.parent ?? undefined
 
   while (current !== undefined) {
@@ -81,7 +158,11 @@ function isInsideLinguiContext(node: TSESTree.Node): boolean {
       current.tag.type === AST_NODE_TYPES.Identifier &&
       LINGUI_TAGGED_TEMPLATES.has(current.tag.name)
     ) {
-      return true
+      // Verify it's actually from Lingui (or use name-based fallback)
+      const isLingui = isLinguiSymbol(current.tag, typeChecker, parserServices)
+      if (isLingui === true || isLingui === null) {
+        return true
+      }
     }
 
     // JSX components: <Trans>Hello</Trans>, <Plural value={n} ... />
@@ -90,7 +171,11 @@ function isInsideLinguiContext(node: TSESTree.Node): boolean {
       current.openingElement.name.type === AST_NODE_TYPES.JSXIdentifier &&
       LINGUI_JSX_COMPONENTS.has(current.openingElement.name.name)
     ) {
-      return true
+      // Verify it's actually from Lingui (or use name-based fallback)
+      const isLingui = isLinguiSymbol(current.openingElement.name, typeChecker, parserServices)
+      if (isLingui === true || isLingui === null) {
+        return true
+      }
     }
 
     // Function macros: msg({ message: "Hello" }), plural(n, {...})
@@ -99,7 +184,11 @@ function isInsideLinguiContext(node: TSESTree.Node): boolean {
       current.callee.type === AST_NODE_TYPES.Identifier &&
       LINGUI_FUNCTION_MACROS.has(current.callee.name)
     ) {
-      return true
+      // Verify it's actually from Lingui (or use name-based fallback)
+      const isLingui = isLinguiSymbol(current.callee, typeChecker, parserServices)
+      if (isLingui === true || isLingui === null) {
+        return true
+      }
     }
 
     // Runtime API: i18n.t({ message: "Hello" }), i18n._("Hello")
@@ -107,11 +196,24 @@ function isInsideLinguiContext(node: TSESTree.Node): boolean {
       current.type === AST_NODE_TYPES.CallExpression &&
       current.callee.type === AST_NODE_TYPES.MemberExpression &&
       current.callee.object.type === AST_NODE_TYPES.Identifier &&
-      current.callee.object.name === "i18n" &&
       current.callee.property.type === AST_NODE_TYPES.Identifier &&
       (current.callee.property.name === "t" || current.callee.property.name === "_")
     ) {
-      return true
+      // Check if the object is of type I18n from Lingui
+      try {
+        const objectTsNode = parserServices.esTreeNodeToTSNodeMap.get(current.callee.object)
+        const objectType = typeChecker.getTypeAtLocation(objectTsNode)
+        const typeName = typeChecker.typeToString(objectType)
+        if (typeName === "I18n") {
+          return true
+        }
+      } catch {
+        // Type info not available
+      }
+      // Fallback: check if variable is named "i18n"
+      if (current.callee.object.name === "i18n") {
+        return true
+      }
     }
 
     current = current.parent ?? undefined
@@ -678,7 +780,7 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       }
 
       // Already inside Lingui localization
-      if (isInsideLinguiContext(node)) {
+      if (isInsideLinguiContext(node, typeChecker, parserServices)) {
         return
       }
 
@@ -765,7 +867,7 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
         return
       }
 
-      if (isInsideLinguiContext(node)) {
+      if (isInsideLinguiContext(node, typeChecker, parserServices)) {
         return
       }
 
