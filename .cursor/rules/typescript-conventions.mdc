@@ -1,0 +1,234 @@
+---
+description: TypeScript coding conventions and patterns
+globs: ["**/*.ts", "**/*.tsx"]
+alwaysApply: false
+---
+
+# TypeScript Conventions
+
+## Imports
+
+### Type-Only Imports
+
+Always use inline type imports for type-only imports:
+
+```ts
+// ✅ Good
+import { type RuleModule, ESLintUtils } from "@typescript-eslint/utils";
+
+// ❌ Bad - separate import statement
+import type { RuleModule } from "@typescript-eslint/utils";
+import { ESLintUtils } from "@typescript-eslint/utils";
+```
+
+### Import Order
+
+1. Node.js built-ins
+2. External packages
+3. Internal modules (relative imports)
+
+```ts
+import path from "node:path";
+
+import { ESLintUtils } from "@typescript-eslint/utils";
+
+import { createRule } from "../utils/create-rule.js";
+```
+
+## Type Definitions
+
+### Interfaces over Types
+
+Prefer `interface` for object shapes:
+
+```ts
+// ✅ Good
+interface RuleOptions {
+  allowedCallees: string[];
+  maxDepth: number;
+}
+
+// ❌ Bad
+type RuleOptions = {
+  allowedCallees: string[];
+  maxDepth: number;
+};
+```
+
+### Const Objects over Enums
+
+Use const objects with `as const` instead of enums:
+
+```ts
+// ✅ Good
+const MessageId = {
+  ComplexExpression: "complexExpression",
+  NestedMacro: "nestedMacro",
+} as const;
+
+type MessageId = (typeof MessageId)[keyof typeof MessageId];
+
+// ❌ Bad
+enum MessageId {
+  ComplexExpression = "complexExpression",
+  NestedMacro = "nestedMacro",
+}
+```
+
+## Functions
+
+### Named Function Declarations
+
+Use function declarations for pure functions:
+
+```ts
+// ✅ Good
+function isLinguiMacro(node: TSESTree.Node): boolean {
+  return node.type === "TaggedTemplateExpression";
+}
+
+// ❌ Bad - arrow function for pure function
+const isLinguiMacro = (node: TSESTree.Node): boolean => {
+  return node.type === "TaggedTemplateExpression";
+};
+```
+
+### Arrow Functions for Callbacks
+
+Use arrow functions for inline callbacks and closures:
+
+```ts
+// ✅ Good
+const listeners = nodes.filter((node) => isRelevant(node));
+
+// ✅ Good - closure capturing context
+function createVisitor(context: RuleContext) {
+  return {
+    CallExpression: (node) => {
+      // Uses context from closure
+    },
+  };
+}
+```
+
+### Explicit Return Types
+
+All exported functions must have explicit return types:
+
+```ts
+// ✅ Good
+export function createRule<TOptions extends unknown[]>(
+  options: RuleCreatorOptions<TOptions>
+): RuleModule<string, TOptions> {
+  // ...
+}
+
+// ❌ Bad - missing return type
+export function createRule(options) {
+  // ...
+}
+```
+
+## Error Handling
+
+### No Throwing in Rule Logic
+
+ESLint rules should report errors, not throw:
+
+```ts
+// ✅ Good
+if (!parserServices.program) {
+  // Gracefully degrade - skip type-aware checks
+  return;
+}
+
+// ❌ Bad
+if (!parserServices.program) {
+  throw new Error("TypeScript program required");
+}
+```
+
+### Type Guards
+
+Use type guards for narrowing:
+
+```ts
+function isCallExpression(node: TSESTree.Node): node is TSESTree.CallExpression {
+  return node.type === "CallExpression";
+}
+
+// Usage
+if (isCallExpression(node)) {
+  // node is typed as CallExpression here
+  console.log(node.callee);
+}
+```
+
+## Naming Conventions
+
+### Variables
+
+- **Boolean**: Use auxiliary verbs: `isLoading`, `hasError`, `shouldUpdate`
+- **Collections**: Use plural: `items`, `rules`, `visitors`
+- **Functions**: Use verbs: `createRule`, `isValid`, `getType`
+
+### Files
+
+- **Rules**: `rule-name.ts` (kebab-case)
+- **Utils**: `createRule.ts` (camelCase)
+- **Types**: `types.ts` or inline
+
+### Constants
+
+Use SCREAMING_SNAKE_CASE for true constants:
+
+```ts
+const LINGUI_MACROS = ["t", "Trans", "msg", "defineMessage"] as const;
+const DEFAULT_MAX_DEPTH = 1;
+```
+
+## Nullish Handling
+
+### Prefer Nullish Coalescing
+
+```ts
+// ✅ Good
+const value = input ?? defaultValue;
+
+// ❌ Bad - falsy check includes 0, ""
+const value = input || defaultValue;
+```
+
+### Prefer Optional Chaining
+
+```ts
+// ✅ Good
+const name = user?.profile?.name;
+
+// ❌ Bad
+const name = user && user.profile && user.profile.name;
+```
+
+## Comments
+
+### JSDoc for Public APIs
+
+```ts
+/**
+ * Creates an ESLint rule for Lingui macro validation.
+ *
+ * @param options - Rule configuration options
+ * @returns Configured ESLint rule module
+ */
+export function createLinguiRule(options: RuleOptions): RuleModule {
+  // ...
+}
+```
+
+### Inline Comments for Non-Obvious Logic
+
+```ts
+// TypeScript's getTypeAtLocation returns the *widened* type for literals,
+// so we need to check the contextual type instead
+const contextualType = typeChecker.getContextualType(node);
+```

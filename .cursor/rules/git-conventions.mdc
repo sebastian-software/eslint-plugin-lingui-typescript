@@ -1,0 +1,73 @@
+---
+description: Git commit conventions and workflow
+globs: ["**/*"]
+alwaysApply: false
+---
+
+# Git Conventions
+
+## Commit Style
+
+### Conventional Commits
+
+Use the conventional commits format:
+
+```
+<type>(<scope>): <subject>
+
+[optional body]
+```
+
+### Types
+
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation only
+- `style`: Formatting, no code change
+- `refactor`: Code change without feature/fix
+- `perf`: Performance improvement
+- `test`: Adding/updating tests
+- `build`: Build system, dependencies
+- `ci`: CI configuration
+- `chore`: Maintenance tasks
+
+### Commit Size
+
+- **Small, atomic commits**: One logical change per commit
+- **Buildable**: Each commit should leave the project in a working state
+- **Reviewable**: Easy to understand in isolation
+
+### Commit Messages
+
+- **Subject line**: Imperative mood, max 72 chars, no period
+- **Body**: Only when subject isn't self-explanatory
+- **Body style**: Bullet points or short lines, no prose
+- **Focus**: Technical details, rationale for non-obvious decisions
+
+### Examples
+
+```
+feat(rules): add no-complex-expressions rule
+```
+
+```
+build: configure typescript strict mode
+
+- noUncheckedIndexedAccess for array safety
+- exactOptionalPropertyTypes distinguishes undefined vs missing
+- verbatimModuleSyntax enforces explicit type imports
+```
+
+```
+fix(parser): handle missing type info gracefully
+
+- parserServices.program may be undefined without tsconfig
+- skip type-aware checks instead of throwing
+```
+
+### What NOT to Include in Body
+
+- Obvious information repeating the subject
+- Prose or filler text
+- Implementation details visible in the diff
+- Generic statements like "Updated code"

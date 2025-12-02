@@ -1,0 +1,291 @@
+---
+description: Patterns for implementing ESLint rules with TypeScript
+globs: ["src/rules/**/*.ts"]
+alwaysApply: false
+---
+
+# ESLint Plugin Development Patterns
+
+## Rule Structure
+
+### Using @typescript-eslint/utils
+
+```ts
+import { ESLintUtils, type TSESTree } from "@typescript-eslint/utils";
+
+const createRule = ESLintUtils.RuleCreator(
+  (name) => `https://github.com/your-org/eslint-plugin-lingui/docs/rules/${name}.md`
+);
+
+export const noComplexExpressions = createRule({
+  name: "no-complex-expressions-in-message",
+  meta: {
+    type: "problem",
+    docs: {
+      description: "Disallow complex expressions in Lingui messages",
+    },
+    messages: {
+      complexExpression: "Complex expression '{{expression}}' in Lingui message",
+    },
+    schema: [
+      {
+        type: "object",
+        properties: {
+          allowedCallees: {
+            type: "array",
+            items: { type: "string" },
+          },
+        },
+        additionalProperties: false,
+      },
+    ],
+  },
+  defaultOptions: [{ allowedCallees: ["i18n.number", "i18n.date"] }],
+  create(context) {
+    return {
+      TaggedTemplateExpression(node) {
+        // Rule implementation
+      },
+    };
+  },
+});
+```
+
+## Type-Aware Rules
+
+### Accessing TypeScript Services
+
+```ts
+import { ESLintUtils } from "@typescript-eslint/utils";
+
+create(context) {
+  // Get parser services (may or may not have type info)
+  const parserServices = ESLintUtils.getParserServices(context, true);
+
+  // Check if type info is available
+  const hasTypeInfo = parserServices.program !== undefined;
+
+  if (hasTypeInfo) {
+    const typeChecker = parserServices.program.getTypeChecker();
+    // Use type-aware logic
+  } else {
+    // Fall back to syntax-only checks
+  }
+}
+```
+
+### Getting Types from Nodes
+
+```ts
+function getTypeOfNode(
+  node: TSESTree.Node,
+  parserServices: ParserServicesWithTypeInformation
+): ts.Type {
+  const typeChecker = parserServices.program.getTypeChecker();
+  const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node);
+  return typeChecker.getTypeAtLocation(tsNode);
+}
+```
+
+### Checking String Literal Types
+
+```ts
+function isStringLiteralType(type: ts.Type): boolean {
+  // Check for single string literal
+  if (type.isStringLiteral()) {
+    return true;
+  }
+
+  // Check for union of string literals
+  if (type.isUnion()) {
+    return type.types.every((t) => t.isStringLiteral());
+  }
+
+  return false;
+}
+```
+
+## Common Patterns
+
+### Detecting Lingui Macros
+
+```ts
+const LINGUI_MACROS = ["t", "Trans", "msg", "defineMessage"] as const;
+
+function isLinguiTaggedTemplate(node: TSESTree.TaggedTemplateExpression): boolean {
+  return node.tag.type === "Identifier" && node.tag.name === "t";
+}
+
+function isLinguiJSXComponent(node: TSESTree.JSXElement): boolean {
+  const name = node.openingElement.name;
+  return name.type === "JSXIdentifier" && name.name === "Trans";
+}
+
+function isLinguiCallExpression(node: TSESTree.CallExpression): boolean {
+  if (node.callee.type === "Identifier") {
+    return ["msg", "defineMessage"].includes(node.callee.name);
+  }
+  return false;
+}
+```
+
+### Traversing Message Content
+
+```ts
+function getTemplateExpressions(
+  node: TSESTree.TaggedTemplateExpression
+): TSESTree.Expression[] {
+  return node.quasi.expressions;
+}
+
+function getJSXExpressions(
+  node: TSESTree.JSXElement
+): TSESTree.JSXExpressionContainer[] {
+  return node.children.filter(
+    (child): child is TSESTree.JSXExpressionContainer =>
+      child.type === "JSXExpressionContainer"
+  );
+}
+```
+
+### Checking Expression Complexity
+
+```ts
+function getMemberExpressionDepth(node: TSESTree.MemberExpression): number {
+  let depth = 1;
+  let current: TSESTree.Expression = node.object;
+
+  while (current.type === "MemberExpression") {
+    depth++;
+    current = current.object;
+  }
+
+  return depth;
+}
+
+function isSimpleExpression(node: TSESTree.Expression): boolean {
+  switch (node.type) {
+    case "Identifier":
+      return true;
+    case "MemberExpression":
+      return getMemberExpressionDepth(node) <= 1;
+    default:
+      return false;
+  }
+}
+```
+
+## Testing Rules
+
+### Using RuleTester
+
+```ts
+import { RuleTester } from "@typescript-eslint/rule-tester";
+import { afterAll, describe, it } from "vitest";
+import { noComplexExpressions } from "./no-complex-expressions-in-message.js";
+
+// Configure RuleTester to use Vitest
+RuleTester.afterAll = afterAll;
+RuleTester.describe = describe;
+RuleTester.it = it;
+
+const ruleTester = new RuleTester({
+  languageOptions: {
+    parser: await import("@typescript-eslint/parser"),
+    parserOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+      ecmaFeatures: {
+        jsx: true,
+      },
+    },
+  },
+});
+
+ruleTester.run("no-complex-expressions-in-message", noComplexExpressions, {
+  valid: [
+    `t\`Hello \${name}\``,
+    `<Trans>Hello {name}</Trans>`,
+  ],
+  invalid: [
+    {
+      code: `t\`Hello \${Math.random()}\``,
+      errors: [{ messageId: "complexExpression" }],
+    },
+  ],
+});
+```
+
+### Type-Aware Test Cases
+
+```ts
+const ruleTesterWithTypes = new RuleTester({
+  languageOptions: {
+    parser: await import("@typescript-eslint/parser"),
+    parserOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+      project: "./tsconfig.test.json",
+      tsconfigRootDir: __dirname,
+    },
+  },
+});
+```
+
+## Error Messages
+
+### Using Message IDs
+
+```ts
+messages: {
+  complexExpression: "Avoid complex expression '{{expression}}' in translations",
+  nestedMacro: "Nested Lingui macro '{{macro}}' is not allowed",
+  missingText: "Translation message should contain text, not just '{{element}}'",
+}
+
+// In rule:
+context.report({
+  node,
+  messageId: "complexExpression",
+  data: {
+    expression: context.sourceCode.getText(node),
+  },
+});
+```
+
+## Plugin Export
+
+### Main Entry Point
+
+```ts
+// src/index.ts
+import { noComplexExpressions } from "./rules/no-complex-expressions-in-message.js";
+import { noNestedMacros } from "./rules/no-nested-macros.js";
+// ... other rules
+
+const plugin = {
+  meta: {
+    name: "eslint-plugin-lingui",
+    version: "1.0.0",
+  },
+  rules: {
+    "no-complex-expressions-in-message": noComplexExpressions,
+    "no-nested-macros": noNestedMacros,
+    // ... other rules
+  },
+  configs: {
+    "flat/recommended": {
+      plugins: {
+        lingui: plugin,
+      },
+      rules: {
+        "lingui/no-complex-expressions-in-message": "error",
+        "lingui/no-nested-macros": "error",
+        // ... other rules
+      },
+    },
+  },
+};
+
+export default plugin;
+```
