@@ -245,3 +245,55 @@ jobs:
 
 - **Push** to `main` branch
 - **Pull requests** targeting `main`
+
+## Releasing
+
+### release-it
+
+The project uses `release-it` with the `@release-it/conventional-changelog` plugin for automated releases.
+
+```bash
+npm run release
+```
+
+This will:
+1. Run lint, typecheck, and tests
+2. Bump version based on conventional commits
+3. Generate/update CHANGELOG.md
+4. Create git tag
+5. Push to GitHub
+6. Create GitHub Release with changelog
+7. Publish to npm
+
+### Release Configuration
+
+```json
+// .release-it.json
+{
+  "git": {
+    "commitMessage": "chore: release v${version}",
+    "tagName": "v${version}"
+  },
+  "github": {
+    "release": true
+  },
+  "npm": {
+    "publish": true
+  },
+  "plugins": {
+    "@release-it/conventional-changelog": {
+      "preset": "conventionalcommits",
+      "infile": "CHANGELOG.md"
+    }
+  }
+}
+```
+
+### Required Dev Dependencies
+
+```json
+{
+  "release-it": "^18.x",
+  "@release-it/conventional-changelog": "^10.x"
+}
+```
