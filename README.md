@@ -68,7 +68,7 @@ Or configure rules manually:
 
 | Rule | Description | Recommended |
 |------|-------------|:-----------:|
-| [no-unlocalized-strings](docs/rules/no-unlocalized-strings.md) | Detects user-visible strings not wrapped in Lingui macros. Uses TypeScript types to automatically ignore technical strings like union types and Intl API arguments. | ✅ |
+| [no-unlocalized-strings](docs/rules/no-unlocalized-strings.md) | Detects user-visible strings not wrapped in Lingui macros. Uses TypeScript types to automatically ignore technical strings like string literal unions, DOM APIs, Intl methods, and discriminated union fields. | ✅ |
 | [no-single-variable-message](docs/rules/no-single-variable-message.md) | Disallows messages that consist only of a single variable without surrounding text. Such messages provide no context for translators. | ✅ |
 | [no-single-tag-message](docs/rules/no-single-tag-message.md) | Disallows `<Trans>` components that contain only a single JSX element without text. The wrapped element should be translated directly instead. | ✅ |
 | [no-nested-macros](docs/rules/no-nested-macros.md) | Prevents nesting Lingui macros inside each other (e.g., `t` inside `<Trans>`). Nested macros create invalid message catalogs and confuse translators. | ✅ |

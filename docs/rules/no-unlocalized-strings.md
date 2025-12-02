@@ -77,6 +77,16 @@ function setAlign(align: "left" | "center" | "right") {}
 setAlign("center")  // ✅ Not reported
 ```
 
+### DOM APIs
+
+```tsx
+// All DOM string literal unions are automatically detected
+document.createElement("div")                          // ✅ keyof HTMLElementTagNameMap
+element.addEventListener("click", handler)             // ✅ keyof GlobalEventHandlersEventMap
+fetch(url, { mode: "cors", credentials: "include" })   // ✅ RequestMode, RequestCredentials
+element.scrollIntoView({ behavior: "smooth" })         // ✅ ScrollBehavior
+```
+
 ### Intl-Related Types
 
 ```tsx
