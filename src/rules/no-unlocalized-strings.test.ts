@@ -150,6 +150,33 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
         const state: StateOrBool = "pending"
       `,
       filename: "test.tsx"
+    },
+
+    // TypeScript: useState with generic type parameter
+    {
+      code: `
+        type Status = "idle" | "loading" | "error"
+        declare function useState<T>(initial: T): [T, (v: T) => void]
+        const [status, setStatus] = useState<Status>("idle")
+      `,
+      filename: "test.tsx"
+    },
+
+    // TypeScript: as const assertion
+    {
+      code: `
+        const ACTION_SAVE = "save" as const
+      `,
+      filename: "test.tsx"
+    },
+
+    // TypeScript: Discriminated union assignment
+    {
+      code: `
+        type Action = { type: "save" } | { type: "cancel" }
+        const action: Action = { type: "save" }
+      `,
+      filename: "test.tsx"
     }
   ],
   invalid: [
