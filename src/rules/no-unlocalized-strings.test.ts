@@ -111,6 +111,29 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
         setMode("dark")
       `,
       filename: "test.tsx"
+    },
+
+    // TypeScript: String literal unions with undefined/null
+    {
+      code: `
+        type OptionalStatus = "loading" | "error" | undefined
+        const status: OptionalStatus = "loading"
+      `,
+      filename: "test.tsx"
+    },
+    {
+      code: `
+        type NullableMode = "dark" | "light" | null
+        const mode: NullableMode = "dark"
+      `,
+      filename: "test.tsx"
+    },
+    {
+      code: `
+        function setVariant(v: "primary" | "secondary" | undefined) {}
+        setVariant("primary")
+      `,
+      filename: "test.tsx"
     }
   ],
   invalid: [

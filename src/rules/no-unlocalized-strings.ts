@@ -259,12 +259,35 @@ function isTechnicalStringType(
     const contextualType = typeChecker.getContextualType(tsNode)
 
     if (contextualType !== undefined) {
-      // Check if contextual type is a union of string literals
+      // Check if contextual type is a union containing string literals
+      // Allow other primitive types: undefined, null, boolean, number
       if (contextualType.isUnion()) {
-        const allStringLiterals = contextualType.types.every(
-          (t) => t.isStringLiteral() || (t.flags & 128) !== 0 // StringLiteral flag
-        )
-        if (allStringLiterals) {
+        const hasStringLiteral = contextualType.types.some((t) => t.isStringLiteral() || (t.flags & 128) !== 0)
+        const allTechnical = contextualType.types.every((t) => {
+          // String literal (flags: 128)
+          if (t.isStringLiteral() || (t.flags & 128) !== 0) {
+            return true
+          }
+          // Number literal (flags: 256)
+          if (t.isNumberLiteral() || (t.flags & 256) !== 0) {
+            return true
+          }
+          // Boolean literal - true (flags: 512) or false (flags: 1024)
+          if ((t.flags & 512) !== 0 || (t.flags & 1024) !== 0) {
+            return true
+          }
+          // undefined (flags: 32768)
+          if ((t.flags & 32768) !== 0) {
+            return true
+          }
+          // null (flags: 65536)
+          if ((t.flags & 65536) !== 0) {
+            return true
+          }
+          return false
+        })
+        // Only ignore if the union contains at least one string literal
+        if (hasStringLiteral && allTechnical) {
           return true
         }
       }
