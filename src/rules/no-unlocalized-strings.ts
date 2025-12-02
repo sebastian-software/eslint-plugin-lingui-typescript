@@ -569,18 +569,32 @@ function isInNonLinguiTaggedTemplate(node: TSESTree.Node): boolean {
   return false
 }
 
-/** Checks if a string is in an import/export statement (module path). */
-function isInImportExport(node: TSESTree.Node): boolean {
-  let current: TSESTree.Node | undefined = node.parent ?? undefined
+/**
+ * Checks if a string is an import/export module source specifier.
+ *
+ * Only returns true for the module path in:
+ * - import "module-path"
+ * - import x from "module-path"
+ * - export * from "module-path"
+ * - export { x } from "module-path"
+ *
+ * Does NOT return true for strings inside exported declarations:
+ * - export function foo() { return "Hello World" } ← "Hello World" should be checked
+ */
+function isImportExportSource(node: TSESTree.Node): boolean {
+  const parent = node.parent
+  if (parent === undefined) {
+    return false
+  }
 
-  while (current !== undefined) {
-    switch (current.type) {
-      case AST_NODE_TYPES.ImportDeclaration:
-      case AST_NODE_TYPES.ExportAllDeclaration:
-      case AST_NODE_TYPES.ExportNamedDeclaration:
-        return true
-    }
-    current = current.parent ?? undefined
+  // Check if this literal is the `source` property of an import/export
+  switch (parent.type) {
+    case AST_NODE_TYPES.ImportDeclaration:
+      return parent.source === node
+    case AST_NODE_TYPES.ExportAllDeclaration:
+      return parent.source === node
+    case AST_NODE_TYPES.ExportNamedDeclaration:
+      return parent.source === node
   }
 
   return false
@@ -804,8 +818,8 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
         return
       }
 
-      // Import/export path
-      if (isInImportExport(node)) {
+      // Import/export module source specifier
+      if (isImportExportSource(node)) {
         return
       }
 

@@ -348,6 +348,37 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       code: "<button>保存</button>",
       filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Strings inside exported functions (bug fix: should be flagged)
+    {
+      code: 'export function testAction() { const message = "Failed to check preferences"; return message; }',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+    {
+      code: 'export async function testAction() { const message = "Failed to check preferences"; return message; }',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+    {
+      code: `
+        export async function checkPreferenceExistsAction(companyId: string) {
+          try {
+            return { success: true };
+          } catch (error) {
+            const message = error instanceof Error ? error.message : "Failed to check preferences";
+            return { success: false, error: message };
+          }
+        }
+      `,
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+    {
+      code: 'export const testAction = () => { return "Something went wrong!" }',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
     }
   ]
 })
