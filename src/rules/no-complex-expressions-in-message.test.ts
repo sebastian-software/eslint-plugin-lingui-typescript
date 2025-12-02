@@ -21,22 +21,28 @@ const ruleTester = new RuleTester({
 
 ruleTester.run("no-complex-expressions-in-message", noComplexExpressionsInMessage, {
   valid: [
-    // Simple identifiers in t``
+    // ==================== Simple Identifiers ====================
+    // These are the recommended way to use variables in Lingui
     "t`Hello ${name}`",
     "t`You have ${count} items`",
     "t`${greeting}, ${name}!`",
-
-    // Simple identifiers in <Trans>
     "<Trans>Hello {name}</Trans>",
     "<Trans>You have {count} items</Trans>",
 
-    // Allowed callees (default: i18n.number, i18n.date)
+    // ==================== Allowed Function Calls ====================
+    // Lingui's built-in formatters (default allowedCallees)
     "t`Price: ${i18n.number(price)}`",
     "t`Date: ${i18n.date(date)}`",
     "<Trans>Price: {i18n.number(price)}</Trans>",
     "<Trans>Date: {i18n.date(date)}</Trans>",
 
-    // Member expressions when allowed
+    // ==================== Lingui Helpers ====================
+    // These are always allowed for pluralization and selection
+    "t`Hello ${plural(count, { one: '#', other: '#' })}`",
+    "t`Hello ${select(gender, { male: 'he', other: 'they' })}`",
+    "t`Hello ${selectOrdinal(pos, { one: '#st', other: '#th' })}`",
+
+    // ==================== Member Expressions (when enabled) ====================
     {
       code: "t`Hello ${props.name}`",
       options: [{ allowMemberExpressions: true, allowedCallees: [], maxExpressionDepth: 1 }]
@@ -46,37 +52,23 @@ ruleTester.run("no-complex-expressions-in-message", noComplexExpressionsInMessag
       options: [{ allowMemberExpressions: true, allowedCallees: [], maxExpressionDepth: 1 }]
     },
 
-    // Non-Lingui tagged templates should be ignored
+    // ==================== Non-Lingui (Ignored) ====================
+    // Other tagged templates should not be checked
     "css`color: ${theme.primary}`",
     "html`<div>${content}</div>`",
-
-    // Non-Trans JSX elements should be ignored
+    // Other JSX components should not be checked
     "<div>{Math.random()}</div>",
     "<Plural>{count * 2}</Plural>",
 
-    // Named placeholder syntax: ${{ name: value }}
-    "t`hello ${{name: user}}`",
-    "t`hello ${{name: obj.prop}}`",
-    "<Trans>hello {{name: user}}</Trans>",
-    "<Trans>hello {{name: obj.prop}}</Trans>",
-
-    // Placeholder function: ph({ name: value })
-    "t`hello ${ph({name: user})}`",
-    "t`hello ${ph({name: obj.prop})}`",
-    "<Trans>hello {ph({name: user})}</Trans>",
-
-    // Lingui helpers: plural(), select(), selectOrdinal()
-    "t`Hello ${plural(count, { one: '#', other: '#' })}`",
-    "t`Hello ${select(gender, { male: 'he', other: 'they' })}`",
-    "t`Hello ${selectOrdinal(pos, { one: '#st', other: '#th' })}`",
-
-    // JSX whitespace expressions
+    // ==================== JSX Whitespace ====================
+    // Whitespace expressions are commonly used for spacing
     "<Trans>Did you mean{' '}<span>something</span></Trans>",
     "<Trans>Hello{` `}World</Trans>",
     "<Trans>{' '}</Trans>"
   ],
   invalid: [
-    // Binary expressions
+    // ==================== Binary Expressions ====================
+    // Math operations should be done outside the translation
     {
       code: "t`Price: ${price * 1.2}`",
       errors: [{ messageId: "complexExpression" }]
@@ -86,7 +78,8 @@ ruleTester.run("no-complex-expressions-in-message", noComplexExpressionsInMessag
       errors: [{ messageId: "complexExpression" }]
     },
 
-    // Non-whitelisted function calls
+    // ==================== Non-Allowed Function Calls ====================
+    // Functions not in allowedCallees should be extracted
     {
       code: "t`Random: ${Math.random()}`",
       errors: [{ messageId: "complexExpression" }]
@@ -100,7 +93,8 @@ ruleTester.run("no-complex-expressions-in-message", noComplexExpressionsInMessag
       errors: [{ messageId: "complexExpression" }]
     },
 
-    // Member expressions when not allowed (default)
+    // ==================== Member Expressions (default: not allowed) ====================
+    // By default, member expressions are disallowed to keep translations simple
     {
       code: "t`Hello ${user.name}`",
       errors: [{ messageId: "complexExpression" }]
@@ -110,21 +104,24 @@ ruleTester.run("no-complex-expressions-in-message", noComplexExpressionsInMessag
       errors: [{ messageId: "complexExpression" }]
     },
 
-    // Deep member expressions even when allowed
+    // ==================== Deep Member Expressions ====================
+    // Even when member expressions are allowed, deep nesting is not
     {
       code: "t`Street: ${user.address.street}`",
       options: [{ allowMemberExpressions: true, allowedCallees: [], maxExpressionDepth: 1 }],
       errors: [{ messageId: "complexExpression" }]
     },
 
-    // Optional chaining
+    // ==================== Optional Chaining ====================
+    // Optional chaining implies the value might be undefined
     {
       code: "t`Name: ${user?.name}`",
       options: [{ allowMemberExpressions: true, allowedCallees: [], maxExpressionDepth: 1 }],
       errors: [{ messageId: "complexExpression" }]
     },
 
-    // Conditional expressions
+    // ==================== Conditional Expressions ====================
+    // Ternaries should use plural/select instead
     {
       code: "t`Status: ${isActive ? 'Active' : 'Inactive'}`",
       errors: [{ messageId: "complexExpression" }]
@@ -134,19 +131,20 @@ ruleTester.run("no-complex-expressions-in-message", noComplexExpressionsInMessag
       errors: [{ messageId: "complexExpression" }]
     },
 
-    // Logical expressions
+    // ==================== Logical Expressions ====================
+    // Default values should be handled outside the translation
     {
       code: "t`Name: ${name || 'Unknown'}`",
       errors: [{ messageId: "complexExpression" }]
     },
 
-    // Template literals inside
+    // ==================== Nested Template Literals ====================
     {
       code: "t`Value: ${`nested ${x}`}`",
       errors: [{ messageId: "complexExpression" }]
     },
 
-    // Multiple violations in one message
+    // ==================== Multiple Violations ====================
     {
       code: "t`${a + b} and ${Math.random()}`",
       errors: [{ messageId: "complexExpression" }, { messageId: "complexExpression" }]
@@ -156,26 +154,23 @@ ruleTester.run("no-complex-expressions-in-message", noComplexExpressionsInMessag
       errors: [{ messageId: "complexExpression" }, { messageId: "complexExpression" }]
     },
 
-    // Multiple keys in named placeholder
+    // ==================== Legacy Placeholder Syntax ====================
+    // The ${{name: value}} syntax is from older Lingui versions and should not be used
+    {
+      code: "t`hello ${{name: user}}`",
+      errors: [{ messageId: "legacyPlaceholder" }]
+    },
+    {
+      code: "t`hello ${{name: obj.prop}}`",
+      errors: [{ messageId: "legacyPlaceholder" }]
+    },
+    {
+      code: "<Trans>hello {{name: user}}</Trans>",
+      errors: [{ messageId: "legacyPlaceholder" }]
+    },
     {
       code: "t`hello ${{name: user, age: userAge}}`",
-      errors: [{ messageId: "multiplePlaceholders" }]
-    },
-    {
-      code: "<Trans>hello {{name: user, surname: userSurname}}</Trans>",
-      errors: [{ messageId: "multiplePlaceholders" }]
-    },
-
-    // Invalid placeholder function with multiple keys
-    {
-      code: "t`hello ${ph({name: user, age: userAge})}`",
-      errors: [{ messageId: "multiplePlaceholders" }]
-    },
-
-    // Non-whitelisted function call in placeholder
-    {
-      code: "t`hello ${greeting({name: obj.prop})}`",
-      errors: [{ messageId: "complexExpression" }]
+      errors: [{ messageId: "legacyPlaceholder" }]
     }
   ]
 })

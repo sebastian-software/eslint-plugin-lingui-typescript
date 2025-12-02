@@ -12,21 +12,37 @@ export interface Options {
   ignorePattern: string | null
 }
 
+// ============================================================================
+// Default Configuration
+// ============================================================================
+
+/**
+ * Functions whose arguments should not be checked for localization.
+ * Supports wildcards: "console.*" matches console.log, console.error, etc.
+ */
 const DEFAULT_IGNORE_FUNCTIONS = ["console.*", "require", "import", "Error", "TypeError", "RangeError", "SyntaxError"]
 
+/**
+ * JSX attributes and object properties whose values should not be checked.
+ * These are typically technical values, not user-visible text.
+ */
 const DEFAULT_IGNORE_PROPERTIES = [
+  // CSS/styling
   "className",
   "styleName",
   "style",
+  // HTML attributes
   "type",
   "id",
   "key",
   "name",
-  "testID",
-  "data-testid",
   "href",
   "src",
   "role",
+  // Testing
+  "testID",
+  "data-testid",
+  // Accessibility (handled by their own rules usually)
   "aria-label",
   "aria-describedby",
   "aria-labelledby",
@@ -47,92 +63,38 @@ const DEFAULT_IGNORE_PROPERTIES = [
   "pathLength"
 ]
 
+/**
+ * Variable names whose values should not be checked.
+ */
 const DEFAULT_IGNORE_NAMES = ["__DEV__", "NODE_ENV"]
 
-/**
- * Checks if a string looks like a user-visible UI string.
- * Supports Latin and Non-Latin scripts (CJK, Cyrillic, Arabic, Hebrew, etc.)
- */
-function looksLikeUIString(value: string): boolean {
-  const trimmed = value.trim()
+// ============================================================================
+// Lingui Context Detection
+// ============================================================================
 
-  // Empty or whitespace only
-  if (trimmed.length === 0) {
-    return false
-  }
-
-  // Single character (likely technical)
-  if (trimmed.length === 1) {
-    return false
-  }
-
-  // All uppercase with underscores (likely constant)
-  if (/^[A-Z][A-Z0-9_]*$/.test(trimmed)) {
-    return false
-  }
-
-  // Looks like a path or URL
-  if (/^(\/|https?:|mailto:|tel:|#)/.test(trimmed)) {
-    return false
-  }
-
-  // Looks like a CSS class or technical identifier (ASCII only)
-  if (/^[a-z][a-z0-9-_]*$/i.test(trimmed) && !trimmed.includes(" ")) {
-    return false
-  }
-
-  // Looks like CSS selector or pseudo-class (starts with :, ., #, [, or *)
-  if (/^[:.#[*&>+~]/.test(trimmed)) {
-    return false
-  }
-
-  // Non-Latin scripts: CJK (Chinese, Japanese, Korean), Cyrillic, Arabic, Hebrew, Thai, etc.
-  // These are almost always user-visible text
-  if (/[\u3000-\u9fff\uac00-\ud7af\u0400-\u04ff\u0600-\u06ff\u0590-\u05ff\u0e00-\u0e7f\u1100-\u11ff]/.test(trimmed)) {
-    return true
-  }
-
-  // Contains letters and spaces (likely UI text)
-  if (/[a-zA-Z]/.test(trimmed) && /\s/.test(trimmed)) {
-    return true
-  }
-
-  // Starts with uppercase letter followed by lowercase (likely sentence)
-  if (/^[A-Z][a-z]/.test(trimmed)) {
-    return true
-  }
-
-  // Contains common UI patterns
-  if (/[.!?:,]/.test(trimmed)) {
-    return true
-  }
-
-  return false
-}
-
-/**
- * Lingui tagged template macros
- */
+/** Tagged template macros from Lingui */
 const LINGUI_TAGGED_TEMPLATES = new Set(["t"])
 
-/**
- * Lingui JSX components
- */
+/** JSX components from Lingui that handle localization */
 const LINGUI_JSX_COMPONENTS = new Set(["Trans", "Plural", "Select", "SelectOrdinal"])
 
-/**
- * Lingui function macros
- */
+/** Function-style macros from Lingui */
 const LINGUI_FUNCTION_MACROS = new Set(["msg", "defineMessage", "plural", "select", "selectOrdinal"])
 
 /**
- * Checks if a node is inside a Lingui macro/component.
+ * Checks if a node is inside any Lingui localization context.
+ *
+ * This includes:
+ * - Tagged templates: t`Hello`
+ * - JSX components: <Trans>, <Plural>, <Select>, <SelectOrdinal>
+ * - Function macros: msg(), defineMessage(), plural(), select(), selectOrdinal()
+ * - Runtime API: i18n.t(), i18n._()
  */
 function isInsideLinguiContext(node: TSESTree.Node): boolean {
   let current: TSESTree.Node | undefined = node.parent ?? undefined
 
   while (current !== undefined) {
-    // Inside t`...`, plural`...`, select`...`, selectOrdinal`...`
+    // Tagged template: t`Hello ${name}`
     if (
       current.type === AST_NODE_TYPES.TaggedTemplateExpression &&
       current.tag.type === AST_NODE_TYPES.Identifier &&
@@ -141,7 +103,7 @@ function isInsideLinguiContext(node: TSESTree.Node): boolean {
       return true
     }
 
-    // Inside <Trans>, <Plural>, <Select>, <SelectOrdinal>
+    // JSX components: <Trans>Hello</Trans>, <Plural value={n} ... />
     if (
       current.type === AST_NODE_TYPES.JSXElement &&
       current.openingElement.name.type === AST_NODE_TYPES.JSXIdentifier &&
@@ -150,7 +112,7 @@ function isInsideLinguiContext(node: TSESTree.Node): boolean {
       return true
     }
 
-    // Inside msg() or defineMessage()
+    // Function macros: msg({ message: "Hello" }), plural(n, {...})
     if (
       current.type === AST_NODE_TYPES.CallExpression &&
       current.callee.type === AST_NODE_TYPES.Identifier &&
@@ -159,7 +121,7 @@ function isInsideLinguiContext(node: TSESTree.Node): boolean {
       return true
     }
 
-    // Inside i18n.t() or i18n._()
+    // Runtime API: i18n.t({ message: "Hello" }), i18n._("Hello")
     if (
       current.type === AST_NODE_TYPES.CallExpression &&
       current.callee.type === AST_NODE_TYPES.MemberExpression &&
@@ -177,8 +139,95 @@ function isInsideLinguiContext(node: TSESTree.Node): boolean {
   return false
 }
 
+// ============================================================================
+// Heuristic: Does this string look like user-visible text?
+// ============================================================================
+
 /**
- * Gets the full callee name from a call expression (e.g., "console.log", "obj.method.call").
+ * Determines if a string looks like user-visible UI text.
+ *
+ * Returns TRUE (needs localization) for:
+ * - Text with spaces and letters: "Hello World"
+ * - Sentences starting with capital: "Save changes"
+ * - Text with punctuation: "Are you sure?"
+ * - Non-Latin scripts: "こんにちは", "Привет", "مرحبا"
+ *
+ * Returns FALSE (technical, skip) for:
+ * - Empty/whitespace: "", "   "
+ * - Single character: "-", "."
+ * - Constants: "MY_CONSTANT"
+ * - Identifiers: "myVariable", "my-css-class"
+ * - URLs/paths: "https://...", "/api/users"
+ * - CSS selectors: ":hover", ".class"
+ */
+function looksLikeUIString(value: string): boolean {
+  const trimmed = value.trim()
+
+  // Empty or whitespace only - not user text
+  if (trimmed.length === 0) {
+    return false
+  }
+
+  // Single character - likely technical (separator, bullet, etc.)
+  if (trimmed.length === 1) {
+    return false
+  }
+
+  // ALL_CAPS_WITH_UNDERSCORES - likely a constant
+  if (/^[A-Z][A-Z0-9_]*$/.test(trimmed)) {
+    return false
+  }
+
+  // Starts with protocol or path - URL or file path
+  if (/^(\/|https?:|mailto:|tel:|#)/.test(trimmed)) {
+    return false
+  }
+
+  // Looks like identifier: camelCase, kebab-case, snake_case (no spaces)
+  if (/^[a-z][a-z0-9-_]*$/i.test(trimmed) && !trimmed.includes(" ")) {
+    return false
+  }
+
+  // CSS selector: starts with :, ., #, [, *, &, >, +, ~
+  if (/^[:.#[*&>+~]/.test(trimmed)) {
+    return false
+  }
+
+  // Non-Latin scripts are almost always user-visible text
+  // Ranges: CJK, Hangul, Cyrillic, Arabic, Hebrew, Thai, Hangul Jamo
+  if (/[\u3000-\u9fff\uac00-\ud7af\u0400-\u04ff\u0600-\u06ff\u0590-\u05ff\u0e00-\u0e7f\u1100-\u11ff]/.test(trimmed)) {
+    return true
+  }
+
+  // Contains letters AND spaces - likely a phrase or sentence
+  if (/[a-zA-Z]/.test(trimmed) && /\s/.test(trimmed)) {
+    return true
+  }
+
+  // Starts with capital followed by lowercase - likely a sentence start
+  if (/^[A-Z][a-z]/.test(trimmed)) {
+    return true
+  }
+
+  // Contains sentence punctuation - likely user text
+  if (/[.!?:,]/.test(trimmed)) {
+    return true
+  }
+
+  return false
+}
+
+// ============================================================================
+// Ignored Function/Property Checks
+// ============================================================================
+
+/**
+ * Extracts the full call chain name from a callee expression.
+ *
+ * Examples:
+ * - foo() → "foo"
+ * - console.log() → "console.log"
+ * - a.b.c() → "a.b.c"
  */
 function getCalleeName(callee: TSESTree.Expression): string | null {
   if (callee.type === AST_NODE_TYPES.Identifier) {
@@ -193,7 +242,7 @@ function getCalleeName(callee: TSESTree.Expression): string | null {
       if (current.property.type === AST_NODE_TYPES.Identifier) {
         parts.unshift(current.property.name)
       } else {
-        return null
+        return null // Computed property, can't determine name
       }
       current = current.object
     }
@@ -208,47 +257,54 @@ function getCalleeName(callee: TSESTree.Expression): string | null {
 }
 
 /**
- * Checks if a callee name matches an ignore pattern.
- * Supports wildcards: "console.*", "*.headers.set"
+ * Checks if a name matches a pattern that may contain wildcards.
+ *
+ * Patterns:
+ * - "foo" matches exactly "foo"
+ * - "console.*" matches "console.log", "console.error", etc.
+ * - "*.headers.set" matches "ctx.headers.set", "request.headers.set", etc.
  */
-function matchesIgnorePattern(calleeName: string, pattern: string): boolean {
-  if (pattern === calleeName) {
+function matchesWildcardPattern(name: string, pattern: string): boolean {
+  if (pattern === name) {
     return true
   }
 
-  if (pattern.includes("*")) {
-    // Convert pattern to regex: "console.*" -> /^console\.[^.]+$/
-    // "*.headers.set" -> /^[^.]+\.headers\.set$/
-    const regexPattern = pattern
-      .split(".")
-      .map((part) => (part === "*" ? "[^.]+" : part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")))
-      .join("\\.")
-    const regex = new RegExp(`^${regexPattern}$`)
-    return regex.test(calleeName)
+  if (!pattern.includes("*")) {
+    return false
   }
 
-  return false
+  // Convert "console.*" to regex /^console\.[^.]+$/
+  const regexPattern = pattern
+    .split(".")
+    .map((part) => (part === "*" ? "[^.]+" : part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")))
+    .join("\\.")
+
+  return new RegExp(`^${regexPattern}$`).test(name)
 }
 
 /**
- * Checks if a node is a function argument to an ignored function.
+ * Checks if a string is an argument to an ignored function or constructor.
+ *
+ * Handles both:
+ * - Function calls: console.log("...")
+ * - Constructor calls: new Error("...")
  */
 function isIgnoredFunctionArgument(node: TSESTree.Node, ignoreFunctions: string[]): boolean {
   const parent = node.parent
 
-  // Handle CallExpression: fn("string")
+  // Regular function call: fn("string")
   if (parent?.type === AST_NODE_TYPES.CallExpression) {
     const calleeName = getCalleeName(parent.callee)
     if (calleeName !== null) {
-      return ignoreFunctions.some((pattern) => matchesIgnorePattern(calleeName, pattern))
+      return ignoreFunctions.some((pattern) => matchesWildcardPattern(calleeName, pattern))
     }
   }
 
-  // Handle NewExpression: new Error("string")
+  // Constructor call: new Error("string")
   if (parent?.type === AST_NODE_TYPES.NewExpression) {
     const callee = parent.callee
     if (callee.type === AST_NODE_TYPES.Identifier) {
-      return ignoreFunctions.some((pattern) => matchesIgnorePattern(callee.name, pattern))
+      return ignoreFunctions.some((pattern) => matchesWildcardPattern(callee.name, pattern))
     }
   }
 
@@ -256,19 +312,19 @@ function isIgnoredFunctionArgument(node: TSESTree.Node, ignoreFunctions: string[
 }
 
 /**
- * Checks if a node is a value for an ignored property/attribute.
+ * Checks if a string is a value for an ignored property/attribute.
  */
 function isIgnoredProperty(node: TSESTree.Node, ignoreProperties: string[]): boolean {
   const parent = node.parent
 
-  // JSX attribute: <div prop="value" />
+  // JSX attribute: <div className="..." />
   if (parent?.type === AST_NODE_TYPES.JSXAttribute) {
     if (parent.name.type === AST_NODE_TYPES.JSXIdentifier) {
       return ignoreProperties.includes(parent.name.name)
     }
   }
 
-  // Object property: { prop: "value" }
+  // Object property: { className: "..." }
   if (parent?.type === AST_NODE_TYPES.Property) {
     if (parent.key.type === AST_NODE_TYPES.Identifier) {
       return ignoreProperties.includes(parent.key.name)
@@ -281,21 +337,26 @@ function isIgnoredProperty(node: TSESTree.Node, ignoreProperties: string[]): boo
   return false
 }
 
+// ============================================================================
+// Syntax Context Checks (non-user-facing locations)
+// ============================================================================
+
 /**
- * Checks if a node is in a type context (type alias, interface, etc.).
+ * Checks if a string is in a TypeScript type context (not runtime code).
+ *
+ * Type contexts include: type aliases, interfaces, type annotations, type assertions
  */
 function isInTypeContext(node: TSESTree.Node): boolean {
   let current: TSESTree.Node | undefined = node.parent ?? undefined
 
   while (current !== undefined) {
-    if (
-      current.type === AST_NODE_TYPES.TSTypeAliasDeclaration ||
-      current.type === AST_NODE_TYPES.TSInterfaceDeclaration ||
-      current.type === AST_NODE_TYPES.TSTypeAnnotation ||
-      current.type === AST_NODE_TYPES.TSAsExpression ||
-      current.type === AST_NODE_TYPES.TSTypeAssertion
-    ) {
-      return true
+    switch (current.type) {
+      case AST_NODE_TYPES.TSTypeAliasDeclaration:
+      case AST_NODE_TYPES.TSInterfaceDeclaration:
+      case AST_NODE_TYPES.TSTypeAnnotation:
+      case AST_NODE_TYPES.TSAsExpression:
+      case AST_NODE_TYPES.TSTypeAssertion:
+        return true
     }
     current = current.parent ?? undefined
   }
@@ -303,35 +364,34 @@ function isInTypeContext(node: TSESTree.Node): boolean {
   return false
 }
 
-/**
- * Checks if a node is a switch case test.
- */
+/** Checks if a string is a switch case value: case "value": */
 function isInSwitchCase(node: TSESTree.Node): boolean {
   const parent = node.parent
   return parent?.type === AST_NODE_TYPES.SwitchCase && parent.test === node
 }
 
-/**
- * Checks if a node is a computed member expression key (obj["key"]).
- */
+/** Checks if a string is a computed property key: obj["key"] */
 function isComputedMemberKey(node: TSESTree.Node): boolean {
   const parent = node.parent
   return parent?.type === AST_NODE_TYPES.MemberExpression && parent.computed && parent.property === node
 }
 
 /**
- * Checks if a node is inside a non-Lingui tagged template expression.
+ * Checks if a string is inside a non-Lingui tagged template.
+ *
+ * Strings inside css`...`, styled.div`...`, etc. should not be checked
+ * since they're not user-visible text.
  */
 function isInNonLinguiTaggedTemplate(node: TSESTree.Node): boolean {
   let current: TSESTree.Node | undefined = node.parent ?? undefined
 
   while (current !== undefined) {
     if (current.type === AST_NODE_TYPES.TaggedTemplateExpression) {
-      // If it's a Lingui tag, it's handled elsewhere
+      // If it's a Lingui tag, it's handled by isInsideLinguiContext
       if (current.tag.type === AST_NODE_TYPES.Identifier && LINGUI_TAGGED_TEMPLATES.has(current.tag.name)) {
         return false
       }
-      // Non-Lingui tagged template (styled.div, css, html, etc.)
+      // Other tagged templates (css, styled, html, etc.)
       return true
     }
     current = current.parent ?? undefined
@@ -340,19 +400,16 @@ function isInNonLinguiTaggedTemplate(node: TSESTree.Node): boolean {
   return false
 }
 
-/**
- * Checks if a node is in an import or export declaration.
- */
+/** Checks if a string is in an import/export statement (module path). */
 function isInImportExport(node: TSESTree.Node): boolean {
   let current: TSESTree.Node | undefined = node.parent ?? undefined
 
   while (current !== undefined) {
-    if (
-      current.type === AST_NODE_TYPES.ImportDeclaration ||
-      current.type === AST_NODE_TYPES.ExportAllDeclaration ||
-      current.type === AST_NODE_TYPES.ExportNamedDeclaration
-    ) {
-      return true
+    switch (current.type) {
+      case AST_NODE_TYPES.ImportDeclaration:
+      case AST_NODE_TYPES.ExportAllDeclaration:
+      case AST_NODE_TYPES.ExportNamedDeclaration:
+        return true
     }
     current = current.parent ?? undefined
   }
@@ -360,9 +417,7 @@ function isInImportExport(node: TSESTree.Node): boolean {
   return false
 }
 
-/**
- * Checks if a node is an `as const` assertion.
- */
+/** Checks if a string has an `as const` assertion. */
 function isAsConstAssertion(node: TSESTree.Node): boolean {
   const parent = node.parent
   if (parent?.type === AST_NODE_TYPES.TSAsExpression) {
@@ -378,9 +433,11 @@ function isAsConstAssertion(node: TSESTree.Node): boolean {
   return false
 }
 
-/**
- * Checks if a type is from the Intl namespace or related to localization.
- */
+// ============================================================================
+// TypeScript Type-Aware Checks
+// ============================================================================
+
+/** Type names from the Intl namespace that take string literal options. */
 function isIntlRelatedType(typeName: string): boolean {
   return (
     typeName.startsWith("Intl.") ||
@@ -392,11 +449,16 @@ function isIntlRelatedType(typeName: string): boolean {
 }
 
 /**
- * Checks if a string literal is a technical string based on TypeScript types.
- * Uses the TypeChecker to detect:
- * - String literal union types (e.g., "left" | "right" | "center")
- * - Intl-related types (e.g., Intl.LocalesArgument, DateTimeFormatOptions)
- * - Discriminated union properties (type/kind fields)
+ * Uses TypeScript's type checker to determine if a string is technical.
+ *
+ * Detects:
+ * - String literal union types: type Status = "loading" | "error"
+ * - Intl API arguments: toLocaleString("en-US", { weekday: "long" })
+ * - Discriminated union fields: { type: "add" } | { type: "remove" }
+ *
+ * This is one of the main advantages of using TypeScript - we can
+ * automatically detect that "loading" in `setStatus("loading")` is
+ * technical if Status is typed as a union, without manual configuration.
  */
 function isTechnicalStringType(
   node: TSESTree.Literal,
@@ -408,47 +470,47 @@ function isTechnicalStringType(
     const contextualType = typeChecker.getContextualType(tsNode)
 
     if (contextualType !== undefined) {
-      // Check if contextual type is a union containing string literals
-      // Allow other primitive types: undefined, null, boolean, number
+      // Check for string literal unions: "a" | "b" | "c"
+      // Also allow unions with undefined, null, boolean, number
       if (contextualType.isUnion()) {
         const hasStringLiteral = contextualType.types.some((t) => t.isStringLiteral() || (t.flags & 128) !== 0)
         const allTechnical = contextualType.types.every((t) => {
-          // String literal (flags: 128)
+          // String literal
           if (t.isStringLiteral() || (t.flags & 128) !== 0) {
             return true
           }
-          // Number literal (flags: 256)
+          // Number literal
           if (t.isNumberLiteral() || (t.flags & 256) !== 0) {
             return true
           }
-          // Boolean literal - true (flags: 512) or false (flags: 1024)
+          // Boolean literals (true/false)
           if ((t.flags & 512) !== 0 || (t.flags & 1024) !== 0) {
             return true
           }
-          // undefined (flags: 32768)
+          // undefined
           if ((t.flags & 32768) !== 0) {
             return true
           }
-          // null (flags: 65536)
+          // null
           if ((t.flags & 65536) !== 0) {
             return true
           }
           return false
         })
-        // Only ignore if the union contains at least one string literal
+
         if (hasStringLiteral && allTechnical) {
           return true
         }
       }
 
-      // Check if contextual type is from Intl namespace
+      // Check for Intl API types
       const typeName = typeChecker.typeToString(contextualType)
       if (isIntlRelatedType(typeName)) {
         return true
       }
     }
 
-    // Check if it's used as a discriminator (type/kind property)
+    // Check for discriminated union patterns: { type: "value", kind: "value" }
     const parent = node.parent
     if (parent.type === AST_NODE_TYPES.Property) {
       const key = parent.key
@@ -457,12 +519,16 @@ function isTechnicalStringType(
       }
     }
   } catch {
-    // If type checking fails, fall back to false
+    // Type checking can fail for various reasons, fall back to false
     return false
   }
 
   return false
 }
+
+// ============================================================================
+// Rule Definition
+// ============================================================================
 
 export const noUnlocalizedStrings = createRule<[Options], MessageId>({
   name: "no-unlocalized-strings",
@@ -516,6 +582,9 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
 
     const ignoreRegex = options.ignorePattern !== null ? new RegExp(options.ignorePattern) : null
 
+    /**
+     * Main check for string literals: "Hello World", 'Hello World'
+     */
     function checkStringLiteral(node: TSESTree.Literal): void {
       if (typeof node.value !== "string") {
         return
@@ -523,66 +592,67 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
 
       const value = node.value
 
-      // Check ignore pattern
+      // User-provided ignore pattern
       if (ignoreRegex?.test(value) === true) {
         return
       }
 
-      // Check if it looks like UI text
+      // Heuristic: does it look like user text?
       if (!looksLikeUIString(value)) {
         return
       }
 
-      // Check if inside Lingui context
+      // Already inside Lingui localization
       if (isInsideLinguiContext(node)) {
         return
       }
 
-      // Check if in type context
+      // TypeScript type definition (not runtime)
       if (isInTypeContext(node)) {
         return
       }
 
-      // Check if switch case
+      // Switch case value
       if (isInSwitchCase(node)) {
         return
       }
 
-      // Check if computed member key
+      // Computed property access: obj["key"]
       if (isComputedMemberKey(node)) {
         return
       }
 
-      // Check if inside non-Lingui tagged template
+      // Non-Lingui tagged template: css`...`, styled.div`...`
       if (isInNonLinguiTaggedTemplate(node)) {
         return
       }
 
-      // Check if in import/export
+      // Import/export path
       if (isInImportExport(node)) {
         return
       }
 
-      // Check if as const assertion
+      // `as const` assertion
       if (isAsConstAssertion(node)) {
         return
       }
 
-      // Check ignored functions
+      // Argument to ignored function
       if (isIgnoredFunctionArgument(node, options.ignoreFunctions)) {
         return
       }
 
-      // Check ignored properties
+      // Value for ignored property
       if (isIgnoredProperty(node, options.ignoreProperties)) {
         return
       }
 
-      // TypeScript type-aware check
+      // TypeScript type-aware: string literal union, Intl API, etc.
       if (isTechnicalStringType(node, typeChecker, parserServices)) {
         return
       }
 
+      // If we got here, it's likely an unlocalized user-visible string
       context.report({
         node,
         messageId: "unlocalizedString",
@@ -592,6 +662,9 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       })
     }
 
+    /**
+     * Check for JSX text content: <div>Hello World</div>
+     */
     function checkJSXText(node: TSESTree.JSXText): void {
       const value = node.value.trim()
 
@@ -599,17 +672,14 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
         return
       }
 
-      // Check ignore pattern
       if (ignoreRegex?.test(value) === true) {
         return
       }
 
-      // Check if it looks like UI text
       if (!looksLikeUIString(value)) {
         return
       }
 
-      // Check if inside Lingui context
       if (isInsideLinguiContext(node)) {
         return
       }

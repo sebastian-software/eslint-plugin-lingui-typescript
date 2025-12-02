@@ -2,7 +2,7 @@ import { AST_NODE_TYPES, type TSESTree } from "@typescript-eslint/utils"
 
 import { createRule } from "../utils/create-rule.js"
 
-type MessageId = "complexExpression" | "multiplePlaceholders"
+type MessageId = "complexExpression" | "legacyPlaceholder"
 
 export interface Options {
   allowedCallees: string[]
@@ -10,22 +10,39 @@ export interface Options {
   maxExpressionDepth: number | null
 }
 
+/**
+ * Default functions that are allowed in Lingui messages.
+ * These are Lingui's built-in formatters for numbers and dates.
+ */
 const DEFAULT_ALLOWED_CALLEES = ["i18n.number", "i18n.date"]
 
-// Lingui helpers that are always allowed: plural(), select(), selectOrdinal()
+/**
+ * Lingui helper functions that can be nested inside t`...`.
+ * These are used for pluralization and selection based on values.
+ *
+ * Example: t`You have ${plural(count, { one: '# item', other: '# items' })}`
+ */
 const LINGUI_HELPERS = new Set(["plural", "select", "selectOrdinal"])
 
-// Placeholder functions that wrap named placeholders
-const PLACEHOLDER_FUNCTIONS = new Set(["ph"])
+// ============================================================================
+// Helper Functions
+// ============================================================================
 
 /**
- * Gets the string representation of a callee (e.g., "i18n.number", "Math.random").
+ * Extracts the function/method name from a call expression.
+ *
+ * Examples:
+ * - `foo()` → "foo"
+ * - `obj.method()` → "obj.method"
+ * - `a.b.c()` → "a.b.c"
+ * - `arr[0]()` → null (computed access not supported)
  */
 function getCalleeName(node: TSESTree.Expression): string | null {
   if (node.type === AST_NODE_TYPES.Identifier) {
     return node.name
   }
 
+  // Build the chain for member expressions like obj.method.call
   if (node.type === AST_NODE_TYPES.MemberExpression && !node.computed) {
     const object = getCalleeName(node.object)
     const property = node.property.type === AST_NODE_TYPES.Identifier ? node.property.name : null
@@ -39,7 +56,12 @@ function getCalleeName(node: TSESTree.Expression): string | null {
 }
 
 /**
- * Gets the depth of a member expression chain.
+ * Counts how deep a member expression chain goes.
+ *
+ * Examples:
+ * - `user.name` → 1
+ * - `user.address.city` → 2
+ * - `a.b.c.d` → 3
  */
 function getMemberExpressionDepth(node: TSESTree.MemberExpression): number {
   let depth = 1
@@ -54,124 +76,78 @@ function getMemberExpressionDepth(node: TSESTree.MemberExpression): number {
 }
 
 /**
- * Result of checking a placeholder expression.
- */
-interface PlaceholderCheckResult {
-  allowed: boolean
-  multipleKeys?: boolean
-}
-
-/**
- * Checks if an object is a valid named placeholder: { name: value }
- * Returns { allowed: true } for single-key objects with simple identifier values.
- * Returns { allowed: false, multipleKeys: true } for multi-key objects.
- */
-function checkNamedPlaceholder(node: TSESTree.ObjectExpression): PlaceholderCheckResult {
-  const properties = node.properties.filter((p) => p.type === AST_NODE_TYPES.Property)
-
-  // Multiple keys in placeholder is an error
-  if (properties.length > 1) {
-    return { allowed: false, multipleKeys: true }
-  }
-
-  // Single key with identifier value is OK
-  const prop = properties[0]
-  if (prop !== undefined) {
-    // Allow simple identifier values: { name: user }
-    if (prop.value.type === AST_NODE_TYPES.Identifier) {
-      return { allowed: true }
-    }
-    // Allow member expressions: { name: obj.prop }
-    if (prop.value.type === AST_NODE_TYPES.MemberExpression) {
-      return { allowed: true }
-    }
-  }
-
-  return { allowed: false }
-}
-
-/**
- * Checks if a call expression is a placeholder function: ph({ name: value })
- */
-function isPlaceholderFunction(node: TSESTree.CallExpression): PlaceholderCheckResult {
-  const calleeName = getCalleeName(node.callee)
-  if (calleeName === null || !PLACEHOLDER_FUNCTIONS.has(calleeName)) {
-    return { allowed: false }
-  }
-
-  const [arg] = node.arguments
-  if (arg?.type === AST_NODE_TYPES.ObjectExpression) {
-    return checkNamedPlaceholder(arg)
-  }
-
-  return { allowed: false }
-}
-
-/**
  * Checks if an expression is allowed within a Lingui message.
+ *
+ * Allowed by default:
+ * - Simple identifiers: `${name}`, `${count}`
+ * - Lingui helpers: `${plural(...)}`, `${select(...)}`
+ * - Configured callees: `${i18n.number(price)}`
+ *
+ * Optionally allowed (via options):
+ * - Member expressions: `${user.name}` (if allowMemberExpressions: true)
+ *
+ * Never allowed:
+ * - Binary operations: `${a + b}`
+ * - Conditionals: `${isX ? 'a' : 'b'}`
+ * - Arbitrary function calls: `${formatDate(d)}`
+ * - Optional chaining: `${user?.name}`
  */
-function isAllowedExpression(node: TSESTree.Expression, options: Options): PlaceholderCheckResult {
-  // Simple identifiers are always allowed: name, count
+function isAllowedExpression(node: TSESTree.Expression, options: Options): boolean {
+  // Simple identifiers are always allowed: ${name}, ${count}
   if (node.type === AST_NODE_TYPES.Identifier) {
-    return { allowed: true }
+    return true
   }
 
-  // Member expressions: props.name, user.id
+  // Member expressions: ${user.name}, ${props.value}
   if (node.type === AST_NODE_TYPES.MemberExpression) {
+    // Disabled by default - complex paths make translation harder
     if (!options.allowMemberExpressions) {
-      return { allowed: false }
+      return false
     }
 
-    // Check depth limit
+    // Check depth limit to prevent deeply nested access like user.profile.settings.theme
     const depth = getMemberExpressionDepth(node)
     if (options.maxExpressionDepth !== null && depth > options.maxExpressionDepth) {
-      return { allowed: false }
+      return false
     }
 
-    // Optional chaining is not allowed
+    // Optional chaining (user?.name) is never allowed - it implies the value
+    // might be undefined, which translators can't handle
     if (node.optional) {
-      return { allowed: false }
+      return false
     }
 
-    return { allowed: true }
+    return true
   }
 
-  // Named placeholder syntax: ${{ name: value }}
-  if (node.type === AST_NODE_TYPES.ObjectExpression) {
-    return checkNamedPlaceholder(node)
-  }
-
-  // Call expressions: check if callee is whitelisted or Lingui helper
+  // Call expressions: check if it's a Lingui helper or whitelisted function
   if (node.type === AST_NODE_TYPES.CallExpression) {
     const calleeName = getCalleeName(node.callee)
-
-    // Lingui helpers: plural(), select(), selectOrdinal()
-    if (calleeName !== null && LINGUI_HELPERS.has(calleeName)) {
-      return { allowed: true }
+    if (calleeName === null) {
+      return false
     }
 
-    // User-defined allowed callees
-    if (calleeName !== null && options.allowedCallees.includes(calleeName)) {
-      return { allowed: true }
+    // Lingui helpers are always allowed: plural(), select(), selectOrdinal()
+    if (LINGUI_HELPERS.has(calleeName)) {
+      return true
     }
 
-    // Placeholder function: ph({ name: value })
-    const phResult = isPlaceholderFunction(node)
-    if (phResult.allowed || phResult.multipleKeys === true) {
-      return phResult
+    // User-configured allowed functions: i18n.number(), i18n.date(), etc.
+    if (options.allowedCallees.includes(calleeName)) {
+      return true
     }
 
-    return { allowed: false }
+    return false
   }
 
-  // All other expression types are not allowed
-  return { allowed: false }
+  // Everything else (binary ops, conditionals, etc.) is not allowed
+  return false
 }
 
 /**
- * Gets a readable representation of an expression for error messages.
+ * Returns a human-readable description of an expression type for error messages.
  */
-function getExpressionText(node: TSESTree.Expression): string {
+function describeExpression(node: TSESTree.Expression): string {
   switch (node.type) {
     case AST_NODE_TYPES.BinaryExpression:
       return `binary expression (${node.operator})`
@@ -192,11 +168,34 @@ function getExpressionText(node: TSESTree.Expression): string {
     case AST_NODE_TYPES.ArrayExpression:
       return "array expression"
     case AST_NODE_TYPES.ObjectExpression:
-      return "object expression"
+      return "object expression (legacy placeholder syntax?)"
     default:
       return node.type
   }
 }
+
+/**
+ * Checks if an expression is JSX whitespace like {' '} or {` `}.
+ * These are commonly used for spacing in JSX and should be allowed.
+ */
+function isWhitespaceExpression(expr: TSESTree.Expression): boolean {
+  // String literal whitespace: {' '}, {"  "}
+  if (expr.type === AST_NODE_TYPES.Literal && typeof expr.value === "string") {
+    return expr.value.trim() === ""
+  }
+
+  // Template literal whitespace: {` `}, {`  `}
+  if (expr.type === AST_NODE_TYPES.TemplateLiteral) {
+    const fullText = expr.quasis.map((q) => q.value.raw).join("")
+    return fullText.trim() === ""
+  }
+
+  return false
+}
+
+// ============================================================================
+// Rule Definition
+// ============================================================================
 
 export const noComplexExpressionsInMessage = createRule<[Options], MessageId>({
   name: "no-complex-expressions-in-message",
@@ -208,7 +207,8 @@ export const noComplexExpressionsInMessage = createRule<[Options], MessageId>({
     messages: {
       complexExpression:
         "Complex expression '{{expression}}' in Lingui message. Use simple identifiers or extract to a variable.",
-      multiplePlaceholders: "Named placeholder can only have a single key"
+      legacyPlaceholder:
+        "Legacy placeholder syntax is not supported. Use simple variables like ${name} instead of object expressions."
     },
     schema: [
       {
@@ -240,83 +240,87 @@ export const noComplexExpressionsInMessage = createRule<[Options], MessageId>({
     }
   ],
   create(context, [options]) {
-    function reportExpression(expr: TSESTree.Expression, result: PlaceholderCheckResult): void {
-      if (result.multipleKeys === true) {
+    /**
+     * Checks a single expression and reports if it's not allowed.
+     */
+    function checkExpression(expr: TSESTree.Expression): void {
+      // Legacy placeholder syntax: ${{name: value}}
+      // This was used in older Lingui versions but is no longer recommended
+      if (expr.type === AST_NODE_TYPES.ObjectExpression) {
         context.report({
           node: expr,
-          messageId: "multiplePlaceholders"
+          messageId: "legacyPlaceholder"
         })
-      } else {
+        return
+      }
+
+      if (!isAllowedExpression(expr, options)) {
         context.report({
           node: expr,
           messageId: "complexExpression",
-          data: {
-            expression: getExpressionText(expr)
-          }
+          data: { expression: describeExpression(expr) }
         })
-      }
-    }
-
-    function checkExpressions(expressions: TSESTree.Expression[]): void {
-      for (const expr of expressions) {
-        const result = isAllowedExpression(expr, options)
-        if (!result.allowed) {
-          reportExpression(expr, result)
-        }
       }
     }
 
     /**
-     * Checks if a JSX expression is whitespace: {' '} or {` `}
+     * Checks all expressions in a tagged template: t`Hello ${expr}`
      */
-    function isWhitespaceExpression(expr: TSESTree.Expression): boolean {
-      if (expr.type === AST_NODE_TYPES.Literal && typeof expr.value === "string") {
-        return expr.value.trim() === ""
+    function checkTemplateExpressions(expressions: TSESTree.Expression[]): void {
+      for (const expr of expressions) {
+        checkExpression(expr)
       }
-      if (expr.type === AST_NODE_TYPES.TemplateLiteral) {
-        const fullText = expr.quasis.map((q) => q.value.raw).join("")
-        return fullText.trim() === ""
-      }
-      return false
     }
 
-    function checkJSXChildren(children: TSESTree.JSXChild[]): void {
+    /**
+     * Checks all expression children in a JSX element: <Trans>Hello {expr}</Trans>
+     */
+    function checkJSXExpressionChildren(children: TSESTree.JSXChild[]): void {
       for (const child of children) {
-        if (
-          child.type === AST_NODE_TYPES.JSXExpressionContainer &&
-          child.expression.type !== AST_NODE_TYPES.JSXEmptyExpression
-        ) {
-          // Allow whitespace expressions: {' '}, {` `}
-          if (isWhitespaceExpression(child.expression)) {
-            continue
-          }
-
-          const result = isAllowedExpression(child.expression, options)
-          if (!result.allowed) {
-            reportExpression(child.expression, result)
-          }
+        // Only check JSXExpressionContainer nodes: {expr}
+        if (child.type !== AST_NODE_TYPES.JSXExpressionContainer) {
+          continue
         }
+
+        // Skip empty expressions: {}
+        if (child.expression.type === AST_NODE_TYPES.JSXEmptyExpression) {
+          continue
+        }
+
+        // Allow whitespace expressions: {' '}, {` `}
+        // These are commonly used for spacing in JSX
+        if (isWhitespaceExpression(child.expression)) {
+          continue
+        }
+
+        checkExpression(child.expression)
       }
     }
 
     return {
-      // Check t`Hello ${expr}` pattern
+      /**
+       * Handle tagged template literals: t`Hello ${name}`
+       */
       TaggedTemplateExpression(node): void {
+        // Only check the `t` macro, not other tagged templates like css`...`
         if (node.tag.type !== AST_NODE_TYPES.Identifier || node.tag.name !== "t") {
           return
         }
 
-        checkExpressions(node.quasi.expressions)
+        checkTemplateExpressions(node.quasi.expressions)
       },
 
-      // Check <Trans>Hello {expr}</Trans> pattern
+      /**
+       * Handle JSX elements: <Trans>Hello {name}</Trans>
+       */
       JSXElement(node): void {
-        const openingElement = node.openingElement
-        if (openingElement.name.type !== AST_NODE_TYPES.JSXIdentifier || openingElement.name.name !== "Trans") {
+        // Only check <Trans> components
+        const name = node.openingElement.name
+        if (name.type !== AST_NODE_TYPES.JSXIdentifier || name.name !== "Trans") {
           return
         }
 
-        checkJSXChildren(node.children)
+        checkJSXExpressionChildren(node.children)
       }
     }
   }
