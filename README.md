@@ -29,12 +29,26 @@ const message = "Welcome to our app"
 
 **No configuration needed** for DOM APIs, Intl methods, or your own string literal union types. TypeScript already knows!
 
+### Smart Lingui Detection
+
+The plugin uses TypeScript's symbol resolution to verify that `t`, `Trans`, `msg`, etc. actually come from Lingui packages — not just any function with the same name:
+
+```ts
+import { t } from "@lingui/macro"
+const label = t`Save`  // ✅ Recognized as Lingui
+
+// Your own function with the same name
+const t = (key: string) => translations[key]
+const label = t("save")  // ❌ Not confused with Lingui
+```
+
 ## Features
 
 - 🔍 Detects incorrect usage of Lingui translation macros
 - 📝 Enforces simple, safe expressions inside translated messages
 - 🎯 Detects missing localization of user-visible text
 - 🧠 Zero-config recognition of technical strings via TypeScript types
+- 🔒 Verifies Lingui macros actually come from `@lingui/*` packages (no false positives from similarly-named functions)
 
 ## Requirements
 
@@ -112,6 +126,7 @@ This plugin is a TypeScript-focused alternative to the official [eslint-plugin-l
 | **String literal unions** | Manual whitelist | ✅ Auto-detected |
 | **DOM API strings** | Manual whitelist | ✅ Auto-detected |
 | **Intl method arguments** | Manual whitelist | ✅ Auto-detected |
+| **Lingui macro verification** | Name-based only | ✅ Verifies package origin |
 | **ESLint version** | 8.x | 9.x (flat config) |
 | **Config format** | Legacy `.eslintrc` | Flat config only |
 
