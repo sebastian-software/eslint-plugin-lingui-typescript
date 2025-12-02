@@ -108,20 +108,24 @@ const action = { type: "save" }  // ✅ Not reported (type/kind properties)
 
 Array of function names whose string arguments should be ignored. Supports wildcards.
 
-Default: `["console.*", "require", "import", "Error", "TypeError", "RangeError", "SyntaxError"]`
+Default: `["require", "import"]`
+
+Most common cases are detected automatically via TypeScript types:
+- **Console methods** (`console.log`, `console.error`, etc.) — detected via `Console` type
+- **Error constructors** (`new Error()`, `new TypeError()`, etc.) — detected via Error type hierarchy
 
 ```ts
 {
   "lingui-ts/no-unlocalized-strings": ["error", {
-    "ignoreFunctions": ["console.*", "require", "logger.*", "analytics.track"]
+    "ignoreFunctions": ["require", "import", "logger.*", "analytics.track"]
   }]
 }
 ```
 
 Wildcard examples:
 
-- `"console.*"` matches `console.log`, `console.error`, etc.
-- `"*.debug"` matches `logger.debug`, `app.debug`, etc.
+- `"logger.*"` matches `logger.debug`, `logger.info`, etc.
+- `"*.track"` matches `analytics.track`, `events.track`, etc.
 
 ### `ignoreProperties`
 
@@ -134,10 +138,8 @@ Default:
 ```ts
 [
   "className",    // CSS classes - arbitrary strings, always technical
-  "styleName",    // CSS modules
   "key",          // React key prop
-  "testID",       // React Native testing
-  "data-testid"   // DOM testing
+  "data-testid"   // DOM Testing Library standard
 ]
 ```
 

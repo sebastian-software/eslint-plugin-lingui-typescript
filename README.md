@@ -144,7 +144,7 @@ The `no-unlocalized-strings` rule has different options because TypeScript types
 |-----------------|-------------|-------|
 | `useTsTypes` | — | Always enabled (TypeScript required) |
 | `ignore` (array of regex) | `ignorePattern` (single regex) | Simplified |
-| `ignoreFunctions` | `ignoreFunctions` | ✅ Compatible (wildcards work slightly differently) |
+| `ignoreFunctions` | `ignoreFunctions` | ✅ Simplified (Console/Error auto-detected) |
 | `ignoreNames` (with regex support) | `ignoreNames` | Simplified (no regex, plain strings only) |
 | — | `ignoreProperties` | New: separate option for JSX attributes and object properties |
 | `ignoreMethodsOnTypes` | — | Not needed (TypeScript handles this automatically) |

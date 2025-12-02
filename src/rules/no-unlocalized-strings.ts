@@ -19,8 +19,11 @@ export interface Options {
 /**
  * Functions whose arguments should not be checked for localization.
  * Supports wildcards: "console.*" matches console.log, console.error, etc.
+ *
+ * This list is intentionally minimal - Error constructors and console methods
+ * are detected automatically via TypeScript types.
  */
-const DEFAULT_IGNORE_FUNCTIONS = ["console.*", "require", "import", "Error", "TypeError", "RangeError", "SyntaxError"]
+const DEFAULT_IGNORE_FUNCTIONS = ["require", "import"]
 
 /**
  * JSX attributes and object properties whose values should not be checked.
@@ -35,11 +38,9 @@ const DEFAULT_IGNORE_FUNCTIONS = ["console.*", "require", "import", "Error", "Ty
 const DEFAULT_IGNORE_PROPERTIES = [
   // CSS class names - accept arbitrary strings, always technical
   "className",
-  "styleName",
-  // React-specific
+  // React key prop
   "key",
-  // Testing IDs - arbitrary strings, always technical
-  "testID",
+  // Testing ID - DOM Testing Library standard
   "data-testid"
 ]
 
@@ -292,6 +293,86 @@ function isIgnoredFunctionArgument(node: TSESTree.Node, ignoreFunctions: string[
     if (callee.type === AST_NODE_TYPES.Identifier) {
       return ignoreFunctions.some((pattern) => matchesWildcardPattern(callee.name, pattern))
     }
+  }
+
+  return false
+}
+
+/**
+ * Checks if a string is an argument to a Console method (console.log, etc.)
+ * using TypeScript type information.
+ */
+function isConsoleMethodArgument(
+  node: TSESTree.Node,
+  typeChecker: ts.TypeChecker,
+  parserServices: ReturnType<typeof ESLintUtils.getParserServices>
+): boolean {
+  const parent = node.parent
+  if (parent?.type !== AST_NODE_TYPES.CallExpression) {
+    return false
+  }
+
+  const callee = parent.callee
+  if (callee.type !== AST_NODE_TYPES.MemberExpression) {
+    return false
+  }
+
+  try {
+    const objectTsNode = parserServices.esTreeNodeToTSNodeMap.get(callee.object)
+    const objectType = typeChecker.getTypeAtLocation(objectTsNode)
+    const typeName = typeChecker.typeToString(objectType)
+
+    // Check if the object is of type Console
+    return typeName === "Console"
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Checks if a string is an argument to an Error constructor
+ * using TypeScript type information.
+ */
+function isErrorConstructorArgument(
+  node: TSESTree.Node,
+  typeChecker: ts.TypeChecker,
+  parserServices: ReturnType<typeof ESLintUtils.getParserServices>
+): boolean {
+  const parent = node.parent
+  if (parent?.type !== AST_NODE_TYPES.NewExpression) {
+    return false
+  }
+
+  try {
+    const calleeTsNode = parserServices.esTreeNodeToTSNodeMap.get(parent.callee)
+    const calleeType = typeChecker.getTypeAtLocation(calleeTsNode)
+
+    // Check if the constructor creates an Error type
+    const constructSignatures = calleeType.getConstructSignatures()
+    for (const sig of constructSignatures) {
+      const returnType = sig.getReturnType()
+      const returnTypeName = typeChecker.typeToString(returnType)
+
+      // Check if it returns Error or any Error subtype
+      if (returnTypeName === "Error" || returnTypeName.endsWith("Error")) {
+        return true
+      }
+
+      // Check if the return type extends Error
+      if ("getBaseTypes" in returnType && typeof returnType.getBaseTypes === "function") {
+        const baseTypes = returnType.getBaseTypes()
+        if (baseTypes !== undefined) {
+          for (const baseType of baseTypes) {
+            const baseTypeName = typeChecker.typeToString(baseType)
+            if (baseTypeName === "Error") {
+              return true
+            }
+          }
+        }
+      }
+    }
+  } catch {
+    return false
   }
 
   return false
@@ -633,6 +714,16 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
 
       // Argument to ignored function
       if (isIgnoredFunctionArgument(node, options.ignoreFunctions)) {
+        return
+      }
+
+      // Console method argument (type-aware)
+      if (isConsoleMethodArgument(node, typeChecker, parserServices)) {
+        return
+      }
+
+      // Error constructor argument (type-aware)
+      if (isErrorConstructorArgument(node, typeChecker, parserServices)) {
         return
       }
 
