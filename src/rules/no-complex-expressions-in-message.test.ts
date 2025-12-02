@@ -29,6 +29,15 @@ ruleTester.run("no-complex-expressions-in-message", noComplexExpressionsInMessag
     "<Trans>Hello {name}</Trans>",
     "<Trans>You have {count} items</Trans>",
 
+    // ==================== Plural/Select (standalone, not inside t/Trans) ====================
+    // These are Lingui components/functions but NOT checked by this rule
+    // (this rule only checks expressions inside t`...` and <Trans>)
+    '<Plural value={count} one="# item" other="# items" />',
+    '<Plural value={count * 2} one="# item" other="# items" />',
+    '<Select value={gender} male="He" female="She" other="They" />',
+    'plural(count, { one: "# item", other: "# items" })',
+    'select(gender, { male: "He", female: "She", other: "They" })',
+
     // ==================== Non-Lingui (Ignored) ====================
     // Other tagged templates are not checked
     "css`color: ${theme.primary}`",
