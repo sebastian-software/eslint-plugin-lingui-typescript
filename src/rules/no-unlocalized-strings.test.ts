@@ -21,7 +21,7 @@ const ruleTester = new RuleTester({
 ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
   valid: [
     // Inside t``
-    { name: "inside t`` macro", code: "t`Hello World`", filename: "test.tsx" },
+    { code: "t`Hello World`", filename: "test.tsx" },
     { code: "t`Save changes`", filename: "test.tsx" },
 
     // Inside plural(), select(), selectOrdinal()
