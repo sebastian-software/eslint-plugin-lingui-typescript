@@ -4,7 +4,7 @@ import { createRule } from "../utils/create-rule.js"
 
 type MessageId = "topLevelNotAllowed"
 
-interface Options {
+export interface Options {
   allowTopLevel: boolean
 }
 

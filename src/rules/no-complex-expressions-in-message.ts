@@ -4,7 +4,7 @@ import { createRule } from "../utils/create-rule.js"
 
 type MessageId = "complexExpression"
 
-interface Options {
+export interface Options {
   allowedCallees: string[]
   allowMemberExpressions: boolean
   maxExpressionDepth: number | null

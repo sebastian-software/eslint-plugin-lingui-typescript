@@ -57,6 +57,7 @@ export default [
 | [no-nested-macros](docs/rules/no-nested-macros.md) | Disallow nesting Lingui macros | ✅ |
 | [no-single-tag-message](docs/rules/no-single-tag-message.md) | Disallow messages with only a single markup tag | ✅ |
 | [no-single-variable-message](docs/rules/no-single-variable-message.md) | Disallow messages that consist only of a single variable | ✅ |
+| [no-unlocalized-strings](docs/rules/no-unlocalized-strings.md) | Detect unlocalized user-visible strings (TypeScript-aware) | ⚠️ |
 | [valid-t-call-location](docs/rules/valid-t-call-location.md) | Enforce `t` calls inside functions | ✅ |
 
 ### Optional Rules
@@ -65,11 +66,6 @@ export default [
 |------|-------------|
 | [text-restrictions](docs/rules/text-restrictions.md) | Enforce project-specific text restrictions |
 
-### Planned Rules
-
-- `no-unlocalized-strings` — Detect user-visible strings not wrapped in Lingui (TypeScript type-aware)
-
 ## License
 
 [MIT](LICENSE)
-

@@ -9,6 +9,7 @@ import { noComplexExpressionsInMessage } from "./rules/no-complex-expressions-in
 import { noNestedMacros } from "./rules/no-nested-macros.js"
 import { noSingleTagMessage } from "./rules/no-single-tag-message.js"
 import { noSingleVariableMessage } from "./rules/no-single-variable-message.js"
+import { noUnlocalizedStrings } from "./rules/no-unlocalized-strings.js"
 import { textRestrictions } from "./rules/text-restrictions.js"
 import { validTCallLocation } from "./rules/valid-t-call-location.js"
 
@@ -23,6 +24,7 @@ const plugin = {
     "no-nested-macros": noNestedMacros,
     "no-single-tag-message": noSingleTagMessage,
     "no-single-variable-message": noSingleVariableMessage,
+    "no-unlocalized-strings": noUnlocalizedStrings,
     "text-restrictions": textRestrictions,
     "valid-t-call-location": validTCallLocation
   },
@@ -41,6 +43,7 @@ plugin.configs = {
       "lingui-ts/no-nested-macros": "error",
       "lingui-ts/no-single-tag-message": "error",
       "lingui-ts/no-single-variable-message": "error",
+      "lingui-ts/no-unlocalized-strings": "warn",
       "lingui-ts/valid-t-call-location": "error"
       // text-restrictions not in recommended (requires configuration)
     }

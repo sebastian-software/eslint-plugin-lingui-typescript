@@ -4,7 +4,7 @@ import { createRule } from "../utils/create-rule.js"
 
 type MessageId = "nestedMacro"
 
-interface Options {
+export interface Options {
   macros: string[]
   allowDifferentMacros: boolean
 }

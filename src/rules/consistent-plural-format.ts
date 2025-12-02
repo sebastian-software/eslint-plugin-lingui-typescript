@@ -4,7 +4,7 @@ import { createRule } from "../utils/create-rule.js"
 
 type MessageId = "missingPluralKey"
 
-interface Options {
+export interface Options {
   requiredKeys: string[]
 }
 

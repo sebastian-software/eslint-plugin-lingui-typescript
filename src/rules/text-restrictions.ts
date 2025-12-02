@@ -4,7 +4,7 @@ import { createRule } from "../utils/create-rule.js"
 
 type MessageId = "forbiddenPattern" | "tooShort"
 
-interface Options {
+export interface Options {
   forbiddenPatterns: string[]
   minLength: number | null
 }
