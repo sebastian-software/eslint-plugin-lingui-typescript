@@ -4,32 +4,29 @@
  * @packageDocumentation
  */
 
-// TODO: Import rules when implemented
-// import { noComplexExpressionsInMessage } from "./rules/no-complex-expressions-in-message.js";
+import { noSingleVariableMessage } from "./rules/no-single-variable-message.js"
 
 const plugin = {
   meta: {
     name: "eslint-plugin-lingui-typescript",
-    version: "1.0.0",
+    version: "1.0.0"
   },
   rules: {
-    // Rules will be added here as they are implemented
+    "no-single-variable-message": noSingleVariableMessage
   },
-  configs: {},
+  configs: {} as Record<string, unknown>
 }
 
-// Add self-reference for flat config
-const flatRecommended = {
-  plugins: {
-    "lingui-ts": plugin,
-  },
-  rules: {
-    // Recommended rules will be added here
-  },
-};
-
+// Add flat config with self-reference
 plugin.configs = {
-  "flat/recommended": flatRecommended,
-};
+  "flat/recommended": {
+    plugins: {
+      "lingui-ts": plugin
+    },
+    rules: {
+      "lingui-ts/no-single-variable-message": "error"
+    }
+  }
+}
 
-export default plugin;
+export default plugin

@@ -177,3 +177,30 @@ Note: `jiti` is required by ESLint 9 for loading TypeScript config files (`eslin
 - `npm run test` - Run tests
 - `npm run test:watch` - Run tests in watch mode
 - `npm run typecheck` - Type-check without emitting
+
+## CI/CD
+
+### GitHub Actions
+
+The project uses GitHub Actions for continuous integration with three parallel jobs:
+
+```yaml
+# .github/workflows/ci.yml
+jobs:
+  test:        # typecheck + unit tests
+  lint:        # eslint + prettier
+  build:       # compile + upload artifact
+```
+
+### CI Checks
+
+| Job | Steps |
+|-----|-------|
+| **test** | `npm run typecheck`, `npm test` |
+| **lint** | `npm run lint`, `npm run format:check` |
+| **build** | `npm run build`, upload `dist/` artifact |
+
+### Triggers
+
+- **Push** to `main` branch
+- **Pull requests** targeting `main`
