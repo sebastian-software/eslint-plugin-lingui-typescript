@@ -14,7 +14,7 @@ alwaysApply: false
 import { ESLintUtils, type TSESTree } from "@typescript-eslint/utils"
 
 const createRule = ESLintUtils.RuleCreator(
-  (name) => `https://github.com/your-org/eslint-plugin-lingui/docs/rules/${name}.md`
+  (name) => `https://github.com/user/eslint-plugin-lingui-typescript/blob/main/docs/rules/${name}.md`
 )
 
 export const noComplexExpressions = createRule({
@@ -318,7 +318,7 @@ import { noNestedMacros } from "./rules/no-nested-macros.js"
 
 const plugin = {
   meta: {
-    name: "eslint-plugin-lingui",
+    name: "eslint-plugin-lingui-typescript",
     version: "1.0.0",
   },
   rules: {
@@ -329,11 +329,11 @@ const plugin = {
   configs: {
     "flat/recommended": {
       plugins: {
-        lingui: plugin,
+        "lingui-ts": plugin,
       },
       rules: {
-        "lingui/no-complex-expressions-in-message": "error",
-        "lingui/no-nested-macros": "error",
+        "lingui-ts/no-complex-expressions-in-message": "error",
+        "lingui-ts/no-nested-macros": "error",
         // ... other rules
       },
     },

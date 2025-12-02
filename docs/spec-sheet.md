@@ -61,16 +61,16 @@ Provide an ESLint plugin for Lingui that:
 2. Flat Config usage MUST be possible like:
 
 ```ts
-import linguiPlugin from "eslint-plugin-lingui";
+import linguiPlugin from "eslint-plugin-lingui-typescript"
 
 export default [
   linguiPlugin.configs["flat/recommended"],
   {
     rules: {
-      "lingui/no-unlocalized-strings": ["error", { /* options */ }],
+      "lingui-ts/no-unlocalized-strings": ["error", { /* options */ }],
     },
   },
-];
+]
 ```
 
 ---
@@ -134,7 +134,7 @@ Each rule MUST:
 
 **Configuration (Options):**
 
-* Default export name: `"lingui/no-complex-expressions-in-message": "error"` in recommended config.
+* Default export name: `"lingui-ts/no-complex-expressions-in-message": "error"` in recommended config.
 * Options object fields (optional):
   * `allowedCallees: string[]`
     Format: dot-separated string, e.g. `"i18n.number"`, `"i18n.date"`.

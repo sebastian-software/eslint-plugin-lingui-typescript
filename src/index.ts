@@ -9,19 +9,19 @@
 
 const plugin = {
   meta: {
-    name: "eslint-plugin-lingui",
+    name: "eslint-plugin-lingui-typescript",
     version: "1.0.0",
   },
   rules: {
     // Rules will be added here as they are implemented
   },
   configs: {},
-};
+}
 
 // Add self-reference for flat config
 const flatRecommended = {
   plugins: {
-    lingui: plugin,
+    "lingui-ts": plugin,
   },
   rules: {
     // Recommended rules will be added here
