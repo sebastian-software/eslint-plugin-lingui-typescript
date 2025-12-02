@@ -4,6 +4,7 @@
  * @packageDocumentation
  */
 
+import { noSingleTagMessage } from "./rules/no-single-tag-message.js"
 import { noSingleVariableMessage } from "./rules/no-single-variable-message.js"
 
 const plugin = {
@@ -12,6 +13,7 @@ const plugin = {
     version: "1.0.0"
   },
   rules: {
+    "no-single-tag-message": noSingleTagMessage,
     "no-single-variable-message": noSingleVariableMessage
   },
   configs: {} as Record<string, unknown>
@@ -24,6 +26,7 @@ plugin.configs = {
       "lingui-ts": plugin
     },
     rules: {
+      "lingui-ts/no-single-tag-message": "error",
       "lingui-ts/no-single-variable-message": "error"
     }
   }
