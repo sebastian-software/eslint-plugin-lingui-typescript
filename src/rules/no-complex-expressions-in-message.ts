@@ -4,54 +4,24 @@ import { createRule } from "../utils/create-rule.js"
 
 type MessageId = "complexExpression" | "legacyPlaceholder"
 
-/**
- * Lingui helper functions that can be nested inside t`...`.
- * These are used for pluralization and selection based on values.
- *
- * Example: t`You have ${plural(count, { one: '# item', other: '# items' })}`
- */
-const LINGUI_HELPERS = new Set(["plural", "select", "selectOrdinal"])
-
 // ============================================================================
 // Helper Functions
 // ============================================================================
 
 /**
- * Extracts the function name from a callee expression.
- * Only handles simple identifiers, not member expressions.
- */
-function getSimpleCalleeName(node: TSESTree.Expression): string | null {
-  if (node.type === AST_NODE_TYPES.Identifier) {
-    return node.name
-  }
-  return null
-}
-
-/**
  * Checks if an expression is allowed within a Lingui message.
  *
- * Only two things are allowed:
- * 1. Simple identifiers: ${name}, ${count}, ${formattedPrice}
- * 2. Lingui helpers: ${plural(...)}, ${select(...)}, ${selectOrdinal(...)}
+ * ONLY simple identifiers are allowed: ${name}, ${count}, ${formattedPrice}
  *
  * Everything else must be extracted to a named variable first.
  * This ensures translators always see meaningful placeholder names.
+ *
+ * Note: plural(), select(), selectOrdinal() are NOT allowed inside t`...`
+ * Use the JSX components <Plural>, <Select>, <SelectOrdinal> instead,
+ * or ICU message syntax in your catalog.
  */
 function isAllowedExpression(node: TSESTree.Expression): boolean {
-  // Simple identifiers: ${name}, ${count}
-  if (node.type === AST_NODE_TYPES.Identifier) {
-    return true
-  }
-
-  // Lingui helpers: ${plural(...)}, ${select(...)}, ${selectOrdinal(...)}
-  if (node.type === AST_NODE_TYPES.CallExpression) {
-    const calleeName = getSimpleCalleeName(node.callee)
-    if (calleeName !== null && LINGUI_HELPERS.has(calleeName)) {
-      return true
-    }
-  }
-
-  return false
+  return node.type === AST_NODE_TYPES.Identifier
 }
 
 /**
