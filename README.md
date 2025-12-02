@@ -100,6 +100,12 @@ Or configure rules manually:
 | [consistent-plural-format](docs/rules/consistent-plural-format.md) | Validates `<Plural>` component usage by ensuring required plural keys (`one`, `other`) are present. Helps maintain consistent pluralization across the codebase. | ✅ |
 | [text-restrictions](docs/rules/text-restrictions.md) | Enforces project-specific text restrictions like disallowed patterns or minimum length. Requires configuration to be useful. | — |
 
+## Related Projects
+
+- [Lingui](https://lingui.dev/) – The excellent i18n library this plugin is built for. Provides powerful macros like `t`, `<Trans>`, and `plural` for seamless internationalization.
+- [eslint-plugin-lingui](https://github.com/lingui/eslint-plugin-lingui) – The official Lingui ESLint plugin. Great for JavaScript projects; this plugin extends the concept with TypeScript type-awareness.
+- [typescript-eslint](https://typescript-eslint.io/) – The foundation that makes type-aware linting possible. This plugin builds on their excellent tooling.
+
 ## License
 
 [MIT](LICENSE)
