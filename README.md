@@ -91,14 +91,75 @@ Or configure rules manually:
 
 | Rule | Description | Recommended |
 |------|-------------|:-----------:|
-| [no-unlocalized-strings](docs/rules/no-unlocalized-strings.md) | Detects user-visible strings not wrapped in Lingui macros. Uses TypeScript types to automatically ignore technical strings like string literal unions, DOM APIs, Intl methods, and discriminated union fields. | ✅ |
-| [no-single-variable-message](docs/rules/no-single-variable-message.md) | Disallows messages that consist only of a single variable without surrounding text. Such messages provide no context for translators. | ✅ |
-| [no-single-tag-message](docs/rules/no-single-tag-message.md) | Disallows `<Trans>` components that contain only a single JSX element without text. The wrapped element should be translated directly instead. | ✅ |
+| [no-unlocalized-strings](docs/rules/no-unlocalized-strings.md) | Detects user-visible strings not wrapped in Lingui macros. Uses TypeScript types to automatically ignore technical strings like string literal unions, DOM APIs, and Intl methods. | ✅ |
+| [no-single-variable-message](docs/rules/no-single-variable-message.md) | Disallows messages that consist only of variables without surrounding text. Such messages provide no context for translators. | ✅ |
+| [no-single-tag-message](docs/rules/no-single-tag-message.md) | Disallows `<Trans>` components that contain only a single JSX element without text. The wrapped element should have surrounding text for context. | ✅ |
 | [no-nested-macros](docs/rules/no-nested-macros.md) | Prevents nesting Lingui macros inside each other (e.g., `t` inside `<Trans>`). Nested macros create invalid message catalogs and confuse translators. | ✅ |
-| [no-complex-expressions-in-message](docs/rules/no-complex-expressions-in-message.md) | Restricts embedded expressions in messages to simple identifiers and member access. Complex expressions like function calls or ternaries should be extracted to variables. | ✅ |
-| [valid-t-call-location](docs/rules/valid-t-call-location.md) | Ensures `t` macro calls are inside functions, not at module scope. Module-level calls execute before i18n is initialized and won't update on locale change. | ✅ |
-| [consistent-plural-format](docs/rules/consistent-plural-format.md) | Validates `<Plural>` component usage by ensuring required plural keys (`one`, `other`) are present. Helps maintain consistent pluralization across the codebase. | ✅ |
-| [text-restrictions](docs/rules/text-restrictions.md) | Enforces project-specific text restrictions like disallowed patterns or minimum length. Requires configuration to be useful. | — |
+| [no-complex-expressions-in-message](docs/rules/no-complex-expressions-in-message.md) | Restricts embedded expressions to simple identifiers only. Complex expressions like `${user.name}` or `${formatPrice(x)}` must be extracted to named variables first. | ✅ |
+| [valid-t-call-location](docs/rules/valid-t-call-location.md) | Ensures `t` macro calls are inside functions or class properties, not at module scope. Module-level calls execute before i18n is initialized and won't update on locale change. | ✅ |
+| [consistent-plural-format](docs/rules/consistent-plural-format.md) | Enforces consistent plural value format — either `#` hash syntax or `${var}` template literals throughout the codebase. | ✅ |
+| [text-restrictions](docs/rules/text-restrictions.md) | Enforces project-specific text restrictions with custom patterns and messages. Requires configuration. | — |
+
+## Migrating from eslint-plugin-lingui
+
+This plugin is a TypeScript-focused alternative to the official [eslint-plugin-lingui](https://github.com/lingui/eslint-plugin-lingui). Here are the key differences:
+
+### Key Differences
+
+| Feature | eslint-plugin-lingui | eslint-plugin-lingui-typescript |
+|---------|---------------------|--------------------------------|
+| **Type-aware detection** | ❌ Heuristics only | ✅ Uses TypeScript types |
+| **String literal unions** | Manual whitelist | ✅ Auto-detected |
+| **DOM API strings** | Manual whitelist | ✅ Auto-detected |
+| **Intl method arguments** | Manual whitelist | ✅ Auto-detected |
+| **ESLint version** | 8.x | 9.x (flat config) |
+| **Config format** | Legacy `.eslintrc` | Flat config only |
+
+### Why Switch?
+
+1. **Less configuration**: TypeScript's type system automatically identifies technical strings — no need to maintain long whitelists of ignored functions and patterns.
+
+2. **Fewer false positives**: Strings typed as literal unions (like `"loading" | "error"`) are automatically recognized as non-translatable.
+
+3. **Modern ESLint**: Built for ESLint 9's flat config from the ground up.
+
+### Rule Mapping
+
+| eslint-plugin-lingui | eslint-plugin-lingui-typescript |
+|---------------------|--------------------------------|
+| `lingui/no-unlocalized-strings` | `lingui-ts/no-unlocalized-strings` |
+| `lingui/t-call-in-function` | `lingui-ts/valid-t-call-location` |
+| `lingui/no-single-variables-to-translate` | `lingui-ts/no-single-variable-message` |
+| `lingui/no-expression-in-message` | `lingui-ts/no-complex-expressions-in-message` |
+| `lingui/no-single-tag-to-translate` | `lingui-ts/no-single-tag-message` |
+| `lingui/text-restrictions` | `lingui-ts/text-restrictions` |
+| — | `lingui-ts/no-nested-macros` (new) |
+| — | `lingui-ts/consistent-plural-format` (new) |
+
+### Migration Steps
+
+1. Remove the old plugin:
+   ```bash
+   npm uninstall eslint-plugin-lingui
+   ```
+
+2. Install this plugin:
+   ```bash
+   npm install --save-dev eslint-plugin-lingui-typescript
+   ```
+
+3. Update your ESLint config to flat config format (if not already):
+   ```ts
+   // eslint.config.ts
+   import linguiPlugin from "eslint-plugin-lingui-typescript"
+
+   export default [
+     // ... other configs
+     linguiPlugin.configs["flat/recommended"]
+   ]
+   ```
+
+4. Review your ignore lists — many entries may no longer be needed thanks to type-aware detection.
 
 ## Related Projects
 

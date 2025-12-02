@@ -1,68 +1,97 @@
 # consistent-plural-format
 
-Ensure `<Plural>` component has required plural category props.
+Enforce consistent plural format style (`#` hash or `${var}` template).
 
 ## Why?
 
-Proper pluralization requires specific props for different quantities. Missing props can cause:
-- Runtime errors or fallback to incorrect text
-- Incomplete translations
-- Poor user experience for different languages
+Lingui supports two formats for interpolating the count value in plural messages:
+
+1. **Hash format**: `"# items"` — uses `#` as a placeholder
+2. **Template format**: `` `${count} items` `` — uses template literals
+
+Mixing both styles in a codebase leads to inconsistency and confusion. This rule enforces one style throughout your project.
 
 ## Rule Details
 
-This rule ensures that `<Plural>` components include all required plural category props.
+This rule checks `plural()` calls and `<Plural>` components and reports when the wrong format style is used.
 
-### ❌ Invalid
+### With `style: "hash"` (default)
+
+#### ❌ Invalid
 
 ```tsx
-// Missing 'other' (required by default)
-<Plural value={count} one="# item" />
+// Template format when hash is required
+plural(count, {
+  one: `${count} item`,
+  other: `${count} items`
+})
 
-// Missing 'one' (required by default)
-<Plural value={count} other="# items" />
-
-// Missing both required props
-<Plural value={count} zero="None" />
+<Plural
+  value={count}
+  one={`${count} item`}
+  other={`${count} items`}
+/>
 ```
 
-### ✅ Valid
+#### ✅ Valid
 
 ```tsx
-// All required props present
-<Plural value={count} one="# item" other="# items" />
+// Hash format
+plural(count, {
+  one: "# item",
+  other: "# items"
+})
 
-// Additional props are allowed
-<Plural value={count} one="One" other="Many" zero="None" />
+<Plural
+  value={count}
+  one="# item"
+  other="# items"
+/>
+```
 
-// With expressions
-<Plural value={count} one={oneMsg} other={otherMsg} />
+### With `style: "template"`
+
+#### ❌ Invalid
+
+```tsx
+// Hash format when template is required
+plural(count, {
+  one: "# item",
+  other: "# items"
+})
+```
+
+#### ✅ Valid
+
+```tsx
+// Template format
+plural(count, {
+  one: `${count} item`,
+  other: `${count} items`
+})
 ```
 
 ## Options
 
-### `requiredKeys`
+### `style`
 
-Array of plural category props that must be present. Default: `["one", "other"]`
+Which format style to enforce. Default: `"hash"`
 
-Common CLDR plural categories: `zero`, `one`, `two`, `few`, `many`, `other`
+- `"hash"` — Require `#` placeholder (Lingui's standard format)
+- `"template"` — Require `${var}` template literals
 
 ```ts
-// Require only 'other'
+// Enforce hash format (default)
 {
-  "lingui-ts/consistent-plural-format": ["error", {
-    "requiredKeys": ["other"]
-  }]
+  "lingui-ts/consistent-plural-format": ["error", { "style": "hash" }]
 }
 
-// Require zero, one, and other
+// Enforce template format
 {
-  "lingui-ts/consistent-plural-format": ["error", {
-    "requiredKeys": ["zero", "one", "other"]
-  }]
+  "lingui-ts/consistent-plural-format": ["error", { "style": "template" }]
 }
 ```
 
 ## When Not To Use It
 
-If your project uses ICU message format directly in `t` strings instead of `<Plural>` components, this rule won't help. It only checks JSX `<Plural>` components.
+If your project intentionally mixes both formats or you don't use `plural()` / `<Plural>`, you can disable this rule.

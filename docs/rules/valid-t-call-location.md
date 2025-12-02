@@ -13,9 +13,9 @@ Using `t` at module top-level causes serious issues:
 
 ## Rule Details
 
-This rule reports `t` tagged template expressions that are not inside a function, arrow function, or method.
+This rule reports `t` tagged template expressions that are not inside a function, arrow function, method, or class property.
 
-### Invalid
+### ❌ Invalid
 
 ```tsx
 // Top-level variable
@@ -24,18 +24,16 @@ const msg = t`Hello`
 // Top-level export
 export const greeting = t`Welcome`
 
-// Class property
-class MyClass {
-  message = t`Hello`
-}
-
 // Top-level object
 const config = {
   message: t`Hello`
 }
+
+// Top-level array
+const messages = [t`One`, t`Two`]
 ```
 
-### Valid
+### ✅ Valid
 
 ```tsx
 // Inside function
@@ -54,6 +52,11 @@ class MyClass {
   }
 }
 
+// Inside class property (evaluated at instantiation time)
+class MyComponent {
+  label = t`Submit`
+}
+
 // Inside React component
 function App() {
   return <div>{t`Welcome`}</div>
@@ -66,6 +69,27 @@ items.map(() => t`Item`)
 function useTranslation() {
   return { message: t`Hello` }
 }
+
+// Inside IIFE
+const msg = (() => t`Hello`)()
+```
+
+## Class Properties
+
+Class properties are allowed because they are evaluated at class instantiation time (when `new MyClass()` is called), not at module load time. This means:
+
+1. The i18n library is already initialized
+2. The current locale is available
+3. Each instance can have different translations
+
+```tsx
+// ✅ Valid - evaluated when the class is instantiated
+class Button {
+  label = t`Click me`
+}
+
+// ❌ Invalid - evaluated at module load time
+const label = t`Click me`
 ```
 
 ## Options
@@ -74,4 +98,4 @@ This rule has no options. Top-level `t` calls are always an error.
 
 ## When Not To Use It
 
-If you have a very specific build setup that statically extracts and replaces `t` calls at compile time, you might not need this rule. However, this is rare and you should verify your setup handles locale changes correctly.
+If you have a very specific build setup that statically extracts and replaces `t` calls at compile time (like Babel macros with static extraction), you might not need this rule. However, this is rare and you should verify your setup handles locale changes correctly.

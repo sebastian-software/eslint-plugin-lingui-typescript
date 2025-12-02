@@ -1,109 +1,104 @@
 # no-complex-expressions-in-message
 
-Disallow complex expressions in Lingui messages.
+Disallow complex expressions in Lingui messages — only simple identifiers are allowed.
 
 ## Why?
 
-Complex expressions in translation messages:
-- Make it harder for translators to understand the context
-- Can cause issues with message extraction
-- May lead to runtime errors if the expression fails
-- Make the code harder to maintain
+Complex expressions in translation messages cause problems:
 
-Extract complex logic to variables before using them in messages.
+- **Translators can't understand code**: Expressions like `${user.name}` or `${formatPrice(price)}` are meaningless to translators
+- **Missing context**: Translators need descriptive placeholder names, not code
+- **Extraction issues**: Complex expressions can cause problems with message extraction tools
+- **Maintenance burden**: Inline logic is harder to test and maintain
+
+The solution is simple: extract any complex expression to a named variable first.
 
 ## Rule Details
 
-This rule reports complex expressions inside `t` tagged templates and `<Trans>` components.
+This rule reports any expression inside `t` tagged templates or `<Trans>` components that is not a simple identifier.
+
+**Only simple identifiers are allowed**: `${name}`, `${count}`, `${formattedPrice}`
 
 ### ❌ Invalid
 
 ```tsx
-// Binary/arithmetic expressions
-t`Price: ${price * 1.2}`
-<Trans>Total: {count + 1}</Trans>
+// Member expressions
+t`Hello ${user.name}`
+<Trans>Hello {user.name}</Trans>
 
-// Non-whitelisted function calls
+// Function calls
+t`Price: ${formatPrice(price)}`
 t`Random: ${Math.random()}`
 <Trans>Date: {formatDate(date)}</Trans>
-t`Items: ${items.join(', ')}`
 
-// Member expressions (by default)
-t`Hello ${user.name}`
+// Binary expressions
+t`Total: ${price * 1.2}`
+<Trans>Sum: {a + b}</Trans>
 
 // Conditional expressions
-t`Status: ${isActive ? 'Active' : 'Inactive'}`
+t`Status: ${isActive ? "Active" : "Inactive"}`
 
 // Logical expressions
-t`Name: ${name || 'Unknown'}`
+t`Name: ${name || "Unknown"}`
+
+// Template literals inside expressions
+t`Result: ${`nested ${value}`}`
+
+// Legacy placeholder syntax
+t`Hello ${{ name: userName }}`
 ```
 
 ### ✅ Valid
 
 ```tsx
-// Simple identifiers
+// Simple identifiers only
 t`Hello ${name}`
-<Trans>You have {count} items</Trans>
+t`You have ${count} items`
+<Trans>Hello {name}</Trans>
+<Trans>Total: {formattedTotal}</Trans>
 
-// Whitelisted Lingui helpers
-t`Price: ${i18n.number(price)}`
-t`Date: ${i18n.date(date)}`
-<Trans>Price: {i18n.number(price)}</Trans>
+// Extract complex expressions first
+const displayName = user.name
+t`Hello ${displayName}`
 
-// Extract complex logic first
-const displayPrice = price * 1.2
-t`Price: ${displayPrice}`
+const formattedPrice = formatPrice(price)
+<Trans>Price: {formattedPrice}</Trans>
 
-const formattedDate = formatDate(date)
-<Trans>Date: {formattedDate}</Trans>
+const statusText = isActive ? "Active" : "Inactive"
+t`Status: ${statusText}`
+
+// Whitespace expressions are allowed in JSX
+<Trans>Hello{" "}{name}</Trans>
+```
+
+## Recommended Pattern
+
+Always extract expressions to descriptively-named variables:
+
+```tsx
+// ❌ Bad: translator sees "${user.profile.displayName}"
+t`Welcome back, ${user.profile.displayName}!`
+
+// ✅ Good: translator sees "${userName}"
+const userName = user.profile.displayName
+t`Welcome back, ${userName}!`
+
+// ❌ Bad: translator sees "${items.filter(...).length}"
+t`${items.filter(i => i.active).length} active items`
+
+// ✅ Good: translator sees "${activeCount}"
+const activeCount = items.filter(i => i.active).length
+t`${activeCount} active items`
 ```
 
 ## Options
 
-### `allowedCallees`
+This rule has no options. All non-identifier expressions are disallowed.
 
-Array of function names that are allowed. Format: dot-separated strings.
+## Note on Lingui Helpers
 
-Default: `["i18n.number", "i18n.date"]`
-
-```ts
-{
-  "lingui-ts/no-complex-expressions-in-message": ["error", {
-    "allowedCallees": ["i18n.number", "i18n.date", "formatCurrency"]
-  }]
-}
-```
-
-### `allowMemberExpressions`
-
-Whether to allow simple member expressions like `props.name`. Default: `false`
-
-```ts
-{
-  "lingui-ts/no-complex-expressions-in-message": ["error", {
-    "allowMemberExpressions": true
-  }]
-}
-```
-
-### `maxExpressionDepth`
-
-Maximum depth for member expression chains when `allowMemberExpressions` is `true`. Default: `1`
-
-- `1`: allows `user.name` but not `user.address.street`
-- `2`: allows up to `user.address.street`
-- `null`: no limit
-
-```ts
-{
-  "lingui-ts/no-complex-expressions-in-message": ["error", {
-    "allowMemberExpressions": true,
-    "maxExpressionDepth": 2
-  }]
-}
-```
+Unlike some other i18n libraries, Lingui's `plural()`, `select()`, and `selectOrdinal()` should **not** be nested inside `t` templates. Use the JSX components `<Plural>`, `<Select>`, `<SelectOrdinal>` instead, or ICU message syntax in your translation catalog.
 
 ## When Not To Use It
 
-If your codebase has established patterns that rely on inline expressions and you handle translation complexity elsewhere, you can disable this rule.
-
+If your codebase has established patterns that rely heavily on inline expressions and you handle translation complexity elsewhere, you can disable this rule. However, consider the impact on translator experience.

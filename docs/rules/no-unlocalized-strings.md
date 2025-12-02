@@ -7,11 +7,12 @@ Detect user-visible strings not wrapped in Lingui translation macros.
 ## Why?
 
 Unlocalized strings can lead to:
+
 - Incomplete translations
 - Poor user experience for non-English speakers
 - Difficulty tracking what needs translation
 
-This rule uses TypeScript's type system to intelligently distinguish between user-visible text and technical strings.
+This rule uses TypeScript's type system to intelligently distinguish between user-visible text and technical strings — no manual whitelisting needed for most cases.
 
 ## Rule Details
 
@@ -28,7 +29,7 @@ const msg = "Something went wrong!"
 <button>Save changes</button>
 <p>Please try again.</p>
 
-// Object properties
+// Object properties with UI text
 { label: "Click here" }
 { message: "Error occurred!" }
 ```
@@ -105,27 +106,48 @@ const action = { type: "save" }  // ✅ Not reported (type/kind properties)
 
 ### `ignoreFunctions`
 
-Array of function names whose string arguments should be ignored.
+Array of function names whose string arguments should be ignored. Supports wildcards.
 
-Default: `["console.log", "console.warn", "console.error", "console.info", "console.debug", "require", "import"]`
+Default: `["console.*", "require", "import", "Error", "TypeError", "RangeError", "SyntaxError"]`
 
 ```ts
 {
-  "lingui-ts/no-unlocalized-strings": ["warn", {
-    "ignoreFunctions": ["console.log", "logger.debug"]
+  "lingui-ts/no-unlocalized-strings": ["error", {
+    "ignoreFunctions": ["console.*", "require", "logger.*", "analytics.track"]
   }]
 }
 ```
+
+Wildcard examples:
+
+- `"console.*"` matches `console.log`, `console.error`, etc.
+- `"*.debug"` matches `logger.debug`, `app.debug`, etc.
 
 ### `ignoreProperties`
 
 Array of property/attribute names whose string values should be ignored.
 
-Default: `["className", "styleName", "style", "type", "id", "key", "name", "testID", "data-testid", "href", "src", "role", "aria-label", "aria-describedby", "aria-labelledby"]`
+Default:
+
+```ts
+[
+  // CSS/styling
+  "className", "styleName", "style",
+  // HTML attributes
+  "type", "id", "key", "name", "href", "src", "role",
+  // Testing
+  "testID", "data-testid",
+  // Accessibility
+  "aria-label", "aria-describedby", "aria-labelledby",
+  // SVG attributes
+  "viewBox", "d", "cx", "cy", "r", "x", "y", "width", "height",
+  "fill", "stroke", "transform", "points", "pathLength"
+]
+```
 
 ```ts
 {
-  "lingui-ts/no-unlocalized-strings": ["warn", {
+  "lingui-ts/no-unlocalized-strings": ["error", {
     "ignoreProperties": ["className", "type", "variant", "testId"]
   }]
 }
@@ -145,7 +167,7 @@ Default: `null`
 
 ```ts
 {
-  "lingui-ts/no-unlocalized-strings": ["warn", {
+  "lingui-ts/no-unlocalized-strings": ["error", {
     "ignorePattern": "^(test_|mock_|__)"
   }]
 }
@@ -156,21 +178,21 @@ Default: `null`
 The rule uses heuristics to determine if a string looks like UI text:
 
 **Reported as potential UI text:**
+
 - Contains letters and spaces (e.g., "Save changes")
 - Starts with uppercase followed by lowercase (e.g., "Hello")
 - Contains punctuation like `.!?:,`
+- Contains non-Latin scripts (CJK, Cyrillic, Arabic, etc.)
 
 **Not reported (likely technical):**
+
 - Empty or whitespace only
 - Single characters
 - ALL_CAPS_WITH_UNDERSCORES
 - URLs and paths (`/`, `https://`, `mailto:`)
 - Identifiers without spaces (`myFunction`, `my-css-class`)
+- CSS selectors (`:hover`, `.class`, `#id`)
 
 ## When Not To Use It
 
-This rule requires TypeScript. If your project doesn't use TypeScript or doesn't need localization, you can disable this rule.
-
-## Severity
-
-This rule defaults to `"warn"` in the recommended config since it may have false positives. Adjust the severity based on your project's needs.
+This rule requires TypeScript with type-aware linting enabled. If your project doesn't use TypeScript or doesn't need localization, disable this rule.
