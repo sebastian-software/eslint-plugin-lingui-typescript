@@ -1,4 +1,4 @@
-# no-complex-expressions-in-message
+# no-expression-in-message
 
 Disallow complex expressions in Lingui messages — only simple identifiers are allowed.
 

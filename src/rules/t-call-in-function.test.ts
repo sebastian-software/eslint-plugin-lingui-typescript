@@ -1,7 +1,7 @@
 import { RuleTester } from "@typescript-eslint/rule-tester"
 import { afterAll, describe, it } from "vitest"
 
-import { validTCallLocation } from "./valid-t-call-location.js"
+import { tCallInFunction } from "./t-call-in-function.js"
 
 RuleTester.afterAll = afterAll
 RuleTester.describe = describe
@@ -19,7 +19,7 @@ const ruleTester = new RuleTester({
   }
 })
 
-ruleTester.run("valid-t-call-location", validTCallLocation, {
+ruleTester.run("t-call-in-function", tCallInFunction, {
   valid: [
     // Inside function declaration
     `function Component() {

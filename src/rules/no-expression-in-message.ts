@@ -71,8 +71,8 @@ function isWhitespaceExpression(expr: TSESTree.Expression): boolean {
 // Rule Definition
 // ============================================================================
 
-export const noComplexExpressionsInMessage = createRule<[], MessageId>({
-  name: "no-complex-expressions-in-message",
+export const noExpressionInMessage = createRule<[], MessageId>({
+  name: "no-expression-in-message",
   meta: {
     type: "problem",
     docs: {

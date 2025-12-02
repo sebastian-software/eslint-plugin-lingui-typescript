@@ -1,4 +1,4 @@
-# no-single-tag-message
+# no-single-tag-to-translate
 
 Disallow Lingui messages that consist only of a single JSX element without surrounding text.
 

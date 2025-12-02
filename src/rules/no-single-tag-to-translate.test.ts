@@ -1,7 +1,7 @@
 import { RuleTester } from "@typescript-eslint/rule-tester"
 import { afterAll, describe, it } from "vitest"
 
-import { noSingleTagMessage } from "./no-single-tag-message.js"
+import { noSingleTagToTranslate } from "./no-single-tag-to-translate.js"
 
 RuleTester.afterAll = afterAll
 RuleTester.describe = describe
@@ -19,7 +19,7 @@ const ruleTester = new RuleTester({
   }
 })
 
-ruleTester.run("no-single-tag-message", noSingleTagMessage, {
+ruleTester.run("no-single-tag-to-translate", noSingleTagToTranslate, {
   valid: [
     // Text before element
     "<Trans>Read <a href='/terms'>terms</a></Trans>",

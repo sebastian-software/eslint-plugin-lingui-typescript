@@ -1,4 +1,4 @@
-# no-single-variable-message
+# no-single-variables-to-translate
 
 Disallow Lingui messages that consist only of a single variable.
 

@@ -72,8 +72,8 @@ function hasIdProp(openingElement: TSESTree.JSXOpeningElement): boolean {
   )
 }
 
-export const noSingleVariableMessage = createRule<[], MessageId>({
-  name: "no-single-variable-message",
+export const noSingleVariablesToTranslate = createRule<[], MessageId>({
+  name: "no-single-variables-to-translate",
   meta: {
     type: "problem",
     docs: {

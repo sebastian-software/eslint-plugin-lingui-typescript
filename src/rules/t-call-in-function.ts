@@ -32,8 +32,8 @@ function isInsideValidContext(node: TSESTree.Node): boolean {
   return false
 }
 
-export const validTCallLocation = createRule<[], MessageId>({
-  name: "valid-t-call-location",
+export const tCallInFunction = createRule<[], MessageId>({
+  name: "t-call-in-function",
   meta: {
     type: "problem",
     docs: {

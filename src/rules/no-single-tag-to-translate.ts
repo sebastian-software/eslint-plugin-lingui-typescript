@@ -23,8 +23,8 @@ function isSingleTagJSX(children: TSESTree.JSXChild[]): boolean {
   return onlyChild?.type === AST_NODE_TYPES.JSXElement || onlyChild?.type === AST_NODE_TYPES.JSXFragment
 }
 
-export const noSingleTagMessage = createRule<[], MessageId>({
-  name: "no-single-tag-message",
+export const noSingleTagToTranslate = createRule<[], MessageId>({
+  name: "no-single-tag-to-translate",
   meta: {
     type: "problem",
     docs: {

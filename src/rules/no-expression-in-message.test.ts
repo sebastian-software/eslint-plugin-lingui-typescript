@@ -1,7 +1,7 @@
 import { RuleTester } from "@typescript-eslint/rule-tester"
 import { afterAll, describe, it } from "vitest"
 
-import { noComplexExpressionsInMessage } from "./no-complex-expressions-in-message.js"
+import { noExpressionInMessage } from "./no-expression-in-message.js"
 
 RuleTester.afterAll = afterAll
 RuleTester.describe = describe
@@ -19,7 +19,7 @@ const ruleTester = new RuleTester({
   }
 })
 
-ruleTester.run("no-complex-expressions-in-message", noComplexExpressionsInMessage, {
+ruleTester.run("no-expression-in-message", noExpressionInMessage, {
   valid: [
     // ==================== Simple Identifiers ====================
     // The ONLY thing allowed in Lingui messages

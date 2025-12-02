@@ -1,4 +1,4 @@
-# valid-t-call-location
+# t-call-in-function
 
 Enforce that `t` macro calls are inside functions, not at module top-level.
 

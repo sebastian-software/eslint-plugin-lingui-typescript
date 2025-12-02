@@ -1,7 +1,7 @@
 import { RuleTester } from "@typescript-eslint/rule-tester"
 import { afterAll, describe, it } from "vitest"
 
-import { noSingleVariableMessage } from "./no-single-variable-message.js"
+import { noSingleVariablesToTranslate } from "./no-single-variables-to-translate.js"
 
 RuleTester.afterAll = afterAll
 RuleTester.describe = describe
@@ -19,7 +19,7 @@ const ruleTester = new RuleTester({
   }
 })
 
-ruleTester.run("no-single-variable-message", noSingleVariableMessage, {
+ruleTester.run("no-single-variables-to-translate", noSingleVariablesToTranslate, {
   valid: [
     // Template with text and variable
     "t`Hello ${name}`",
