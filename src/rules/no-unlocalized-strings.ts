@@ -12,15 +12,7 @@ export interface Options {
   ignorePattern: string | null
 }
 
-const DEFAULT_IGNORE_FUNCTIONS = [
-  "console.log",
-  "console.warn",
-  "console.error",
-  "console.info",
-  "console.debug",
-  "require",
-  "import"
-]
+const DEFAULT_IGNORE_FUNCTIONS = ["console.*", "require", "import", "Error", "TypeError", "RangeError", "SyntaxError"]
 
 const DEFAULT_IGNORE_PROPERTIES = [
   "className",
@@ -37,13 +29,29 @@ const DEFAULT_IGNORE_PROPERTIES = [
   "role",
   "aria-label",
   "aria-describedby",
-  "aria-labelledby"
+  "aria-labelledby",
+  // SVG attributes
+  "viewBox",
+  "d",
+  "cx",
+  "cy",
+  "r",
+  "x",
+  "y",
+  "width",
+  "height",
+  "fill",
+  "stroke",
+  "transform",
+  "points",
+  "pathLength"
 ]
 
 const DEFAULT_IGNORE_NAMES = ["__DEV__", "NODE_ENV"]
 
 /**
  * Checks if a string looks like a user-visible UI string.
+ * Supports Latin and Non-Latin scripts (CJK, Cyrillic, Arabic, Hebrew, etc.)
  */
 function looksLikeUIString(value: string): boolean {
   const trimmed = value.trim()
@@ -68,9 +76,20 @@ function looksLikeUIString(value: string): boolean {
     return false
   }
 
-  // Looks like a CSS class or technical identifier
+  // Looks like a CSS class or technical identifier (ASCII only)
   if (/^[a-z][a-z0-9-_]*$/i.test(trimmed) && !trimmed.includes(" ")) {
     return false
+  }
+
+  // Looks like CSS selector or pseudo-class (starts with :, ., #, [, or *)
+  if (/^[:.#[*&>+~]/.test(trimmed)) {
+    return false
+  }
+
+  // Non-Latin scripts: CJK (Chinese, Japanese, Korean), Cyrillic, Arabic, Hebrew, Thai, etc.
+  // These are almost always user-visible text
+  if (/[\u3000-\u9fff\uac00-\ud7af\u0400-\u04ff\u0600-\u06ff\u0590-\u05ff\u0e00-\u0e7f\u1100-\u11ff]/.test(trimmed)) {
+    return true
   }
 
   // Contains letters and spaces (likely UI text)
@@ -159,26 +178,81 @@ function isInsideLinguiContext(node: TSESTree.Node): boolean {
 }
 
 /**
+ * Gets the full callee name from a call expression (e.g., "console.log", "obj.method.call").
+ */
+function getCalleeName(callee: TSESTree.Expression): string | null {
+  if (callee.type === AST_NODE_TYPES.Identifier) {
+    return callee.name
+  }
+
+  if (callee.type === AST_NODE_TYPES.MemberExpression) {
+    const parts: string[] = []
+    let current: TSESTree.Expression = callee
+
+    while (current.type === AST_NODE_TYPES.MemberExpression) {
+      if (current.property.type === AST_NODE_TYPES.Identifier) {
+        parts.unshift(current.property.name)
+      } else {
+        return null
+      }
+      current = current.object
+    }
+
+    if (current.type === AST_NODE_TYPES.Identifier) {
+      parts.unshift(current.name)
+      return parts.join(".")
+    }
+  }
+
+  return null
+}
+
+/**
+ * Checks if a callee name matches an ignore pattern.
+ * Supports wildcards: "console.*", "*.headers.set"
+ */
+function matchesIgnorePattern(calleeName: string, pattern: string): boolean {
+  if (pattern === calleeName) {
+    return true
+  }
+
+  if (pattern.includes("*")) {
+    // Convert pattern to regex: "console.*" -> /^console\.[^.]+$/
+    // "*.headers.set" -> /^[^.]+\.headers\.set$/
+    const regexPattern = pattern
+      .split(".")
+      .map((part) => (part === "*" ? "[^.]+" : part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")))
+      .join("\\.")
+    const regex = new RegExp(`^${regexPattern}$`)
+    return regex.test(calleeName)
+  }
+
+  return false
+}
+
+/**
  * Checks if a node is a function argument to an ignored function.
  */
 function isIgnoredFunctionArgument(node: TSESTree.Node, ignoreFunctions: string[]): boolean {
   const parent = node.parent
-  if (parent?.type !== AST_NODE_TYPES.CallExpression) {
-    return false
-  }
 
-  const callee = parent.callee
-  let calleeName: string | null = null
-
-  if (callee.type === AST_NODE_TYPES.Identifier) {
-    calleeName = callee.name
-  } else if (callee.type === AST_NODE_TYPES.MemberExpression) {
-    if (callee.object.type === AST_NODE_TYPES.Identifier && callee.property.type === AST_NODE_TYPES.Identifier) {
-      calleeName = `${callee.object.name}.${callee.property.name}`
+  // Handle CallExpression: fn("string")
+  if (parent?.type === AST_NODE_TYPES.CallExpression) {
+    const calleeName = getCalleeName(parent.callee)
+    if (calleeName !== null) {
+      return ignoreFunctions.some((pattern) => matchesIgnorePattern(calleeName, pattern))
     }
   }
 
-  return calleeName !== null && ignoreFunctions.includes(calleeName)
+  // Handle NewExpression: new Error("string")
+  if (parent?.type === AST_NODE_TYPES.NewExpression) {
+    const callee = parent.callee
+    if (callee.type === AST_NODE_TYPES.Identifier) {
+      return ignoreFunctions.some((pattern) => matchesIgnorePattern(callee.name, pattern))
+    }
+  }
+
+  return false
 }
 
 /**
@@ -226,6 +300,81 @@ function isInTypeContext(node: TSESTree.Node): boolean {
     current = current.parent ?? undefined
   }
 
+  return false
+}
+
+/**
+ * Checks if a node is a switch case test.
+ */
+function isInSwitchCase(node: TSESTree.Node): boolean {
+  const parent = node.parent
+  return parent?.type === AST_NODE_TYPES.SwitchCase && parent.test === node
+}
+
+/**
+ * Checks if a node is a computed member expression key (obj["key"]).
+ */
+function isComputedMemberKey(node: TSESTree.Node): boolean {
+  const parent = node.parent
+  return parent?.type === AST_NODE_TYPES.MemberExpression && parent.computed && parent.property === node
+}
+
+/**
+ * Checks if a node is inside a non-Lingui tagged template expression.
+ */
+function isInNonLinguiTaggedTemplate(node: TSESTree.Node): boolean {
+  let current: TSESTree.Node | undefined = node.parent ?? undefined
+
+  while (current !== undefined) {
+    if (current.type === AST_NODE_TYPES.TaggedTemplateExpression) {
+      // If it's a Lingui tag, it's handled elsewhere
+      if (current.tag.type === AST_NODE_TYPES.Identifier && LINGUI_TAGGED_TEMPLATES.has(current.tag.name)) {
+        return false
+      }
+      // Non-Lingui tagged template (styled.div, css, html, etc.)
+      return true
+    }
+    current = current.parent ?? undefined
+  }
+
+  return false
+}
+
+/**
+ * Checks if a node is in an import or export declaration.
+ */
+function isInImportExport(node: TSESTree.Node): boolean {
+  let current: TSESTree.Node | undefined = node.parent ?? undefined
+
+  while (current !== undefined) {
+    if (
+      current.type === AST_NODE_TYPES.ImportDeclaration ||
+      current.type === AST_NODE_TYPES.ExportAllDeclaration ||
+      current.type === AST_NODE_TYPES.ExportNamedDeclaration
+    ) {
+      return true
+    }
+    current = current.parent ?? undefined
+  }
+
+  return false
+}
+
+/**
+ * Checks if a node is an `as const` assertion.
+ */
+function isAsConstAssertion(node: TSESTree.Node): boolean {
+  const parent = node.parent
+  if (parent?.type === AST_NODE_TYPES.TSAsExpression) {
+    const typeAnnotation = parent.typeAnnotation
+    if (
+      typeAnnotation.type === AST_NODE_TYPES.TSTypeReference &&
+      typeAnnotation.typeName.type === AST_NODE_TYPES.Identifier &&
+      typeAnnotation.typeName.name === "const"
+    ) {
+      return true
+    }
+  }
   return false
 }
 
@@ -391,6 +540,31 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
 
       // Check if in type context
       if (isInTypeContext(node)) {
+        return
+      }
+
+      // Check if switch case
+      if (isInSwitchCase(node)) {
+        return
+      }
+
+      // Check if computed member key
+      if (isComputedMemberKey(node)) {
+        return
+      }
+
+      // Check if inside non-Lingui tagged template
+      if (isInNonLinguiTaggedTemplate(node)) {
+        return
+      }
+
+      // Check if in import/export
+      if (isInImportExport(node)) {
+        return
+      }
+
+      // Check if as const assertion
+      if (isAsConstAssertion(node)) {
         return
       }
 

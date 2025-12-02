@@ -52,7 +52,28 @@ ruleTester.run("no-complex-expressions-in-message", noComplexExpressionsInMessag
 
     // Non-Trans JSX elements should be ignored
     "<div>{Math.random()}</div>",
-    "<Plural>{count * 2}</Plural>"
+    "<Plural>{count * 2}</Plural>",
+
+    // Named placeholder syntax: ${{ name: value }}
+    "t`hello ${{name: user}}`",
+    "t`hello ${{name: obj.prop}}`",
+    "<Trans>hello {{name: user}}</Trans>",
+    "<Trans>hello {{name: obj.prop}}</Trans>",
+
+    // Placeholder function: ph({ name: value })
+    "t`hello ${ph({name: user})}`",
+    "t`hello ${ph({name: obj.prop})}`",
+    "<Trans>hello {ph({name: user})}</Trans>",
+
+    // Lingui helpers: plural(), select(), selectOrdinal()
+    "t`Hello ${plural(count, { one: '#', other: '#' })}`",
+    "t`Hello ${select(gender, { male: 'he', other: 'they' })}`",
+    "t`Hello ${selectOrdinal(pos, { one: '#st', other: '#th' })}`",
+
+    // JSX whitespace expressions
+    "<Trans>Did you mean{' '}<span>something</span></Trans>",
+    "<Trans>Hello{` `}World</Trans>",
+    "<Trans>{' '}</Trans>"
   ],
   invalid: [
     // Binary expressions
@@ -133,6 +154,28 @@ ruleTester.run("no-complex-expressions-in-message", noComplexExpressionsInMessag
     {
       code: "<Trans>{x * 2} plus {y * 3}</Trans>",
       errors: [{ messageId: "complexExpression" }, { messageId: "complexExpression" }]
+    },
+
+    // Multiple keys in named placeholder
+    {
+      code: "t`hello ${{name: user, age: userAge}}`",
+      errors: [{ messageId: "multiplePlaceholders" }]
+    },
+    {
+      code: "<Trans>hello {{name: user, surname: userSurname}}</Trans>",
+      errors: [{ messageId: "multiplePlaceholders" }]
+    },
+
+    // Invalid placeholder function with multiple keys
+    {
+      code: "t`hello ${ph({name: user, age: userAge})}`",
+      errors: [{ messageId: "multiplePlaceholders" }]
+    },
+
+    // Non-whitelisted function call in placeholder
+    {
+      code: "t`hello ${greeting({name: obj.prop})}`",
+      errors: [{ messageId: "complexExpression" }]
     }
   ]
 })

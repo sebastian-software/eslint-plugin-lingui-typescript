@@ -4,8 +4,14 @@ import { createRule } from "../utils/create-rule.js"
 
 type MessageId = "forbiddenPattern" | "tooShort"
 
+interface RestrictionRule {
+  patterns: string[]
+  message: string
+  flags?: string
+}
+
 export interface Options {
-  forbiddenPatterns: string[]
+  rules: RestrictionRule[]
   minLength: number | null
 }
 
@@ -34,16 +40,28 @@ export const textRestrictions = createRule<[Options], MessageId>({
       description: "Enforce project-specific restrictions on Lingui message text content"
     },
     messages: {
-      forbiddenPattern: "Message contains forbidden pattern: {{pattern}}",
+      forbiddenPattern: "{{message}}",
       tooShort: "Message is too short ({{length}} chars). Minimum required: {{minLength}}"
     },
     schema: [
       {
         type: "object",
         properties: {
-          forbiddenPatterns: {
+          rules: {
             type: "array",
-            items: { type: "string" },
+            items: {
+              type: "object",
+              properties: {
+                patterns: {
+                  type: "array",
+                  items: { type: "string" }
+                },
+                message: { type: "string" },
+                flags: { type: "string" }
+              },
+              required: ["patterns", "message"],
+              additionalProperties: false
+            },
             default: []
           },
           minLength: {
@@ -57,25 +75,28 @@ export const textRestrictions = createRule<[Options], MessageId>({
   },
   defaultOptions: [
     {
-      forbiddenPatterns: [],
+      rules: [],
       minLength: null
     }
   ],
   create(context, [options]) {
-    const forbiddenRegexes = options.forbiddenPatterns.map((pattern) => ({
-      pattern,
-      regex: new RegExp(pattern)
+    // Pre-compile all regex patterns
+    const compiledRules = options.rules.map((rule) => ({
+      message: rule.message,
+      regexes: rule.patterns.map((pattern) => new RegExp(pattern, rule.flags))
     }))
 
     function checkText(text: string, node: TSESTree.Node): void {
       // Check forbidden patterns
-      for (const { pattern, regex } of forbiddenRegexes) {
-        if (regex.test(text)) {
-          context.report({
-            node,
-            messageId: "forbiddenPattern",
-            data: { pattern }
-          })
+      for (const rule of compiledRules) {
+        for (const regex of rule.regexes) {
+          if (regex.test(text)) {
+            context.report({
+              node,
+              messageId: "forbiddenPattern",
+              data: { message: rule.message }
+            })
+          }
         }
       }
 

@@ -19,6 +19,27 @@ const ruleTester = new RuleTester({
   }
 })
 
+const quotesRule = {
+  patterns: ["''", "'", "\u201c"],
+  message: `Quotes should be ' or "`
+}
+
+const bracketRule = {
+  patterns: ["<", ">", "&lt;", "&gt;"],
+  message: "Exclude <,> symbols from translations"
+}
+
+const wordRule = {
+  patterns: ["e-mail"],
+  message: "Use email instead of e-mail",
+  flags: "i"
+}
+
+const lineBreakRule = {
+  patterns: ["^\\n", "\\n$", "^\\r\\n", "\\r\\n$"],
+  message: "No line breaks"
+}
+
 ruleTester.run("text-restrictions", textRestrictions, {
   valid: [
     // Default options (no restrictions)
@@ -28,94 +49,128 @@ ruleTester.run("text-restrictions", textRestrictions, {
     // With minLength, messages meeting requirement
     {
       code: "t`Hello World`",
-      options: [{ forbiddenPatterns: [], minLength: 5 }]
+      options: [{ rules: [], minLength: 5 }]
     },
     {
       code: "<Trans>Hello World</Trans>",
-      options: [{ forbiddenPatterns: [], minLength: 5 }]
+      options: [{ rules: [], minLength: 5 }]
     },
 
-    // With forbiddenPatterns, messages not matching
+    // With forbidden patterns, messages not matching
     {
       code: "t`Hello World`",
-      options: [{ forbiddenPatterns: ["\\n", "&nbsp;"], minLength: null }]
+      options: [{ rules: [quotesRule], minLength: null }]
     },
     {
       code: "<Trans>Hello World</Trans>",
-      options: [{ forbiddenPatterns: ["<br>", "TODO"], minLength: null }]
+      options: [{ rules: [bracketRule], minLength: null }]
     },
 
     // Empty messages don't trigger minLength (handled by other rules)
     {
       code: "t``",
-      options: [{ forbiddenPatterns: [], minLength: 5 }]
+      options: [{ rules: [], minLength: 5 }]
     },
 
     // Non-Lingui templates ignored
     {
       code: "css`&nbsp;`",
-      options: [{ forbiddenPatterns: ["&nbsp;"], minLength: null }]
+      options: [{ rules: [{ patterns: ["&nbsp;"], message: "no nbsp" }], minLength: null }]
     },
 
     // Non-Trans JSX ignored
     {
       code: "<div>X</div>",
-      options: [{ forbiddenPatterns: [], minLength: 5 }]
+      options: [{ rules: [], minLength: 5 }]
+    },
+
+    // Case-sensitive by default (no flags)
+    {
+      code: "<Trans>Email</Trans>",
+      options: [{ rules: [wordRule], minLength: null }]
+    },
+    {
+      code: "<Trans>email</Trans>",
+      options: [{ rules: [wordRule], minLength: null }]
+    },
+
+    // Text without forbidden line breaks
+    {
+      code: "<Trans>hello world</Trans>",
+      options: [{ rules: [lineBreakRule], minLength: null }]
     }
   ],
   invalid: [
-    // Forbidden pattern: HTML entity
+    // Forbidden pattern: fancy quotes
     {
-      code: "t`Hello&nbsp;World`",
-      options: [{ forbiddenPatterns: ["&nbsp;"], minLength: null }],
-      errors: [{ messageId: "forbiddenPattern" }]
+      code: "t`Hell\u201co\u201d`",
+      options: [{ rules: [quotesRule], minLength: null }],
+      errors: [{ messageId: "forbiddenPattern", data: { message: quotesRule.message } }]
     },
 
-    // Forbidden pattern in JSX
+    // Forbidden pattern in JSX (HTML entity)
     {
-      code: "<Trans>HelloTODOWorld</Trans>",
-      options: [{ forbiddenPatterns: ["TODO"], minLength: null }],
-      errors: [{ messageId: "forbiddenPattern" }]
+      code: "<Trans>Hello&lt;World</Trans>",
+      options: [{ rules: [bracketRule], minLength: null }],
+      errors: [{ messageId: "forbiddenPattern", data: { message: bracketRule.message } }]
+    },
+
+    // Case-insensitive matching with flags
+    {
+      code: "<Trans>E-mail</Trans>",
+      options: [{ rules: [wordRule], minLength: null }],
+      errors: [{ messageId: "forbiddenPattern", data: { message: wordRule.message } }]
+    },
+    {
+      code: "<Trans>e-mail</Trans>",
+      options: [{ rules: [wordRule], minLength: null }],
+      errors: [{ messageId: "forbiddenPattern", data: { message: wordRule.message } }]
     },
 
     // Multiple forbidden patterns matched
     {
-      code: "t`Hello&nbsp;&amp;World`",
-      options: [{ forbiddenPatterns: ["&nbsp;", "&amp;"], minLength: null }],
-      errors: [{ messageId: "forbiddenPattern" }, { messageId: "forbiddenPattern" }]
+      code: "t`Hello&lt;&gt;World`",
+      options: [{ rules: [bracketRule], minLength: null }],
+      errors: [
+        { messageId: "forbiddenPattern", data: { message: bracketRule.message } },
+        { messageId: "forbiddenPattern", data: { message: bracketRule.message } }
+      ]
     },
 
     // Too short message
     {
       code: "t`Hi`",
-      options: [{ forbiddenPatterns: [], minLength: 5 }],
+      options: [{ rules: [], minLength: 5 }],
       errors: [{ messageId: "tooShort" }]
     },
     {
       code: "t`X`",
-      options: [{ forbiddenPatterns: [], minLength: 2 }],
+      options: [{ rules: [], minLength: 2 }],
       errors: [{ messageId: "tooShort" }]
     },
 
     // Too short JSX message
     {
       code: "<Trans>Hi</Trans>",
-      options: [{ forbiddenPatterns: [], minLength: 5 }],
+      options: [{ rules: [], minLength: 5 }],
       errors: [{ messageId: "tooShort" }]
     },
 
     // Both forbidden pattern and too short
     {
-      code: "t`X&`",
-      options: [{ forbiddenPatterns: ["&"], minLength: 5 }],
+      code: "t`X<`",
+      options: [{ rules: [bracketRule], minLength: 5 }],
       errors: [{ messageId: "forbiddenPattern" }, { messageId: "tooShort" }]
     },
 
-    // Regex pattern
+    // Multiple rules, multiple errors
     {
-      code: "t`Hello World!!!`",
-      options: [{ forbiddenPatterns: ["!{2,}"], minLength: null }],
-      errors: [{ messageId: "forbiddenPattern" }]
+      code: "t`Hell\u201co\u201d<`",
+      options: [{ rules: [quotesRule, bracketRule], minLength: null }],
+      errors: [
+        { messageId: "forbiddenPattern", data: { message: quotesRule.message } },
+        { messageId: "forbiddenPattern", data: { message: bracketRule.message } }
+      ]
     }
   ]
 })

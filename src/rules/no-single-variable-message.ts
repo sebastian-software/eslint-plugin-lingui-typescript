@@ -18,23 +18,58 @@ function isSingleVariableTemplate(node: TSESTree.TemplateLiteral): boolean {
 }
 
 /**
- * Checks if a JSX element has only a single expression child and no text content.
+ * Checks if a JSX expression is whitespace: {' '} or {` `}
  */
-function isSingleVariableJSX(children: TSESTree.JSXChild[]): boolean {
+function isWhitespaceExpression(expr: TSESTree.Expression): boolean {
+  if (expr.type === AST_NODE_TYPES.Literal && typeof expr.value === "string") {
+    return expr.value.trim() === ""
+  }
+  if (expr.type === AST_NODE_TYPES.TemplateLiteral) {
+    const fullText = expr.quasis.map((q) => q.value.raw).join("")
+    return fullText.trim() === ""
+  }
+  return false
+}
+
+/**
+ * Checks if a JSX element has only expression children and no text content.
+ * This includes single expressions or multiple expressions with whitespace.
+ */
+function isOnlyVariablesJSX(children: TSESTree.JSXChild[]): boolean {
   const meaningfulChildren = children.filter((child) => {
     if (child.type === AST_NODE_TYPES.JSXText) {
       return child.value.trim() !== ""
     }
+    // Whitespace expressions like {' '} don't count as meaningful
+    if (
+      child.type === AST_NODE_TYPES.JSXExpressionContainer &&
+      child.expression.type !== AST_NODE_TYPES.JSXEmptyExpression &&
+      isWhitespaceExpression(child.expression)
+    ) {
+      return false
+    }
     return true
   })
 
-  // Must have exactly one meaningful child that is an expression
-  if (meaningfulChildren.length !== 1) {
+  // No meaningful children (or all whitespace) - this is caught by other rules
+  if (meaningfulChildren.length === 0) {
     return false
   }
 
-  const onlyChild = meaningfulChildren[0]
-  return onlyChild?.type === AST_NODE_TYPES.JSXExpressionContainer
+  // All meaningful children must be expression containers (no text)
+  return meaningfulChildren.every((child) => child.type === AST_NODE_TYPES.JSXExpressionContainer)
+}
+
+/**
+ * Checks if a JSX element has the `id` prop (lazy translation lookup).
+ */
+function hasIdProp(openingElement: TSESTree.JSXOpeningElement): boolean {
+  return openingElement.attributes.some(
+    (attr) =>
+      attr.type === AST_NODE_TYPES.JSXAttribute &&
+      attr.name.type === AST_NODE_TYPES.JSXIdentifier &&
+      attr.name.name === "id"
+  )
 }
 
 export const noSingleVariableMessage = createRule<[], MessageId>({
@@ -74,7 +109,12 @@ export const noSingleVariableMessage = createRule<[], MessageId>({
           return
         }
 
-        if (isSingleVariableJSX(node.children)) {
+        // Trans with id prop is a lazy translation lookup - valid without children
+        if (hasIdProp(openingElement)) {
+          return
+        }
+
+        if (isOnlyVariablesJSX(node.children)) {
           context.report({
             node,
             messageId: "singleVariable"

@@ -5,9 +5,13 @@ import { createRule } from "../utils/create-rule.js"
 type MessageId = "topLevelNotAllowed"
 
 /**
- * Checks if a node is inside a function, arrow function, or method.
+ * Checks if a node is inside a valid context for t calls.
+ * Valid contexts:
+ * - Function declarations/expressions/arrows
+ * - Static class properties (evaluated at class definition time)
+ * - Class methods (via FunctionExpression)
  */
-function isInsideFunction(node: TSESTree.Node): boolean {
+function isInsideValidContext(node: TSESTree.Node): boolean {
   let current: TSESTree.Node | undefined = node.parent ?? undefined
 
   while (current !== undefined) {
@@ -15,6 +19,9 @@ function isInsideFunction(node: TSESTree.Node): boolean {
       case AST_NODE_TYPES.FunctionDeclaration:
       case AST_NODE_TYPES.FunctionExpression:
       case AST_NODE_TYPES.ArrowFunctionExpression:
+        return true
+      // Static/instance class properties are valid - evaluated at class time, not module load
+      case AST_NODE_TYPES.PropertyDefinition:
         return true
       default:
         break
@@ -45,7 +52,7 @@ export const validTCallLocation = createRule<[], MessageId>({
           return
         }
 
-        if (!isInsideFunction(node)) {
+        if (!isInsideValidContext(node)) {
           context.report({
             node,
             messageId: "topLevelNotAllowed"

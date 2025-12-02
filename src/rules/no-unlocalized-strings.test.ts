@@ -49,9 +49,30 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: 'i18n.t({ message: "Hello World" })', filename: "test.tsx" },
     { code: 'i18n._("Save changes")', filename: "test.tsx" },
 
-    // Console/debug (default ignored functions)
+    // Console/debug (default ignored functions with wildcard)
     { code: 'console.log("Hello World")', filename: "test.tsx" },
     { code: 'console.error("Something went wrong")', filename: "test.tsx" },
+    { code: 'console.warn("This is a warning")', filename: "test.tsx" },
+    { code: 'console.info("Info message here")', filename: "test.tsx" },
+    { code: 'console.debug("Debug output here")', filename: "test.tsx" },
+    { code: 'console.trace("Trace message")', filename: "test.tsx" },
+
+    // Error constructors (default ignored)
+    { code: 'new Error("Something went wrong")', filename: "test.tsx" },
+    { code: 'new TypeError("Invalid type provided")', filename: "test.tsx" },
+    { code: 'throw new RangeError("Value out of range")', filename: "test.tsx" },
+
+    // Custom ignored function with wildcard
+    {
+      code: 'myLogger.info("Log this message")',
+      filename: "test.tsx",
+      options: [{ ignoreFunctions: ["myLogger.*"], ignoreProperties: [], ignoreNames: [], ignorePattern: null }]
+    },
+    {
+      code: 'context.headers.set("Authorization header")',
+      filename: "test.tsx",
+      options: [{ ignoreFunctions: ["*.headers.set"], ignoreProperties: [], ignoreNames: [], ignorePattern: null }]
+    },
 
     // Ignored properties (className, type, etc.)
     { code: '<div className="my-class" />', filename: "test.tsx" },
@@ -177,7 +198,44 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
         const action: Action = { type: "save" }
       `,
       filename: "test.tsx"
-    }
+    },
+
+    // as const in arrays
+    {
+      code: 'const names = ["name" as const, "city" as const]',
+      filename: "test.tsx"
+    },
+
+    // as const in objects
+    {
+      code: 'const sides = { top: "above" as const, bottom: "below" as const }',
+      filename: "test.tsx"
+    },
+
+    // Template literals with only variables
+    { code: "const t = `${BRAND_NAME}`", filename: "test.tsx" },
+    { code: "const t = `${BRAND_NAME}${OTHER}`", filename: "test.tsx" },
+    { code: "const t = ` ${X} ${Y} `", filename: "test.tsx" },
+
+    // Tagged template expressions (styled-components, etc.)
+    { code: 'styled.div`color: ${"red"};`', filename: "test.tsx" },
+    { code: "styled.div`color: ${`red`};`", filename: "test.tsx" },
+
+    // Switch case strings
+    { code: 'switch(x) { case "hello": break; case `world`: break; }', filename: "test.tsx" },
+
+    // SVG attributes
+    { code: '<svg viewBox="0 0 20 40"></svg>', filename: "test.tsx" },
+    { code: '<path d="M10 10" />', filename: "test.tsx" },
+    { code: '<circle cx="10" cy="10" r="2" fill="red" />', filename: "test.tsx" },
+
+    // Computed member expressions (object keys)
+    { code: 'obj["key with spaces"] = value', filename: "test.tsx" },
+    { code: 'const styles = { ":hover": { color: "red" } }', filename: "test.tsx" },
+
+    // Import/Export paths
+    { code: 'import name from "hello"', filename: "test.tsx" },
+    { code: 'export * from "hello_export_all"', filename: "test.tsx" }
   ],
   invalid: [
     // Plain string that looks like UI text
@@ -246,6 +304,48 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     },
     {
       code: '({ message: "Error occurred!" })',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Non-Latin: Japanese
+    {
+      code: 'const a = "こんにちは"',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Non-Latin: Cyrillic (Russian)
+    {
+      code: 'const a = "Привет"',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Non-Latin: Chinese
+    {
+      code: 'const a = "添加筛选器"',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Non-Latin: Korean
+    {
+      code: 'const a = "안녕하세요"',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Non-Latin: Arabic
+    {
+      code: 'const a = "مرحبا"',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // JSX with Non-Latin text
+    {
+      code: "<button>保存</button>",
       filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     }

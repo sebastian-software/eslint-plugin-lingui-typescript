@@ -67,7 +67,24 @@ ruleTester.run("valid-t-call-location", validTCallLocation, {
 
     // Non-t tagged templates at top level are fine
     `const styles = css\`color: red\``,
-    `const html = html\`<div></div>\``
+    `const html = html\`<div></div>\``,
+
+    // Inside class property (evaluated at class definition, not module load)
+    `class MyClass {
+      message = t\`Hello\`
+    }`,
+
+    // Static class property
+    `class React {
+      static state = t\`Hello\`
+    }`,
+
+    // Class arrow function property
+    `class React {
+      render = () => {
+        return t\`Hello\`
+      }
+    }`
   ],
   invalid: [
     // Top-level variable declaration
@@ -89,16 +106,6 @@ ruleTester.run("valid-t-call-location", validTCallLocation, {
         const farewell = t\`Goodbye\`
       `,
       errors: [{ messageId: "topLevelNotAllowed" }, { messageId: "topLevelNotAllowed" }]
-    },
-
-    // Inside class property (not method)
-    {
-      code: `
-        class MyClass {
-          message = t\`Hello\`
-        }
-      `,
-      errors: [{ messageId: "topLevelNotAllowed" }]
     },
 
     // Inside object at top level

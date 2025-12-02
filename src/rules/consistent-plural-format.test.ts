@@ -21,63 +21,102 @@ const ruleTester = new RuleTester({
 
 ruleTester.run("consistent-plural-format", consistentPluralFormat, {
   valid: [
-    // All required props present (default: one, other)
+    // ==================== Hash style (default) - Valid ====================
+    // plural() function with hash
+    `plural(numBooks, { one: "# book", other: "# books" })`,
+    `plural(count, { zero: "# items", one: "# item", other: "# items" })`,
+    // Template string OK as long as using hash
+    "plural(count, { one: `# item`, other: `# items` })",
+
+    // <Plural> component with hash
     '<Plural value={count} one="# item" other="# items" />',
-    '<Plural value={count} one="One" other="Many" zero="None" />',
+    '<Plural value={count} zero="# items" one="# item" other="# items" />',
 
-    // With expressions
-    "<Plural value={count} one={oneMsg} other={otherMsg} />",
+    // No variable in some fields (no error because no wrong format used)
+    'plural(count, { zero: "You have no items", one: "You have one item", other: "# items" })',
 
-    // Custom required keys
+    // ==================== Template style - Valid ====================
+    // plural() with template format
     {
-      code: '<Plural value={count} other="items" />',
-      options: [{ requiredKeys: ["other"] }]
+      code: "plural(numBooks, { one: `${numBooks} book`, other: `${numBooks} books` })",
+      options: [{ style: "template" }]
     },
     {
-      code: '<Plural value={count} one="#" other="#" zero="none" />',
-      options: [{ requiredKeys: ["one", "other", "zero"] }]
+      code: "plural(count, { zero: `${count} items`, one: `${count} item`, other: `${count} items` })",
+      options: [{ style: "template" }]
     },
 
-    // Non-Plural components should be ignored
-    '<Select value={gender} male="He" female="She" other="They" />',
-    '<div one="x" />',
-    "<Trans>Hello</Trans>"
+    // <Plural> with template format
+    {
+      code: "<Plural value={count} one={`${count} item`} other={`${count} items`} />",
+      options: [{ style: "template" }]
+    },
+
+    // No variable in some fields (template style)
+    {
+      code: 'plural(count, { zero: "You have no items", one: "You have one item", other: `${count} items` })',
+      options: [{ style: "template" }]
+    },
+
+    // ==================== Non-plural calls (ignored) ====================
+    "someOtherFunction(numBooks, { one: `${numBooks} book`, other: `${numBooks} books` })",
+    "plural(numBooks, someVariable)"
   ],
   invalid: [
-    // Missing 'other' (default required)
+    // ==================== Hash style (default) - Invalid ====================
+    // plural() with template when hash expected
     {
-      code: '<Plural value={count} one="# item" />',
-      errors: [{ messageId: "missingPluralKey", data: { key: "other" } }]
-    },
-
-    // Missing 'one' (default required)
-    {
-      code: '<Plural value={count} other="# items" />',
-      errors: [{ messageId: "missingPluralKey", data: { key: "one" } }]
-    },
-
-    // Missing both default required keys
-    {
-      code: '<Plural value={count} zero="None" />',
+      code: "plural(numBooks, { one: `${numBooks} book`, other: `${numBooks} books` })",
       errors: [
-        { messageId: "missingPluralKey", data: { key: "one" } },
-        { messageId: "missingPluralKey", data: { key: "other" } }
+        { messageId: "hashRequired", data: { key: "one" } },
+        { messageId: "hashRequired", data: { key: "other" } }
+      ]
+    },
+    // Mixed: some hash, some template
+    {
+      code: 'plural(count, { zero: `${count} items`, one: "# item", other: `${count} items` })',
+      errors: [
+        { messageId: "hashRequired", data: { key: "zero" } },
+        { messageId: "hashRequired", data: { key: "other" } }
       ]
     },
 
-    // Custom required keys missing
+    // <Plural> with template when hash expected
     {
-      code: '<Plural value={count} one="#" other="#" />',
-      options: [{ requiredKeys: ["one", "other", "zero"] }],
-      errors: [{ messageId: "missingPluralKey", data: { key: "zero" } }]
+      code: "<Plural value={count} one={`${count} item`} other={`${count} items`} />",
+      errors: [
+        { messageId: "hashRequired", data: { key: "one" } },
+        { messageId: "hashRequired", data: { key: "other" } }
+      ]
     },
 
-    // Only value prop
+    // ==================== Template style - Invalid ====================
+    // plural() with hash when template expected
     {
-      code: "<Plural value={count} />",
+      code: 'plural(numBooks, { one: "# book", other: "# books" })',
+      options: [{ style: "template" }],
       errors: [
-        { messageId: "missingPluralKey", data: { key: "one" } },
-        { messageId: "missingPluralKey", data: { key: "other" } }
+        { messageId: "templateRequired", data: { key: "one" } },
+        { messageId: "templateRequired", data: { key: "other" } }
+      ]
+    },
+    // Mixed: some template, some hash
+    {
+      code: 'plural(count, { zero: "# items", one: `${count} item`, other: "# items" })',
+      options: [{ style: "template" }],
+      errors: [
+        { messageId: "templateRequired", data: { key: "zero" } },
+        { messageId: "templateRequired", data: { key: "other" } }
+      ]
+    },
+
+    // <Plural> with hash when template expected
+    {
+      code: '<Plural value={count} one="# item" other="# items" />',
+      options: [{ style: "template" }],
+      errors: [
+        { messageId: "templateRequired", data: { key: "one" } },
+        { messageId: "templateRequired", data: { key: "other" } }
       ]
     }
   ]

@@ -49,7 +49,11 @@ ruleTester.run("no-single-variable-message", noSingleVariableMessage, {
 
     // Non-Trans JSX elements (should be ignored)
     "<Plural>{count}</Plural>",
-    "<div>{content}</div>"
+    "<div>{content}</div>",
+
+    // Trans with id prop (lazy translation lookup)
+    "<Trans id={lazyTranslation.id} />",
+    '<Trans id="some-id" />'
   ],
   invalid: [
     // Template with only variable
@@ -79,6 +83,20 @@ ruleTester.run("no-single-variable-message", noSingleVariableMessage, {
     // JSX with variable and whitespace only
     {
       code: "<Trans>  {status}  </Trans>",
+      errors: [{ messageId: "singleVariable" }]
+    },
+
+    // Multiple expressions with whitespace (only variables)
+    {
+      code: "<Trans>{hello} {hello}</Trans>",
+      errors: [{ messageId: "singleVariable" }]
+    },
+    {
+      code: "<Trans>{limitType}{' '}{formatCurrency(value, currency)}</Trans>",
+      errors: [{ messageId: "singleVariable" }]
+    },
+    {
+      code: "<Trans>{formatCurrency(a, b)} {formatCurrency(c, d)}</Trans>",
       errors: [{ messageId: "singleVariable" }]
     }
   ]
