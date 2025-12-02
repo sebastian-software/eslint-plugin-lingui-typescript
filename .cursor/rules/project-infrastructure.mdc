@@ -113,6 +113,8 @@ Note: `jiti` is required by ESLint 9 for loading TypeScript config files (`eslin
 
 ## Prettier Configuration
 
+**All code must be Prettier-formatted.** This is enforced by pre-commit hooks and CI.
+
 ```json
 {
   "semi": false,
@@ -135,6 +137,45 @@ Note: `jiti` is required by ESLint 9 for loading TypeScript config files (`eslin
 - **No trailing commas**: Cleaner appearance
 - **120 character line width**: Modern screens, reduces line breaks in complex types
 - **LF line endings**: Unix-style, consistent across platforms
+
+## Pre-commit Hooks
+
+### Husky + lint-staged
+
+The project uses Husky for Git hooks and lint-staged for running checks on staged files.
+
+```bash
+# .husky/pre-commit
+npx lint-staged
+npm run typecheck
+npm test
+```
+
+### lint-staged Configuration
+
+```json
+{
+  "lint-staged": {
+    "*.{ts,tsx}": ["prettier --write", "eslint --fix"],
+    "*.{json,md,yml,yaml}": ["prettier --write"]
+  }
+}
+```
+
+### What Runs on Commit
+
+1. **lint-staged**: Format and lint staged files only
+2. **typecheck**: Full TypeScript type check
+3. **test**: Full test suite (Vitest)
+
+### Required Dev Dependencies
+
+```json
+{
+  "husky": "^9.x",
+  "lint-staged": "^16.x"
+}
+```
 
 ## Testing
 

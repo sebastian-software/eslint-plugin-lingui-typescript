@@ -6,6 +6,20 @@ alwaysApply: false
 
 # TypeScript Conventions
 
+## Code Quality
+
+### Prettier Formatting
+
+**All code must be Prettier-formatted before committing.** This is enforced by:
+- Pre-commit hooks (Husky + lint-staged)
+- CI checks (`npm run format:check`)
+
+Run `npm run format` to format all files, or rely on the pre-commit hook to auto-format staged files.
+
+### ESLint Compliance
+
+All code must pass ESLint with zero errors. Warnings should be addressed when possible.
+
 ## Imports
 
 ### Type-Only Imports
