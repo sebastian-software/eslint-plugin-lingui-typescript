@@ -11,11 +11,11 @@ alwaysApply: false
 ### Using @typescript-eslint/utils
 
 ```ts
-import { ESLintUtils, type TSESTree } from "@typescript-eslint/utils";
+import { ESLintUtils, type TSESTree } from "@typescript-eslint/utils"
 
 const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/your-org/eslint-plugin-lingui/docs/rules/${name}.md`
-);
+)
 
 export const noComplexExpressions = createRule({
   name: "no-complex-expressions-in-message",
@@ -46,9 +46,62 @@ export const noComplexExpressions = createRule({
       TaggedTemplateExpression(node) {
         // Rule implementation
       },
-    };
+    }
   },
-});
+})
+```
+
+## Error Handling in Rules
+
+### No Throwing in Rule Logic
+
+ESLint rules should report errors, not throw. This ensures rules degrade gracefully when type information is unavailable:
+
+```ts
+// ✅ Good - graceful degradation
+if (!parserServices.program) {
+  // Skip type-aware checks, continue with syntax-only checks
+  return
+}
+
+// ✅ Good - report instead of throw
+if (isInvalidPattern(node)) {
+  context.report({
+    node,
+    messageId: "invalidPattern",
+  })
+}
+
+// ❌ Bad - throws and crashes the linter
+if (!parserServices.program) {
+  throw new Error("TypeScript program required")
+}
+```
+
+### Safe Type Checker Access
+
+Always check for type information availability before using it:
+
+```ts
+create(context) {
+  const parserServices = ESLintUtils.getParserServices(context, true)
+  const hasTypeInfo = parserServices.program !== undefined
+
+  return {
+    Literal(node) {
+      // Syntax-only checks always run
+      if (!isStringLiteral(node)) {
+        return
+      }
+
+      // Type-aware checks only when available
+      if (hasTypeInfo) {
+        const typeChecker = parserServices.program.getTypeChecker()
+        // ... type-aware logic
+      }
+    },
+  }
+}
 ```
 
 ## Type-Aware Rules
@@ -56,17 +109,17 @@ export const noComplexExpressions = createRule({
 ### Accessing TypeScript Services
 
 ```ts
-import { ESLintUtils } from "@typescript-eslint/utils";
+import { ESLintUtils } from "@typescript-eslint/utils"
 
 create(context) {
   // Get parser services (may or may not have type info)
-  const parserServices = ESLintUtils.getParserServices(context, true);
+  const parserServices = ESLintUtils.getParserServices(context, true)
 
   // Check if type info is available
-  const hasTypeInfo = parserServices.program !== undefined;
+  const hasTypeInfo = parserServices.program !== undefined
 
   if (hasTypeInfo) {
-    const typeChecker = parserServices.program.getTypeChecker();
+    const typeChecker = parserServices.program.getTypeChecker()
     // Use type-aware logic
   } else {
     // Fall back to syntax-only checks
@@ -81,9 +134,9 @@ function getTypeOfNode(
   node: TSESTree.Node,
   parserServices: ParserServicesWithTypeInformation
 ): ts.Type {
-  const typeChecker = parserServices.program.getTypeChecker();
-  const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node);
-  return typeChecker.getTypeAtLocation(tsNode);
+  const typeChecker = parserServices.program.getTypeChecker()
+  const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node)
+  return typeChecker.getTypeAtLocation(tsNode)
 }
 ```
 
@@ -93,15 +146,15 @@ function getTypeOfNode(
 function isStringLiteralType(type: ts.Type): boolean {
   // Check for single string literal
   if (type.isStringLiteral()) {
-    return true;
+    return true
   }
 
   // Check for union of string literals
   if (type.isUnion()) {
-    return type.types.every((t) => t.isStringLiteral());
+    return type.types.every((t) => t.isStringLiteral())
   }
 
-  return false;
+  return false
 }
 ```
 
@@ -110,22 +163,22 @@ function isStringLiteralType(type: ts.Type): boolean {
 ### Detecting Lingui Macros
 
 ```ts
-const LINGUI_MACROS = ["t", "Trans", "msg", "defineMessage"] as const;
+const LINGUI_MACROS = ["t", "Trans", "msg", "defineMessage"] as const
 
 function isLinguiTaggedTemplate(node: TSESTree.TaggedTemplateExpression): boolean {
-  return node.tag.type === "Identifier" && node.tag.name === "t";
+  return node.tag.type === "Identifier" && node.tag.name === "t"
 }
 
 function isLinguiJSXComponent(node: TSESTree.JSXElement): boolean {
-  const name = node.openingElement.name;
-  return name.type === "JSXIdentifier" && name.name === "Trans";
+  const name = node.openingElement.name
+  return name.type === "JSXIdentifier" && name.name === "Trans"
 }
 
 function isLinguiCallExpression(node: TSESTree.CallExpression): boolean {
   if (node.callee.type === "Identifier") {
-    return ["msg", "defineMessage"].includes(node.callee.name);
+    return ["msg", "defineMessage"].includes(node.callee.name)
   }
-  return false;
+  return false
 }
 ```
 
@@ -135,7 +188,7 @@ function isLinguiCallExpression(node: TSESTree.CallExpression): boolean {
 function getTemplateExpressions(
   node: TSESTree.TaggedTemplateExpression
 ): TSESTree.Expression[] {
-  return node.quasi.expressions;
+  return node.quasi.expressions
 }
 
 function getJSXExpressions(
@@ -144,7 +197,7 @@ function getJSXExpressions(
   return node.children.filter(
     (child): child is TSESTree.JSXExpressionContainer =>
       child.type === "JSXExpressionContainer"
-  );
+  )
 }
 ```
 
@@ -152,25 +205,25 @@ function getJSXExpressions(
 
 ```ts
 function getMemberExpressionDepth(node: TSESTree.MemberExpression): number {
-  let depth = 1;
-  let current: TSESTree.Expression = node.object;
+  let depth = 1
+  let current: TSESTree.Expression = node.object
 
   while (current.type === "MemberExpression") {
-    depth++;
-    current = current.object;
+    depth++
+    current = current.object
   }
 
-  return depth;
+  return depth
 }
 
 function isSimpleExpression(node: TSESTree.Expression): boolean {
   switch (node.type) {
     case "Identifier":
-      return true;
+      return true
     case "MemberExpression":
-      return getMemberExpressionDepth(node) <= 1;
+      return getMemberExpressionDepth(node) <= 1
     default:
-      return false;
+      return false
   }
 }
 ```
@@ -180,14 +233,14 @@ function isSimpleExpression(node: TSESTree.Expression): boolean {
 ### Using RuleTester
 
 ```ts
-import { RuleTester } from "@typescript-eslint/rule-tester";
-import { afterAll, describe, it } from "vitest";
-import { noComplexExpressions } from "./no-complex-expressions-in-message.js";
+import { RuleTester } from "@typescript-eslint/rule-tester"
+import { afterAll, describe, it } from "vitest"
+import { noComplexExpressions } from "./no-complex-expressions-in-message.js"
 
 // Configure RuleTester to use Vitest
-RuleTester.afterAll = afterAll;
-RuleTester.describe = describe;
-RuleTester.it = it;
+RuleTester.afterAll = afterAll
+RuleTester.describe = describe
+RuleTester.it = it
 
 const ruleTester = new RuleTester({
   languageOptions: {
@@ -200,7 +253,7 @@ const ruleTester = new RuleTester({
       },
     },
   },
-});
+})
 
 ruleTester.run("no-complex-expressions-in-message", noComplexExpressions, {
   valid: [
@@ -213,7 +266,7 @@ ruleTester.run("no-complex-expressions-in-message", noComplexExpressions, {
       errors: [{ messageId: "complexExpression" }],
     },
   ],
-});
+})
 ```
 
 ### Type-Aware Test Cases
@@ -229,7 +282,7 @@ const ruleTesterWithTypes = new RuleTester({
       tsconfigRootDir: __dirname,
     },
   },
-});
+})
 ```
 
 ## Error Messages
@@ -250,7 +303,7 @@ context.report({
   data: {
     expression: context.sourceCode.getText(node),
   },
-});
+})
 ```
 
 ## Plugin Export
@@ -259,8 +312,8 @@ context.report({
 
 ```ts
 // src/index.ts
-import { noComplexExpressions } from "./rules/no-complex-expressions-in-message.js";
-import { noNestedMacros } from "./rules/no-nested-macros.js";
+import { noComplexExpressions } from "./rules/no-complex-expressions-in-message.js"
+import { noNestedMacros } from "./rules/no-nested-macros.js"
 // ... other rules
 
 const plugin = {
@@ -285,7 +338,7 @@ const plugin = {
       },
     },
   },
-};
+}
 
-export default plugin;
+export default plugin
 ```

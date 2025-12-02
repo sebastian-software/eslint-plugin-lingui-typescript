@@ -8,6 +8,14 @@ alwaysApply: true
 
 This document captures infrastructure decisions for an ESLint plugin written in TypeScript.
 
+## General Principles
+
+### Lean Configuration
+
+- **No redundant options**: Don't repeat values that are already implied by other settings
+- **No default values**: Don't explicitly set options that match the tool's default behavior
+- **Composite options first**: Use umbrella options like `strict` instead of individual flags they enable
+
 ## Node.js & Package Manager
 
 - **Node.js**: Minimum version 24 (Current)
@@ -16,7 +24,11 @@ This document captures infrastructure decisions for an ESLint plugin written in 
 
 ## TypeScript Configuration
 
-### Compiler Options (Strict Mode)
+### Compiler Options
+
+Only specify options beyond `strict: true`. The `strict` flag enables:
+`alwaysStrict`, `strictNullChecks`, `strictBindCallApply`, `strictFunctionTypes`,
+`strictPropertyInitialization`, `noImplicitAny`, `noImplicitThis`, `useUnknownInCatchVariables`
 
 ```json
 {
@@ -25,12 +37,6 @@ This document captures infrastructure decisions for an ESLint plugin written in 
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "strict": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "strictBindCallApply": true,
-    "strictPropertyInitialization": true,
-    "noImplicitAny": true,
-    "noImplicitThis": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
@@ -43,11 +49,19 @@ This document captures infrastructure decisions for an ESLint plugin written in 
 }
 ```
 
-### Key Decisions
+### Options Reference
 
-- **`noUncheckedIndexedAccess`**: Enables strict array/object index access, preventing undefined access bugs
-- **`exactOptionalPropertyTypes`**: Distinguishes between `undefined` and missing properties
-- **`verbatimModuleSyntax`**: Enforces explicit type imports, ensuring clean ESM output
+| Option | Description |
+|--------|-------------|
+| [`strict`](https://www.typescriptlang.org/tsconfig/#strict) | Enable all strict type-checking options |
+| [`noImplicitReturns`](https://www.typescriptlang.org/tsconfig/#noImplicitReturns) | Report error when not all code paths in function return a value |
+| [`noFallthroughCasesInSwitch`](https://www.typescriptlang.org/tsconfig/#noFallthroughCasesInSwitch) | Report errors for fallthrough cases in switch statements |
+| [`noUncheckedIndexedAccess`](https://www.typescriptlang.org/tsconfig/#noUncheckedIndexedAccess) | Add `undefined` to any un-declared field in an index signature |
+| [`noUnusedLocals`](https://www.typescriptlang.org/tsconfig/#noUnusedLocals) | Report errors on unused local variables |
+| [`noUnusedParameters`](https://www.typescriptlang.org/tsconfig/#noUnusedParameters) | Report errors on unused parameters in functions |
+| [`exactOptionalPropertyTypes`](https://www.typescriptlang.org/tsconfig/#exactOptionalPropertyTypes) | Interpret optional property types as written, not adding `undefined` |
+| [`forceConsistentCasingInFileNames`](https://www.typescriptlang.org/tsconfig/#forceConsistentCasingInFileNames) | Ensure imports match the casing of files on disk |
+| [`verbatimModuleSyntax`](https://www.typescriptlang.org/tsconfig/#verbatimModuleSyntax) | Preserve import/export syntax; require `type` modifier for type-only imports |
 
 ## ESLint Configuration
 
@@ -56,8 +70,8 @@ This document captures infrastructure decisions for an ESLint plugin written in 
 The project uses `typescript-eslint` v8+ with the new flat config format (array-style, not deprecated `tseslint.config()`).
 
 ```ts
-import eslint from "@eslint/js";
-import tseslint from "typescript-eslint";
+import eslint from "@eslint/js"
+import tseslint from "typescript-eslint"
 
 export default [
   eslint.configs.recommended,
@@ -73,7 +87,7 @@ export default [
       },
     },
   },
-];
+]
 ```
 
 ### Required Dev Dependencies for ESLint + TypeScript
@@ -99,16 +113,14 @@ Note: `jiti` is required by ESLint 9 for loading TypeScript config files (`eslin
 
 ## Prettier Configuration
 
-### Settings (2-Space Indentation)
-
 ```json
 {
-  "semi": true,
+  "semi": false,
   "singleQuote": false,
   "tabWidth": 2,
   "useTabs": false,
-  "trailingComma": "es5",
-  "printWidth": 100,
+  "trailingComma": "none",
+  "printWidth": 120,
   "bracketSpacing": true,
   "arrowParens": "always",
   "endOfLine": "lf"
@@ -117,10 +129,11 @@ Note: `jiti` is required by ESLint 9 for loading TypeScript config files (`eslin
 
 ### Key Decisions
 
-- **2 spaces**: Standard for JavaScript/TypeScript ecosystem
+- **No semicolons**: Cleaner code, ASI handles insertion
 - **Double quotes**: Aligns with JSON, cleaner for strings containing apostrophes
-- **100 character line width**: Balances readability and modern screen sizes
-- **Trailing commas (ES5)**: Cleaner diffs, supported in all target environments
+- **2 spaces**: Standard for JavaScript/TypeScript ecosystem
+- **No trailing commas**: Cleaner appearance
+- **120 character line width**: Modern screens, reduces line breaks in complex types
 - **LF line endings**: Unix-style, consistent across platforms
 
 ## Testing

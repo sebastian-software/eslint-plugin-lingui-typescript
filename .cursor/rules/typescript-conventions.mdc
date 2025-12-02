@@ -14,11 +14,11 @@ Always use inline type imports for type-only imports:
 
 ```ts
 // ✅ Good
-import { type RuleModule, ESLintUtils } from "@typescript-eslint/utils";
+import { type RuleModule, ESLintUtils } from "@typescript-eslint/utils"
 
 // ❌ Bad - separate import statement
-import type { RuleModule } from "@typescript-eslint/utils";
-import { ESLintUtils } from "@typescript-eslint/utils";
+import type { RuleModule } from "@typescript-eslint/utils"
+import { ESLintUtils } from "@typescript-eslint/utils"
 ```
 
 ### Import Order
@@ -28,11 +28,11 @@ import { ESLintUtils } from "@typescript-eslint/utils";
 3. Internal modules (relative imports)
 
 ```ts
-import path from "node:path";
+import path from "node:path"
 
-import { ESLintUtils } from "@typescript-eslint/utils";
+import { ESLintUtils } from "@typescript-eslint/utils"
 
-import { createRule } from "../utils/create-rule.js";
+import { createRule } from "../utils/create-rule.js"
 ```
 
 ## Type Definitions
@@ -44,53 +44,73 @@ Prefer `interface` for object shapes:
 ```ts
 // ✅ Good
 interface RuleOptions {
-  allowedCallees: string[];
-  maxDepth: number;
+  allowedCallees: string[]
+  maxDepth: number
 }
 
 // ❌ Bad
 type RuleOptions = {
-  allowedCallees: string[];
-  maxDepth: number;
-};
+  allowedCallees: string[]
+  maxDepth: number
+}
 ```
 
-### Const Objects over Enums
+### Union String Types over Enums or Const Objects
 
-Use const objects with `as const` instead of enums:
+Prefer simple union string types over enums or const object patterns:
 
 ```ts
-// ✅ Good
+// ✅ Good - simple union type
+type MessageId = "complexExpression" | "nestedMacro"
+
+// ❌ Bad - const object (fake enum pattern)
 const MessageId = {
   ComplexExpression: "complexExpression",
   NestedMacro: "nestedMacro",
-} as const;
+} as const
+type MessageId = (typeof MessageId)[keyof typeof MessageId]
 
-type MessageId = (typeof MessageId)[keyof typeof MessageId];
-
-// ❌ Bad
+// ❌ Bad - enum
 enum MessageId {
   ComplexExpression = "complexExpression",
   NestedMacro = "nestedMacro",
 }
 ```
 
+When you need both runtime values and types, extract the union from an array:
+
+```ts
+// ✅ Good - array as source of truth
+const LINGUI_MACROS = ["t", "Trans", "msg", "defineMessage"] as const
+type LinguiMacro = (typeof LINGUI_MACROS)[number]
+```
+
 ## Functions
 
 ### Named Function Declarations
 
-Use function declarations for pure functions:
+Use function declarations for pure functions, utility functions, and React components:
 
 ```ts
-// ✅ Good
+// ✅ Good - pure function
 function isLinguiMacro(node: TSESTree.Node): boolean {
-  return node.type === "TaggedTemplateExpression";
+  return node.type === "TaggedTemplateExpression"
+}
+
+// ✅ Good - React component
+function UserProfile({ user }: UserProfileProps): React.ReactElement {
+  return <div>{user.name}</div>
 }
 
 // ❌ Bad - arrow function for pure function
 const isLinguiMacro = (node: TSESTree.Node): boolean => {
-  return node.type === "TaggedTemplateExpression";
-};
+  return node.type === "TaggedTemplateExpression"
+}
+
+// ❌ Bad - arrow function for component
+const UserProfile = ({ user }: UserProfileProps) => {
+  return <div>{user.name}</div>
+}
 ```
 
 ### Arrow Functions for Callbacks
@@ -99,7 +119,7 @@ Use arrow functions for inline callbacks and closures:
 
 ```ts
 // ✅ Good
-const listeners = nodes.filter((node) => isRelevant(node));
+const listeners = nodes.filter((node) => isRelevant(node))
 
 // ✅ Good - closure capturing context
 function createVisitor(context: RuleContext) {
@@ -107,7 +127,7 @@ function createVisitor(context: RuleContext) {
     CallExpression: (node) => {
       // Uses context from closure
     },
-  };
+  }
 }
 ```
 
@@ -129,38 +149,19 @@ export function createRule(options) {
 }
 ```
 
-## Error Handling
-
-### No Throwing in Rule Logic
-
-ESLint rules should report errors, not throw:
-
-```ts
-// ✅ Good
-if (!parserServices.program) {
-  // Gracefully degrade - skip type-aware checks
-  return;
-}
-
-// ❌ Bad
-if (!parserServices.program) {
-  throw new Error("TypeScript program required");
-}
-```
-
-### Type Guards
+## Type Guards
 
 Use type guards for narrowing:
 
 ```ts
 function isCallExpression(node: TSESTree.Node): node is TSESTree.CallExpression {
-  return node.type === "CallExpression";
+  return node.type === "CallExpression"
 }
 
 // Usage
 if (isCallExpression(node)) {
   // node is typed as CallExpression here
-  console.log(node.callee);
+  console.log(node.callee)
 }
 ```
 
@@ -183,8 +184,8 @@ if (isCallExpression(node)) {
 Use SCREAMING_SNAKE_CASE for true constants:
 
 ```ts
-const LINGUI_MACROS = ["t", "Trans", "msg", "defineMessage"] as const;
-const DEFAULT_MAX_DEPTH = 1;
+const LINGUI_MACROS = ["t", "Trans", "msg", "defineMessage"] as const
+const DEFAULT_MAX_DEPTH = 1
 ```
 
 ## Nullish Handling
@@ -193,32 +194,46 @@ const DEFAULT_MAX_DEPTH = 1;
 
 ```ts
 // ✅ Good
-const value = input ?? defaultValue;
+const value = input ?? defaultValue
 
 // ❌ Bad - falsy check includes 0, ""
-const value = input || defaultValue;
+const value = input || defaultValue
 ```
 
 ### Prefer Optional Chaining
 
 ```ts
 // ✅ Good
-const name = user?.profile?.name;
+const name = user?.profile?.name
 
 // ❌ Bad
-const name = user && user.profile && user.profile.name;
+const name = user && user.profile && user.profile.name
 ```
 
 ## Comments
 
-### JSDoc for Public APIs
+### JSDoc for Public APIs (TypeScript Style)
+
+Use JSDoc without type annotations - let TypeScript handle the types:
 
 ```ts
+// ✅ Good - TypeScript style (no type annotations in JSDoc)
 /**
  * Creates an ESLint rule for Lingui macro validation.
  *
  * @param options - Rule configuration options
  * @returns Configured ESLint rule module
+ */
+export function createLinguiRule(options: RuleOptions): RuleModule {
+  // ...
+}
+
+// ❌ Bad - JavaScript style (redundant type annotations)
+/**
+ * Creates an ESLint rule for Lingui macro validation.
+ *
+ * @param {RuleOptions} options - Rule configuration options
+ * @returns {RuleModule} Configured ESLint rule module
  */
 export function createLinguiRule(options: RuleOptions): RuleModule {
   // ...
@@ -230,5 +245,5 @@ export function createLinguiRule(options: RuleOptions): RuleModule {
 ```ts
 // TypeScript's getTypeAtLocation returns the *widened* type for literals,
 // so we need to check the contextual type instead
-const contextualType = typeChecker.getContextualType(node);
+const contextualType = typeChecker.getContextualType(node)
 ```
