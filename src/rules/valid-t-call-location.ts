@@ -4,10 +4,6 @@ import { createRule } from "../utils/create-rule.js"
 
 type MessageId = "topLevelNotAllowed"
 
-export interface Options {
-  allowTopLevel: boolean
-}
-
 /**
  * Checks if a node is inside a function, arrow function, or method.
  */
@@ -19,7 +15,6 @@ function isInsideFunction(node: TSESTree.Node): boolean {
       case AST_NODE_TYPES.FunctionDeclaration:
       case AST_NODE_TYPES.FunctionExpression:
       case AST_NODE_TYPES.ArrowFunctionExpression:
-      case AST_NODE_TYPES.MethodDefinition:
         return true
       default:
         break
@@ -30,7 +25,7 @@ function isInsideFunction(node: TSESTree.Node): boolean {
   return false
 }
 
-export const validTCallLocation = createRule<[Options], MessageId>({
+export const validTCallLocation = createRule<[], MessageId>({
   name: "valid-t-call-location",
   meta: {
     type: "problem",
@@ -38,31 +33,12 @@ export const validTCallLocation = createRule<[Options], MessageId>({
       description: "Enforce that t macro calls are inside functions, not at module top-level"
     },
     messages: {
-      topLevelNotAllowed: "t`...` should not be used at module top-level. Move it inside a function or component."
+      topLevelNotAllowed: "t`...` must not be used at module top-level. Move it inside a function, component, or hook."
     },
-    schema: [
-      {
-        type: "object",
-        properties: {
-          allowTopLevel: {
-            type: "boolean",
-            default: false
-          }
-        },
-        additionalProperties: false
-      }
-    ]
+    schema: []
   },
-  defaultOptions: [
-    {
-      allowTopLevel: false
-    }
-  ],
-  create(context, [options]) {
-    if (options.allowTopLevel) {
-      return {}
-    }
-
+  defaultOptions: [],
+  create(context) {
     return {
       TaggedTemplateExpression(node): void {
         if (node.tag.type !== AST_NODE_TYPES.Identifier || node.tag.name !== "t") {

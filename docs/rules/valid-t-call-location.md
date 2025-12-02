@@ -4,18 +4,18 @@ Enforce that `t` macro calls are inside functions, not at module top-level.
 
 ## Why?
 
-Using `t` at module top-level causes issues:
+Using `t` at module top-level causes serious issues:
 
-- **Evaluation order**: The message is evaluated when the module loads, before the i18n context may be ready
-- **Static extraction**: Some extraction tools expect messages inside functions
-- **Hot reloading**: Top-level values don't update when locale changes
-- **Testing**: Harder to mock or test translations
+- **Async loading**: The message catalog must be loaded first (often async). Top-level code runs before this completes.
+- **Locale changes**: Top-level values are evaluated once and never update when the user switches locale.
+- **SSR hydration**: Server and client may have different locales, causing hydration mismatches.
+- **Testing**: Harder to mock or test translations.
 
 ## Rule Details
 
 This rule reports `t` tagged template expressions that are not inside a function, arrow function, or method.
 
-### ❌ Invalid
+### Invalid
 
 ```tsx
 // Top-level variable
@@ -35,7 +35,7 @@ const config = {
 }
 ```
 
-### ✅ Valid
+### Valid
 
 ```tsx
 // Inside function
@@ -70,21 +70,8 @@ function useTranslation() {
 
 ## Options
 
-### `allowTopLevel`
-
-When `true`, allows `t` at module top-level. Default: `false`
-
-Use this if you have a build setup that handles top-level translations correctly.
-
-```ts
-{
-  "lingui-ts/valid-t-call-location": ["error", {
-    "allowTopLevel": true
-  }]
-}
-```
+This rule has no options. Top-level `t` calls are always an error.
 
 ## When Not To Use It
 
-If your build setup correctly handles top-level `t` calls (e.g., with compile-time extraction), you can disable this rule or set `allowTopLevel: true`.
-
+If you have a very specific build setup that statically extracts and replaces `t` calls at compile time, you might not need this rule. However, this is rare and you should verify your setup handles locale changes correctly.

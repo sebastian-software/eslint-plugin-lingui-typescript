@@ -67,13 +67,7 @@ ruleTester.run("valid-t-call-location", validTCallLocation, {
 
     // Non-t tagged templates at top level are fine
     `const styles = css\`color: red\``,
-    `const html = html\`<div></div>\``,
-
-    // Allow top level when configured
-    {
-      code: `const msg = t\`Hello\``,
-      options: [{ allowTopLevel: true }]
-    }
+    `const html = html\`<div></div>\``
   ],
   invalid: [
     // Top-level variable declaration
