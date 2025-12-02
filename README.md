@@ -153,6 +153,7 @@ The `no-unlocalized-strings` rule has different options because TypeScript types
 - `useTsTypes: true` — always enabled
 - Most `ignoreFunctions` entries for DOM APIs — auto-detected via types
 - Most `ignoreNames` entries for typed parameters — auto-detected via types
+- Most `ignoreProperties` entries (like `type`, `role`, `href`) — auto-detected via types
 - `ignoreMethodsOnTypes` — handled automatically
 
 ### Migration Steps

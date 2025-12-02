@@ -24,43 +24,23 @@ const DEFAULT_IGNORE_FUNCTIONS = ["console.*", "require", "import", "Error", "Ty
 
 /**
  * JSX attributes and object properties whose values should not be checked.
- * These are typically technical values, not user-visible text.
+ *
+ * This list is intentionally minimal - most HTML/SVG attributes are detected
+ * automatically via TypeScript types (string literal unions like "button" | "submit").
+ *
+ * We only list properties that:
+ * 1. Accept arbitrary strings (not literal unions) but are still technical
+ * 2. Are framework-specific and not in standard type definitions
  */
 const DEFAULT_IGNORE_PROPERTIES = [
-  // CSS/styling
+  // CSS class names - accept arbitrary strings, always technical
   "className",
   "styleName",
-  "style",
-  // HTML attributes
-  "type",
-  "id",
+  // React-specific
   "key",
-  "name",
-  "href",
-  "src",
-  "role",
-  // Testing
+  // Testing IDs - arbitrary strings, always technical
   "testID",
-  "data-testid",
-  // Accessibility (handled by their own rules usually)
-  "aria-label",
-  "aria-describedby",
-  "aria-labelledby",
-  // SVG attributes
-  "viewBox",
-  "d",
-  "cx",
-  "cy",
-  "r",
-  "x",
-  "y",
-  "width",
-  "height",
-  "fill",
-  "stroke",
-  "transform",
-  "points",
-  "pathLength"
+  "data-testid"
 ]
 
 /**
@@ -190,6 +170,12 @@ function looksLikeUIString(value: string): boolean {
 
   // CSS selector: starts with :, ., #, [, *, &, >, +, ~
   if (/^[:.#[*&>+~]/.test(trimmed)) {
+    return false
+  }
+
+  // SVG path data: commands like M, L, C, etc. followed by coordinates
+  // Examples: "M10 10", "M0 0 L100 100", "M10,10 L20,20"
+  if (/^[MLHVCSQTAZmlhvcsqtaz][\d\s,.-]+/.test(trimmed)) {
     return false
   }
 
@@ -449,10 +435,46 @@ function isIntlRelatedType(typeName: string): boolean {
 }
 
 /**
+ * Checks if a type is a string literal union (technical type).
+ */
+function isStringLiteralUnion(type: ts.Type): boolean {
+  if (type.isUnion()) {
+    const hasStringLiteral = type.types.some((t) => t.isStringLiteral() || (t.flags & 128) !== 0)
+    const allTechnical = type.types.every((t) => {
+      // String literal
+      if (t.isStringLiteral() || (t.flags & 128) !== 0) {
+        return true
+      }
+      // Number literal
+      if (t.isNumberLiteral() || (t.flags & 256) !== 0) {
+        return true
+      }
+      // Boolean literals (true/false)
+      if ((t.flags & 512) !== 0 || (t.flags & 1024) !== 0) {
+        return true
+      }
+      // undefined
+      if ((t.flags & 32768) !== 0) {
+        return true
+      }
+      // null
+      if ((t.flags & 65536) !== 0) {
+        return true
+      }
+      return false
+    })
+    return hasStringLiteral && allTechnical
+  }
+  // Single string literal type
+  return type.isStringLiteral() || (type.flags & 128) !== 0
+}
+
+/**
  * Uses TypeScript's type checker to determine if a string is technical.
  *
  * Detects:
  * - String literal union types: type Status = "loading" | "error"
+ * - JSX attribute types: <input type="text" /> (type is "button" | "checkbox" | ...)
  * - Intl API arguments: toLocaleString("en-US", { weekday: "long" })
  * - Discriminated union fields: { type: "add" } | { type: "remove" }
  *
@@ -471,36 +493,8 @@ function isTechnicalStringType(
 
     if (contextualType !== undefined) {
       // Check for string literal unions: "a" | "b" | "c"
-      // Also allow unions with undefined, null, boolean, number
-      if (contextualType.isUnion()) {
-        const hasStringLiteral = contextualType.types.some((t) => t.isStringLiteral() || (t.flags & 128) !== 0)
-        const allTechnical = contextualType.types.every((t) => {
-          // String literal
-          if (t.isStringLiteral() || (t.flags & 128) !== 0) {
-            return true
-          }
-          // Number literal
-          if (t.isNumberLiteral() || (t.flags & 256) !== 0) {
-            return true
-          }
-          // Boolean literals (true/false)
-          if ((t.flags & 512) !== 0 || (t.flags & 1024) !== 0) {
-            return true
-          }
-          // undefined
-          if ((t.flags & 32768) !== 0) {
-            return true
-          }
-          // null
-          if ((t.flags & 65536) !== 0) {
-            return true
-          }
-          return false
-        })
-
-        if (hasStringLiteral && allTechnical) {
-          return true
-        }
+      if (isStringLiteralUnion(contextualType)) {
+        return true
       }
 
       // Check for Intl API types

@@ -127,31 +127,29 @@ Wildcard examples:
 
 Array of property/attribute names whose string values should be ignored.
 
+This list is intentionally minimal — most HTML/SVG attributes are detected automatically via TypeScript types (string literal unions like `"button" | "submit"` for `type`).
+
 Default:
 
 ```ts
 [
-  // CSS/styling
-  "className", "styleName", "style",
-  // HTML attributes
-  "type", "id", "key", "name", "href", "src", "role",
-  // Testing
-  "testID", "data-testid",
-  // Accessibility
-  "aria-label", "aria-describedby", "aria-labelledby",
-  // SVG attributes
-  "viewBox", "d", "cx", "cy", "r", "x", "y", "width", "height",
-  "fill", "stroke", "transform", "points", "pathLength"
+  "className",    // CSS classes - arbitrary strings, always technical
+  "styleName",    // CSS modules
+  "key",          // React key prop
+  "testID",       // React Native testing
+  "data-testid"   // DOM testing
 ]
 ```
 
 ```ts
 {
   "lingui-ts/no-unlocalized-strings": ["error", {
-    "ignoreProperties": ["className", "type", "variant", "testId"]
+    "ignoreProperties": ["className", "testId", "myCustomTechnicalProp"]
   }]
 }
 ```
+
+**Note**: Properties like `type`, `role`, `href`, `id` are NOT in the default list because TypeScript automatically detects them as technical when they have string literal union types.
 
 ### `ignoreNames`
 
@@ -192,6 +190,7 @@ The rule uses heuristics to determine if a string looks like UI text:
 - URLs and paths (`/`, `https://`, `mailto:`)
 - Identifiers without spaces (`myFunction`, `my-css-class`)
 - CSS selectors (`:hover`, `.class`, `#id`)
+- SVG path data (`M10 10`, `L20 30`)
 
 ## When Not To Use It
 
