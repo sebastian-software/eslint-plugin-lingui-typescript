@@ -60,10 +60,7 @@ export const consistentPluralFormat = createRule<[Options], MessageId>({
         const openingElement = node.openingElement
 
         // Check for <Plural> component
-        if (
-          openingElement.name.type !== AST_NODE_TYPES.JSXIdentifier ||
-          openingElement.name.name !== "Plural"
-        ) {
+        if (openingElement.name.type !== AST_NODE_TYPES.JSXIdentifier || openingElement.name.name !== "Plural") {
           return
         }
 

@@ -146,10 +146,7 @@ function isIgnoredFunctionArgument(node: TSESTree.Node, ignoreFunctions: string[
   if (callee.type === AST_NODE_TYPES.Identifier) {
     calleeName = callee.name
   } else if (callee.type === AST_NODE_TYPES.MemberExpression) {
-    if (
-      callee.object.type === AST_NODE_TYPES.Identifier &&
-      callee.property.type === AST_NODE_TYPES.Identifier
-    ) {
+    if (callee.object.type === AST_NODE_TYPES.Identifier && callee.property.type === AST_NODE_TYPES.Identifier) {
       calleeName = `${callee.object.name}.${callee.property.name}`
     }
   }
@@ -276,8 +273,7 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       description: "Detect user-visible strings not wrapped in Lingui translation macros"
     },
     messages: {
-      unlocalizedString:
-        'String "{{text}}" appears to be user-visible text. Wrap it with t`...` or <Trans>.'
+      unlocalizedString: 'String "{{text}}" appears to be user-visible text. Wrap it with t`...` or <Trans>.'
     },
     schema: [
       {

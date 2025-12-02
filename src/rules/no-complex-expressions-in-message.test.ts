@@ -128,18 +128,11 @@ ruleTester.run("no-complex-expressions-in-message", noComplexExpressionsInMessag
     // Multiple violations in one message
     {
       code: "t`${a + b} and ${Math.random()}`",
-      errors: [
-        { messageId: "complexExpression" },
-        { messageId: "complexExpression" }
-      ]
+      errors: [{ messageId: "complexExpression" }, { messageId: "complexExpression" }]
     },
     {
       code: "<Trans>{x * 2} plus {y * 3}</Trans>",
-      errors: [
-        { messageId: "complexExpression" },
-        { messageId: "complexExpression" }
-      ]
+      errors: [{ messageId: "complexExpression" }, { messageId: "complexExpression" }]
     }
   ]
 })
-

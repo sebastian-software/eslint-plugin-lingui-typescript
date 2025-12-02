@@ -94,10 +94,7 @@ ruleTester.run("valid-t-call-location", validTCallLocation, {
         const greeting = t\`Hello\`
         const farewell = t\`Goodbye\`
       `,
-      errors: [
-        { messageId: "topLevelNotAllowed" },
-        { messageId: "topLevelNotAllowed" }
-      ]
+      errors: [{ messageId: "topLevelNotAllowed" }, { messageId: "topLevelNotAllowed" }]
     },
 
     // Inside class property (not method)
@@ -121,4 +118,3 @@ ruleTester.run("valid-t-call-location", validTCallLocation, {
     }
   ]
 })
-

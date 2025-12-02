@@ -104,4 +104,3 @@ ruleTester.run("no-nested-macros", noNestedMacros, {
     }
   ]
 })
-

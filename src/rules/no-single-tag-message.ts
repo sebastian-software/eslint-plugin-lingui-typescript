@@ -20,9 +20,7 @@ function isSingleTagJSX(children: TSESTree.JSXChild[]): boolean {
   }
 
   const onlyChild = meaningfulChildren[0]
-  return (
-    onlyChild?.type === AST_NODE_TYPES.JSXElement || onlyChild?.type === AST_NODE_TYPES.JSXFragment
-  )
+  return onlyChild?.type === AST_NODE_TYPES.JSXElement || onlyChild?.type === AST_NODE_TYPES.JSXFragment
 }
 
 export const noSingleTagMessage = createRule<[], MessageId>({
@@ -30,12 +28,10 @@ export const noSingleTagMessage = createRule<[], MessageId>({
   meta: {
     type: "problem",
     docs: {
-      description:
-        "Disallow Lingui messages that consist only of a single JSX element without surrounding text"
+      description: "Disallow Lingui messages that consist only of a single JSX element without surrounding text"
     },
     messages: {
-      singleTag:
-        "Translation message should not consist only of a single element. Add surrounding text for context."
+      singleTag: "Translation message should not consist only of a single element. Add surrounding text for context."
     },
     schema: []
   },
@@ -44,10 +40,7 @@ export const noSingleTagMessage = createRule<[], MessageId>({
     return {
       JSXElement(node): void {
         const openingElement = node.openingElement
-        if (
-          openingElement.name.type !== AST_NODE_TYPES.JSXIdentifier ||
-          openingElement.name.name !== "Trans"
-        ) {
+        if (openingElement.name.type !== AST_NODE_TYPES.JSXIdentifier || openingElement.name.name !== "Trans") {
           return
         }
 
@@ -61,4 +54,3 @@ export const noSingleTagMessage = createRule<[], MessageId>({
     }
   }
 })
-

@@ -107,10 +107,7 @@ export const textRestrictions = createRule<[Options], MessageId>({
       // Check <Trans>...</Trans> pattern
       JSXElement(node): void {
         const openingElement = node.openingElement
-        if (
-          openingElement.name.type !== AST_NODE_TYPES.JSXIdentifier ||
-          openingElement.name.name !== "Trans"
-        ) {
+        if (openingElement.name.type !== AST_NODE_TYPES.JSXIdentifier || openingElement.name.name !== "Trans") {
           return
         }
 
@@ -120,4 +117,3 @@ export const textRestrictions = createRule<[Options], MessageId>({
     }
   }
 })
-

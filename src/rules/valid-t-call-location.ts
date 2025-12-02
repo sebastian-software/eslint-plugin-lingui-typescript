@@ -35,12 +35,10 @@ export const validTCallLocation = createRule<[Options], MessageId>({
   meta: {
     type: "problem",
     docs: {
-      description:
-        "Enforce that t macro calls are inside functions, not at module top-level"
+      description: "Enforce that t macro calls are inside functions, not at module top-level"
     },
     messages: {
-      topLevelNotAllowed:
-        "t`...` should not be used at module top-level. Move it inside a function or component."
+      topLevelNotAllowed: "t`...` should not be used at module top-level. Move it inside a function or component."
     },
     schema: [
       {
@@ -81,4 +79,3 @@ export const validTCallLocation = createRule<[Options], MessageId>({
     }
   }
 })
-

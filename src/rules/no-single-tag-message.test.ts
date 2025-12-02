@@ -80,4 +80,3 @@ ruleTester.run("no-single-tag-message", noSingleTagMessage, {
     }
   ]
 })
-

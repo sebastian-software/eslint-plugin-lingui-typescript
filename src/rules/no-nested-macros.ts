@@ -43,10 +43,7 @@ function getMacroName(node: TSESTree.Node): string | null {
 /**
  * Finds the nearest ancestor that is a Lingui macro.
  */
-function findParentMacro(
-  node: TSESTree.Node,
-  macros: string[]
-): { node: TSESTree.Node; name: string } | null {
+function findParentMacro(node: TSESTree.Node, macros: string[]): { node: TSESTree.Node; name: string } | null {
   let current = node.parent
 
   while (current) {

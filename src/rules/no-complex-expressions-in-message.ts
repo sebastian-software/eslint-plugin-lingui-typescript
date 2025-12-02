@@ -22,8 +22,7 @@ function getCalleeName(node: TSESTree.Expression): string | null {
 
   if (node.type === AST_NODE_TYPES.MemberExpression && !node.computed) {
     const object = getCalleeName(node.object)
-    const property =
-      node.property.type === AST_NODE_TYPES.Identifier ? node.property.name : null
+    const property = node.property.type === AST_NODE_TYPES.Identifier ? node.property.name : null
 
     if (object !== null && property !== null) {
       return `${object}.${property}`
@@ -51,10 +50,7 @@ function getMemberExpressionDepth(node: TSESTree.MemberExpression): number {
 /**
  * Checks if an expression is allowed within a Lingui message.
  */
-function isAllowedExpression(
-  node: TSESTree.Expression,
-  options: Options
-): boolean {
+function isAllowedExpression(node: TSESTree.Expression, options: Options): boolean {
   // Simple identifiers are always allowed: name, count
   if (node.type === AST_NODE_TYPES.Identifier) {
     return true
@@ -210,10 +206,7 @@ export const noComplexExpressionsInMessage = createRule<[Options], MessageId>({
       // Check <Trans>Hello {expr}</Trans> pattern
       JSXElement(node): void {
         const openingElement = node.openingElement
-        if (
-          openingElement.name.type !== AST_NODE_TYPES.JSXIdentifier ||
-          openingElement.name.name !== "Trans"
-        ) {
+        if (openingElement.name.type !== AST_NODE_TYPES.JSXIdentifier || openingElement.name.name !== "Trans") {
           return
         }
 
@@ -222,4 +215,3 @@ export const noComplexExpressionsInMessage = createRule<[Options], MessageId>({
     }
   }
 })
-

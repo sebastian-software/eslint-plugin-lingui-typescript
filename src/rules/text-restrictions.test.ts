@@ -82,10 +82,7 @@ ruleTester.run("text-restrictions", textRestrictions, {
     {
       code: "t`Hello&nbsp;&amp;World`",
       options: [{ forbiddenPatterns: ["&nbsp;", "&amp;"], minLength: null }],
-      errors: [
-        { messageId: "forbiddenPattern" },
-        { messageId: "forbiddenPattern" }
-      ]
+      errors: [{ messageId: "forbiddenPattern" }, { messageId: "forbiddenPattern" }]
     },
 
     // Too short message
@@ -111,10 +108,7 @@ ruleTester.run("text-restrictions", textRestrictions, {
     {
       code: "t`X&`",
       options: [{ forbiddenPatterns: ["&"], minLength: 5 }],
-      errors: [
-        { messageId: "forbiddenPattern" },
-        { messageId: "tooShort" }
-      ]
+      errors: [{ messageId: "forbiddenPattern" }, { messageId: "tooShort" }]
     },
 
     // Regex pattern
@@ -125,4 +119,3 @@ ruleTester.run("text-restrictions", textRestrictions, {
     }
   ]
 })
-
