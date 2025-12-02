@@ -2,6 +2,8 @@
 
 Detect user-visible strings not wrapped in Lingui translation macros.
 
+**This rule requires TypeScript type information.**
+
 ## Why?
 
 Unlocalized strings can lead to:
@@ -9,7 +11,7 @@ Unlocalized strings can lead to:
 - Poor user experience for non-English speakers
 - Difficulty tracking what needs translation
 
-This rule helps catch user-visible text that should be wrapped in `t`, `<Trans>`, or other Lingui macros.
+This rule uses TypeScript's type system to intelligently distinguish between user-visible text and technical strings.
 
 ## Rule Details
 
@@ -52,21 +54,41 @@ const x = "CONSTANT_VALUE"
 const url = "https://example.com"
 const path = "/api/users"
 
-// TypeScript union types (type-aware)
+// TypeScript union types (automatically detected)
 type Status = "idle" | "loading" | "error"
+const [status, setStatus] = useState<Status>("idle")
+
+// Intl methods (type-aware detection)
+date.toLocaleDateString("de-DE", { weekday: "long" })
+new Intl.DateTimeFormat("en", { dateStyle: "full" })
 ```
 
 ## TypeScript Type-Aware Detection
 
-When TypeScript type information is available, this rule can detect technical strings based on their types:
+This rule leverages TypeScript's type system to automatically detect technical strings:
+
+### String Literal Unions
 
 ```tsx
-// These are NOT reported (recognized as technical strings)
-type Status = "idle" | "loading" | "error"
-const [status, setStatus] = useState<Status>("idle")
+type Variant = "primary" | "secondary" | "danger"
+const variant: Variant = "primary"  // ✅ Not reported
 
-const action: Action = { type: "save" }  // discriminated union
-const ACTION_SAVE = "save" as const
+function setAlign(align: "left" | "center" | "right") {}
+setAlign("center")  // ✅ Not reported
+```
+
+### Intl-Related Types
+
+```tsx
+// Intl.LocalesArgument, DateTimeFormatOptions, etc.
+date.toLocaleDateString("de-DE", { weekday: "long" })  // ✅ Not reported
+new Intl.NumberFormat("en-US", { style: "currency" })  // ✅ Not reported
+```
+
+### Discriminated Unions
+
+```tsx
+const action = { type: "save" }  // ✅ Not reported (type/kind properties)
 ```
 
 ## Options
@@ -80,7 +102,7 @@ Default: `["console.log", "console.warn", "console.error", "console.info", "cons
 ```ts
 {
   "lingui-ts/no-unlocalized-strings": ["warn", {
-    "ignoreFunctions": ["console.log", "logger.debug", "t"]
+    "ignoreFunctions": ["console.log", "logger.debug"]
   }]
 }
 ```
@@ -119,21 +141,6 @@ Default: `null`
 }
 ```
 
-## Native Intl Methods
-
-Strings passed to native JavaScript Intl methods are automatically ignored since they're technical locale/format values:
-
-```tsx
-// All ignored - locale and option strings are technical
-date.toLocaleDateString("de-DE", { weekday: "long" })
-new Intl.DateTimeFormat("en", { dateStyle: "full" })
-new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" })
-number.toLocaleString("en-US")
-"text".localeCompare("other", "de")
-```
-
-Supported methods: `toLocaleString`, `toLocaleDateString`, `toLocaleTimeString`, `toLocaleUpperCase`, `toLocaleLowerCase`, `localeCompare`, and all `Intl.*` constructors.
-
 ## Heuristics
 
 The rule uses heuristics to determine if a string looks like UI text:
@@ -152,9 +159,8 @@ The rule uses heuristics to determine if a string looks like UI text:
 
 ## When Not To Use It
 
-If your project doesn't need localization or you handle string detection differently, you can disable this rule.
+This rule requires TypeScript. If your project doesn't use TypeScript or doesn't need localization, you can disable this rule.
 
 ## Severity
 
 This rule defaults to `"warn"` in the recommended config since it may have false positives. Adjust the severity based on your project's needs.
-

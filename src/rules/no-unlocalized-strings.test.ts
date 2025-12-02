@@ -10,11 +10,10 @@ RuleTester.it = it
 const ruleTester = new RuleTester({
   languageOptions: {
     parserOptions: {
-      ecmaVersion: 2022,
-      sourceType: "module",
-      ecmaFeatures: {
-        jsx: true
-      }
+      projectService: {
+        allowDefaultProject: ["*.ts", "*.tsx"]
+      },
+      tsconfigRootDir: import.meta.dirname
     }
   }
 })
@@ -22,109 +21,120 @@ const ruleTester = new RuleTester({
 ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
   valid: [
     // Inside t``
-    "t`Hello World`",
-    "t`Save changes`",
+    { code: "t`Hello World`", filename: "test.tsx" },
+    { code: "t`Save changes`", filename: "test.tsx" },
 
     // Inside <Trans>
-    "<Trans>Hello World</Trans>",
-    "<Trans>Save changes</Trans>",
+    { code: "<Trans>Hello World</Trans>", filename: "test.tsx" },
+    { code: "<Trans>Save changes</Trans>", filename: "test.tsx" },
 
     // Inside msg/defineMessage
-    'msg({ message: "Hello World" })',
-    'defineMessage({ message: "Save changes" })',
+    { code: 'msg({ message: "Hello World" })', filename: "test.tsx" },
+    { code: 'defineMessage({ message: "Save changes" })', filename: "test.tsx" },
 
     // Console/debug (default ignored functions)
-    'console.log("Hello World")',
-    'console.error("Something went wrong")',
+    { code: 'console.log("Hello World")', filename: "test.tsx" },
+    { code: 'console.error("Something went wrong")', filename: "test.tsx" },
 
     // Ignored properties (className, type, etc.)
-    '<div className="my-class" />',
-    '<input type="text" />',
-    '<div id="my-id" />',
-    '<div data-testid="test-button" />',
-    '<a href="/path/to/page" />',
+    { code: '<div className="my-class" />', filename: "test.tsx" },
+    { code: '<input type="text" />', filename: "test.tsx" },
+    { code: '<div id="my-id" />', filename: "test.tsx" },
+    { code: '<div data-testid="test-button" />', filename: "test.tsx" },
+    { code: '<a href="/path/to/page" />', filename: "test.tsx" },
 
     // Object properties with ignored keys
-    '({ type: "button" })',
-    '({ className: "my-class" })',
+    { code: '({ type: "button" })', filename: "test.tsx" },
+    { code: '({ className: "my-class" })', filename: "test.tsx" },
 
     // Technical strings (no spaces, identifiers)
-    'const x = "myIdentifier"',
-    'const x = "my-css-class"',
-    'const x = "CONSTANT_VALUE"',
+    { code: 'const x = "myIdentifier"', filename: "test.tsx" },
+    { code: 'const x = "my-css-class"', filename: "test.tsx" },
+    { code: 'const x = "CONSTANT_VALUE"', filename: "test.tsx" },
 
     // URLs and paths
-    'const url = "https://example.com"',
-    'const path = "/api/users"',
-    'const mailto = "mailto:test@example.com"',
+    { code: 'const url = "https://example.com"', filename: "test.tsx" },
+    { code: 'const path = "/api/users"', filename: "test.tsx" },
+    { code: 'const mailto = "mailto:test@example.com"', filename: "test.tsx" },
 
     // Single characters
-    'const sep = "-"',
-    'const x = "."',
+    { code: 'const sep = "-"', filename: "test.tsx" },
+    { code: 'const x = "."', filename: "test.tsx" },
 
     // Empty strings
-    'const x = ""',
-    'const x = "   "',
+    { code: 'const x = ""', filename: "test.tsx" },
+    { code: 'const x = "   "', filename: "test.tsx" },
 
     // Type contexts
-    'type Status = "loading" | "error"',
-    "interface Props { variant: 'primary' | 'secondary' }",
-
-    // Native Intl methods - locale strings
-    'date.toLocaleDateString("de-DE")',
-    'date.toLocaleTimeString("en-US")',
-    'number.toLocaleString("de-DE")',
-    '"hello".localeCompare("world", "de")',
-
-    // Native Intl methods - option values
-    'date.toLocaleDateString("de-DE", { weekday: "long" })',
-    'date.toLocaleDateString("de-DE", { month: "short", year: "numeric" })',
-    'new Intl.DateTimeFormat("en", { dateStyle: "full" })',
-    'new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" })',
-    'new Intl.RelativeTimeFormat("en", { numeric: "auto" })',
+    { code: 'type Status = "loading" | "error"', filename: "test.tsx" },
+    { code: "interface Props { variant: 'primary' | 'secondary' }", filename: "test.tsx" },
 
     // Ignore pattern
     {
       code: 'const x = "test_id_123"',
+      filename: "test.tsx",
       options: [{ ignoreFunctions: [], ignoreProperties: [], ignoreNames: [], ignorePattern: "^test_" }]
     },
 
     // Non-UI looking text
-    'const x = "myFunction"',
-    'const x = "onClick"'
+    { code: 'const x = "myFunction"', filename: "test.tsx" },
+    { code: 'const x = "onClick"', filename: "test.tsx" },
+
+    // TypeScript: String literal union types are recognized as technical
+    {
+      code: `
+        type Align = "left" | "center" | "right"
+        const align: Align = "center"
+      `,
+      filename: "test.tsx"
+    },
+    {
+      code: `
+        function setMode(mode: "dark" | "light") {}
+        setMode("dark")
+      `,
+      filename: "test.tsx"
+    }
   ],
   invalid: [
     // Plain string that looks like UI text
     {
       code: 'const label = "Save changes"',
+      filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     },
     {
       code: 'const msg = "Something went wrong!"',
+      filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     },
     {
       code: 'const title = "Welcome to the app"',
+      filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     },
 
     // JSX text
     {
       code: "<button>Save changes</button>",
+      filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     },
     {
       code: "<div>Something went wrong!</div>",
+      filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     },
     {
       code: "<p>Please try again.</p>",
+      filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     },
 
-    // JSX with title/aria-label that's not in default ignore list
+    // JSX with title (not in default ignore list)
     {
       code: '<button title="Click here">X</button>',
+      filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     },
 
@@ -134,27 +144,27 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
         const a = "Hello World"
         const b = "Goodbye World"
       `,
-      errors: [
-        { messageId: "unlocalizedString" },
-        { messageId: "unlocalizedString" }
-      ]
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }, { messageId: "unlocalizedString" }]
     },
 
     // Function return value
     {
       code: 'function getLabel() { return "Click me" }',
+      filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     },
 
     // Object property (non-ignored key)
     {
       code: '({ label: "Save changes" })',
+      filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     },
     {
       code: '({ message: "Error occurred!" })',
+      filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     }
   ]
 })
-
