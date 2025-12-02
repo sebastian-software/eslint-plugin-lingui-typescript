@@ -24,13 +24,30 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: "t`Hello World`", filename: "test.tsx" },
     { code: "t`Save changes`", filename: "test.tsx" },
 
+    // Inside plural(), select(), selectOrdinal()
+    { code: "plural(count, { one: 'One item', other: '# items' })", filename: "test.tsx" },
+    {
+      code: "select(gender, { male: 'He likes it', female: 'She likes it', other: 'They like it' })",
+      filename: "test.tsx"
+    },
+    { code: "selectOrdinal(pos, { one: '#st place', two: '#nd place', other: '#th place' })", filename: "test.tsx" },
+
     // Inside <Trans>
     { code: "<Trans>Hello World</Trans>", filename: "test.tsx" },
     { code: "<Trans>Save changes</Trans>", filename: "test.tsx" },
 
+    // Inside <Plural>, <Select>, <SelectOrdinal>
+    { code: '<Plural value={count} one="One item" other="# items" />', filename: "test.tsx" },
+    { code: '<Select value={gender} male="He" female="She" other="They" />', filename: "test.tsx" },
+    { code: '<SelectOrdinal value={pos} one="#st" two="#nd" few="#rd" other="#th" />', filename: "test.tsx" },
+
     // Inside msg/defineMessage
     { code: 'msg({ message: "Hello World" })', filename: "test.tsx" },
     { code: 'defineMessage({ message: "Save changes" })', filename: "test.tsx" },
+
+    // Inside i18n.t() and i18n._()
+    { code: 'i18n.t({ message: "Hello World" })', filename: "test.tsx" },
+    { code: 'i18n._("Save changes")', filename: "test.tsx" },
 
     // Console/debug (default ignored functions)
     { code: 'console.log("Hello World")', filename: "test.tsx" },

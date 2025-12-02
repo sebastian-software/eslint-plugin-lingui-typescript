@@ -92,26 +92,41 @@ function looksLikeUIString(value: string): boolean {
 }
 
 /**
+ * Lingui tagged template macros
+ */
+const LINGUI_TAGGED_TEMPLATES = new Set(["t"])
+
+/**
+ * Lingui JSX components
+ */
+const LINGUI_JSX_COMPONENTS = new Set(["Trans", "Plural", "Select", "SelectOrdinal"])
+
+/**
+ * Lingui function macros
+ */
+const LINGUI_FUNCTION_MACROS = new Set(["msg", "defineMessage", "plural", "select", "selectOrdinal"])
+
+/**
  * Checks if a node is inside a Lingui macro/component.
  */
 function isInsideLinguiContext(node: TSESTree.Node): boolean {
   let current: TSESTree.Node | undefined = node.parent ?? undefined
 
   while (current !== undefined) {
-    // Inside t`...`
+    // Inside t`...`, plural`...`, select`...`, selectOrdinal`...`
     if (
       current.type === AST_NODE_TYPES.TaggedTemplateExpression &&
       current.tag.type === AST_NODE_TYPES.Identifier &&
-      current.tag.name === "t"
+      LINGUI_TAGGED_TEMPLATES.has(current.tag.name)
     ) {
       return true
     }
 
-    // Inside <Trans>
+    // Inside <Trans>, <Plural>, <Select>, <SelectOrdinal>
     if (
       current.type === AST_NODE_TYPES.JSXElement &&
       current.openingElement.name.type === AST_NODE_TYPES.JSXIdentifier &&
-      current.openingElement.name.name === "Trans"
+      LINGUI_JSX_COMPONENTS.has(current.openingElement.name.name)
     ) {
       return true
     }
@@ -120,7 +135,19 @@ function isInsideLinguiContext(node: TSESTree.Node): boolean {
     if (
       current.type === AST_NODE_TYPES.CallExpression &&
       current.callee.type === AST_NODE_TYPES.Identifier &&
-      (current.callee.name === "msg" || current.callee.name === "defineMessage")
+      LINGUI_FUNCTION_MACROS.has(current.callee.name)
+    ) {
+      return true
+    }
+
+    // Inside i18n.t() or i18n._()
+    if (
+      current.type === AST_NODE_TYPES.CallExpression &&
+      current.callee.type === AST_NODE_TYPES.MemberExpression &&
+      current.callee.object.type === AST_NODE_TYPES.Identifier &&
+      current.callee.object.name === "i18n" &&
+      current.callee.property.type === AST_NODE_TYPES.Identifier &&
+      (current.callee.property.name === "t" || current.callee.property.name === "_")
     ) {
       return true
     }
