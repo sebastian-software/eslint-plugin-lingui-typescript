@@ -12,9 +12,16 @@ export interface Options {
 
 /**
  * Default functions that are allowed in Lingui messages.
- * These are Lingui's built-in formatters for numbers and dates.
+ *
+ * Empty by default! Even i18n.number/date should be extracted to named
+ * variables so translators see meaningful placeholder names like {price}
+ * instead of anonymous {0}.
+ *
+ * Bad:  t`Price: ${i18n.number(price)}`  → msgid: "Price: {0}"
+ * Good: const formattedPrice = i18n.number(price)
+ *       t`Price: ${formattedPrice}`      → msgid: "Price: {formattedPrice}"
  */
-const DEFAULT_ALLOWED_CALLEES = ["i18n.number", "i18n.date"]
+const DEFAULT_ALLOWED_CALLEES: string[] = []
 
 /**
  * Lingui helper functions that can be nested inside t`...`.
@@ -217,7 +224,9 @@ export const noComplexExpressionsInMessage = createRule<[Options], MessageId>({
           allowedCallees: {
             type: "array",
             items: { type: "string" },
-            default: DEFAULT_ALLOWED_CALLEES
+            default: [],
+            description:
+              "Function calls to allow (e.g. ['i18n.number', 'i18n.date']). Empty by default - extract to named variables!"
           },
           allowMemberExpressions: {
             type: "boolean",

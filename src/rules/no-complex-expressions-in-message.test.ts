@@ -29,12 +29,17 @@ ruleTester.run("no-complex-expressions-in-message", noComplexExpressionsInMessag
     "<Trans>Hello {name}</Trans>",
     "<Trans>You have {count} items</Trans>",
 
-    // ==================== Allowed Function Calls ====================
-    // Lingui's built-in formatters (default allowedCallees)
-    "t`Price: ${i18n.number(price)}`",
-    "t`Date: ${i18n.date(date)}`",
-    "<Trans>Price: {i18n.number(price)}</Trans>",
-    "<Trans>Date: {i18n.date(date)}</Trans>",
+    // ==================== Allowed Function Calls (when configured) ====================
+    // By default, NO function calls are allowed - extract to named variables!
+    // But projects can opt-in via allowedCallees option:
+    {
+      code: "t`Price: ${i18n.number(price)}`",
+      options: [{ allowedCallees: ["i18n.number"], allowMemberExpressions: false, maxExpressionDepth: 1 }]
+    },
+    {
+      code: "<Trans>Price: {i18n.number(price)}</Trans>",
+      options: [{ allowedCallees: ["i18n.number"], allowMemberExpressions: false, maxExpressionDepth: 1 }]
+    },
 
     // ==================== Lingui Helpers ====================
     // These are always allowed for pluralization and selection
@@ -79,7 +84,16 @@ ruleTester.run("no-complex-expressions-in-message", noComplexExpressionsInMessag
     },
 
     // ==================== Non-Allowed Function Calls ====================
-    // Functions not in allowedCallees should be extracted
+    // By default, ALL function calls should be extracted to named variables
+    // This includes i18n.number/date - they produce anonymous placeholders!
+    {
+      code: "t`Price: ${i18n.number(price)}`",
+      errors: [{ messageId: "complexExpression" }]
+    },
+    {
+      code: "t`Date: ${i18n.date(date)}`",
+      errors: [{ messageId: "complexExpression" }]
+    },
     {
       code: "t`Random: ${Math.random()}`",
       errors: [{ messageId: "complexExpression" }]
