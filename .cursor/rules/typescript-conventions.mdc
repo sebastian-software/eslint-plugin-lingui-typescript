@@ -14,11 +14,11 @@ Always use inline type imports for type-only imports:
 
 ```ts
 // ✅ Good
-import { type RuleModule, ESLintUtils } from "@typescript-eslint/utils"
+import { type User, fetchUser } from "./api"
 
 // ❌ Bad - separate import statement
-import type { RuleModule } from "@typescript-eslint/utils"
-import { ESLintUtils } from "@typescript-eslint/utils"
+import type { User } from "./api"
+import { fetchUser } from "./api"
 ```
 
 ### Import Order
@@ -30,9 +30,9 @@ import { ESLintUtils } from "@typescript-eslint/utils"
 ```ts
 import path from "node:path"
 
-import { ESLintUtils } from "@typescript-eslint/utils"
+import { z } from "zod"
 
-import { createRule } from "../utils/create-rule.js"
+import { validateInput } from "../utils/validation.js"
 ```
 
 ## Type Definitions
@@ -43,15 +43,17 @@ Prefer `interface` for object shapes:
 
 ```ts
 // ✅ Good
-interface RuleOptions {
-  allowedCallees: string[]
-  maxDepth: number
+interface UserProfile {
+  name: string
+  email: string
+  age: number
 }
 
 // ❌ Bad
-type RuleOptions = {
-  allowedCallees: string[]
-  maxDepth: number
+type UserProfile = {
+  name: string
+  email: string
+  age: number
 }
 ```
 
@@ -61,19 +63,23 @@ Prefer simple union string types over enums or const object patterns:
 
 ```ts
 // ✅ Good - simple union type
-type MessageId = "complexExpression" | "nestedMacro"
+type Status = "idle" | "loading" | "success" | "error"
 
 // ❌ Bad - const object (fake enum pattern)
-const MessageId = {
-  ComplexExpression: "complexExpression",
-  NestedMacro: "nestedMacro",
+const Status = {
+  Idle: "idle",
+  Loading: "loading",
+  Success: "success",
+  Error: "error",
 } as const
-type MessageId = (typeof MessageId)[keyof typeof MessageId]
+type Status = (typeof Status)[keyof typeof Status]
 
 // ❌ Bad - enum
-enum MessageId {
-  ComplexExpression = "complexExpression",
-  NestedMacro = "nestedMacro",
+enum Status {
+  Idle = "idle",
+  Loading = "loading",
+  Success = "success",
+  Error = "error",
 }
 ```
 
@@ -81,8 +87,8 @@ When you need both runtime values and types, extract the union from an array:
 
 ```ts
 // ✅ Good - array as source of truth
-const LINGUI_MACROS = ["t", "Trans", "msg", "defineMessage"] as const
-type LinguiMacro = (typeof LINGUI_MACROS)[number]
+const SUPPORTED_FORMATS = ["json", "yaml", "toml"] as const
+type SupportedFormat = (typeof SUPPORTED_FORMATS)[number]
 ```
 
 ## Functions
@@ -93,22 +99,22 @@ Use function declarations for pure functions, utility functions, and React compo
 
 ```ts
 // ✅ Good - pure function
-function isLinguiMacro(node: TSESTree.Node): boolean {
-  return node.type === "TaggedTemplateExpression"
+function formatCurrency(amount: number, currency: string): string {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount)
 }
 
 // ✅ Good - React component
-function UserProfile({ user }: UserProfileProps): React.ReactElement {
+function UserCard({ user }: UserCardProps): React.ReactElement {
   return <div>{user.name}</div>
 }
 
 // ❌ Bad - arrow function for pure function
-const isLinguiMacro = (node: TSESTree.Node): boolean => {
-  return node.type === "TaggedTemplateExpression"
+const formatCurrency = (amount: number, currency: string): string => {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount)
 }
 
 // ❌ Bad - arrow function for component
-const UserProfile = ({ user }: UserProfileProps) => {
+const UserCard = ({ user }: UserCardProps) => {
   return <div>{user.name}</div>
 }
 ```
@@ -118,14 +124,14 @@ const UserProfile = ({ user }: UserProfileProps) => {
 Use arrow functions for inline callbacks and closures:
 
 ```ts
-// ✅ Good
-const listeners = nodes.filter((node) => isRelevant(node))
+// ✅ Good - inline callback
+const activeUsers = users.filter((user) => user.isActive)
 
 // ✅ Good - closure capturing context
-function createVisitor(context: RuleContext) {
+function createHandler(config: Config) {
   return {
-    CallExpression: (node) => {
-      // Uses context from closure
+    onSubmit: (data) => {
+      // Uses config from closure
     },
   }
 }
@@ -137,14 +143,12 @@ All exported functions must have explicit return types:
 
 ```ts
 // ✅ Good
-export function createRule<TOptions extends unknown[]>(
-  options: RuleCreatorOptions<TOptions>
-): RuleModule<string, TOptions> {
+export function parseConfig(input: string): Config {
   // ...
 }
 
 // ❌ Bad - missing return type
-export function createRule(options) {
+export function parseConfig(input) {
   // ...
 }
 ```
@@ -154,14 +158,14 @@ export function createRule(options) {
 Use type guards for narrowing:
 
 ```ts
-function isCallExpression(node: TSESTree.Node): node is TSESTree.CallExpression {
-  return node.type === "CallExpression"
+function isError(value: unknown): value is Error {
+  return value instanceof Error
 }
 
 // Usage
-if (isCallExpression(node)) {
-  // node is typed as CallExpression here
-  console.log(node.callee)
+if (isError(result)) {
+  // result is typed as Error here
+  console.log(result.message)
 }
 ```
 
@@ -170,22 +174,24 @@ if (isCallExpression(node)) {
 ### Variables
 
 - **Boolean**: Use auxiliary verbs: `isLoading`, `hasError`, `shouldUpdate`
-- **Collections**: Use plural: `items`, `rules`, `visitors`
-- **Functions**: Use verbs: `createRule`, `isValid`, `getType`
+- **Collections**: Use plural: `items`, `users`, `options`
+- **Functions**: Use verbs: `createUser`, `isValid`, `getConfig`
 
 ### Files
 
-- **Rules**: `rule-name.ts` (kebab-case)
-- **Utils**: `createRule.ts` (camelCase)
-- **Types**: `types.ts` or inline
+- **Components**: `UserCard.tsx` (PascalCase)
+- **Utilities**: `formatCurrency.ts` (camelCase)
+- **Constants/Config**: `constants.ts`, `config.ts` (camelCase)
+- **Types**: `types.ts` or co-located
 
 ### Constants
 
 Use SCREAMING_SNAKE_CASE for true constants:
 
 ```ts
-const LINGUI_MACROS = ["t", "Trans", "msg", "defineMessage"] as const
-const DEFAULT_MAX_DEPTH = 1
+const SUPPORTED_FORMATS = ["json", "yaml", "toml"] as const
+const DEFAULT_TIMEOUT_MS = 5000
+const API_BASE_URL = "https://api.example.com"
 ```
 
 ## Nullish Handling
@@ -204,10 +210,10 @@ const value = input || defaultValue
 
 ```ts
 // ✅ Good
-const name = user?.profile?.name
+const city = user?.address?.city
 
 // ❌ Bad
-const name = user && user.profile && user.profile.name
+const city = user && user.address && user.address.city
 ```
 
 ## Comments
@@ -219,23 +225,25 @@ Use JSDoc without type annotations - let TypeScript handle the types:
 ```ts
 // ✅ Good - TypeScript style (no type annotations in JSDoc)
 /**
- * Creates an ESLint rule for Lingui macro validation.
+ * Formats a date relative to now (e.g., "2 hours ago").
  *
- * @param options - Rule configuration options
- * @returns Configured ESLint rule module
+ * @param date - The date to format
+ * @param locale - Optional locale for formatting
+ * @returns Human-readable relative time string
  */
-export function createLinguiRule(options: RuleOptions): RuleModule {
+export function formatRelativeTime(date: Date, locale?: string): string {
   // ...
 }
 
 // ❌ Bad - JavaScript style (redundant type annotations)
 /**
- * Creates an ESLint rule for Lingui macro validation.
+ * Formats a date relative to now.
  *
- * @param {RuleOptions} options - Rule configuration options
- * @returns {RuleModule} Configured ESLint rule module
+ * @param {Date} date - The date to format
+ * @param {string} [locale] - Optional locale
+ * @returns {string} Relative time string
  */
-export function createLinguiRule(options: RuleOptions): RuleModule {
+export function formatRelativeTime(date: Date, locale?: string): string {
   // ...
 }
 ```
@@ -243,7 +251,7 @@ export function createLinguiRule(options: RuleOptions): RuleModule {
 ### Inline Comments for Non-Obvious Logic
 
 ```ts
-// TypeScript's getTypeAtLocation returns the *widened* type for literals,
-// so we need to check the contextual type instead
-const contextualType = typeChecker.getContextualType(node)
+// Intl.RelativeTimeFormat doesn't auto-select units,
+// so we need to determine the appropriate unit ourselves
+const units = selectTimeUnit(diffMs)
 ```
