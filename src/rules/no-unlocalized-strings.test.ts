@@ -134,6 +134,22 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
         setVariant("primary")
       `,
       filename: "test.tsx"
+    },
+
+    // TypeScript: String literal unions with numbers/booleans
+    {
+      code: `
+        type MixedUnion = "auto" | "manual" | 0 | 1
+        const value: MixedUnion = "auto"
+      `,
+      filename: "test.tsx"
+    },
+    {
+      code: `
+        type StateOrBool = "pending" | "done" | boolean
+        const state: StateOrBool = "pending"
+      `,
+      filename: "test.tsx"
     }
   ],
   invalid: [
