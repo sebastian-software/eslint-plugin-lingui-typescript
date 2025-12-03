@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](///compare/v1.5.0...v1.6.0) (2025-12-03)
+
+### Features
+
+* **no-unlocalized-strings:** auto-ignore styling helper functions f1dc5ba
+* **no-unlocalized-strings:** verify return type of styling helper functions 02acd46
+
 ## [1.5.0](///compare/v1.4.0...v1.5.0) (2025-12-03)
 
 ### Features
