@@ -38,7 +38,8 @@
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build",
     "prepare": "husky",
-    "release": "release-it"
+    "release": "release-it",
+    "release:auto": "release-it --ci"
   },
   "keywords": [
     "eslint",
