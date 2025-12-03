@@ -95,6 +95,19 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     // Complex camelCase class name properties
     { code: '<Select inputElementClassName="text-sm placeholder-gray-400" />', filename: "test.tsx" },
     { code: '<DatePicker calendarPopoverClassName="shadow-lg rounded-xl" />', filename: "test.tsx" },
+
+    // Strings inside className utility functions (cn, clsx, classnames, etc.)
+    { code: '<div className={cn("px-4 py-2", "text-white")} />', filename: "test.tsx" },
+    { code: '<div className={clsx("base-class", condition && "conditional-class")} />', filename: "test.tsx" },
+    { code: '<div className={classnames("a", "b", "c")} />', filename: "test.tsx" },
+    { code: '<div className={twMerge("px-4", "px-8")} />', filename: "test.tsx" },
+    { code: '<div className={condition ? "class-a" : "class-b"} />', filename: "test.tsx" },
+    {
+      code: '<div className={cn("base", variant === "primary" ? "bg-blue-500" : "bg-gray-500")} />',
+      filename: "test.tsx"
+    },
+    // Nested function calls
+    { code: '<div className={cn(baseStyles, getVariantClass("primary"))} />', filename: "test.tsx" },
     // Color properties
     { code: '<Box backgroundColor="#ff0000" />', filename: "test.tsx" },
     { code: '<Text textColor="red-500" />', filename: "test.tsx" },
@@ -453,6 +466,18 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     },
     {
       code: 'const STATUS_COLORS = { active: { nested: "Hello World" } }',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Strings inside callbacks should NOT be ignored (even when className is present)
+    {
+      code: '<button className="px-4" onClick={() => alert("Hello World")}>X</button>',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+    {
+      code: '<button className={cn("px-4")} onSubmit={() => showMessage("Form submitted!")}>X</button>',
       filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     }

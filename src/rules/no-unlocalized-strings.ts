@@ -533,7 +533,82 @@ function isStylingConstant(variableName: string): boolean {
 }
 
 /**
- * Checks if a string is a value for an ignored property/attribute.
+ * Gets the property name if this node is (directly) a property value.
+ */
+function getPropertyName(node: TSESTree.Node): string | null {
+  const parent = node.parent
+
+  // JSX attribute: <div className="..." /> or <div className={...} />
+  if (parent?.type === AST_NODE_TYPES.JSXAttribute && parent.name.type === AST_NODE_TYPES.JSXIdentifier) {
+    return parent.name.name
+  }
+
+  // JSX expression container unwrap: className={...}
+  if (parent?.type === AST_NODE_TYPES.JSXExpressionContainer) {
+    const attr = parent.parent
+    if (attr.type === AST_NODE_TYPES.JSXAttribute && attr.name.type === AST_NODE_TYPES.JSXIdentifier) {
+      return attr.name.name
+    }
+  }
+
+  // Object property: { className: "..." }
+  if (parent?.type === AST_NODE_TYPES.Property && parent.value === node) {
+    if (parent.key.type === AST_NODE_TYPES.Identifier) {
+      return parent.key.name
+    }
+    if (parent.key.type === AST_NODE_TYPES.Literal && typeof parent.key.value === "string") {
+      return parent.key.value
+    }
+  }
+
+  return null
+}
+
+/**
+ * Checks if a property name should be ignored (styling/technical property).
+ */
+function isTechnicalPropertyName(name: string, ignoreProperties: string[]): boolean {
+  return ignoreProperties.includes(name) || isStylingProperty(name)
+}
+
+/**
+ * Checks if a string is anywhere inside the value of a styling property.
+ *
+ * This handles complex patterns like:
+ *   className={cn("class1", "class2")}
+ *   className={cn("base", condition && "extra")}
+ *   className={condition ? "a" : "b"}
+ *
+ * Walks up the tree looking for a JSXAttribute or Property with a styling name.
+ */
+function isInsideStylingPropertyValue(node: TSESTree.Node, ignoreProperties: string[]): boolean {
+  let current: TSESTree.Node | undefined = node
+
+  while (current !== undefined) {
+    // Check if current node is directly the value of a styling property
+    const propName = getPropertyName(current)
+    if (propName !== null) {
+      return isTechnicalPropertyName(propName, ignoreProperties)
+    }
+
+    // Stop at function declarations/expressions (don't cross function boundaries)
+    // This prevents: onClick={() => { return "Hello" }} from being ignored
+    if (
+      current.type === AST_NODE_TYPES.FunctionDeclaration ||
+      current.type === AST_NODE_TYPES.FunctionExpression ||
+      current.type === AST_NODE_TYPES.ArrowFunctionExpression
+    ) {
+      return false
+    }
+
+    current = current.parent ?? undefined
+  }
+
+  return false
+}
+
+/**
+ * Checks if a string is a value for an ignored property/attribute (direct value only).
  */
 function isIgnoredProperty(node: TSESTree.Node, ignoreProperties: string[]): boolean {
   const parent = node.parent
@@ -542,7 +617,7 @@ function isIgnoredProperty(node: TSESTree.Node, ignoreProperties: string[]): boo
   if (parent?.type === AST_NODE_TYPES.JSXAttribute) {
     if (parent.name.type === AST_NODE_TYPES.JSXIdentifier) {
       const name = parent.name.name
-      if (ignoreProperties.includes(name) || isStylingProperty(name)) {
+      if (isTechnicalPropertyName(name, ignoreProperties)) {
         return true
       }
     }
@@ -552,13 +627,13 @@ function isIgnoredProperty(node: TSESTree.Node, ignoreProperties: string[]): boo
   if (parent?.type === AST_NODE_TYPES.Property) {
     if (parent.key.type === AST_NODE_TYPES.Identifier) {
       const name = parent.key.name
-      if (ignoreProperties.includes(name) || isStylingProperty(name)) {
+      if (isTechnicalPropertyName(name, ignoreProperties)) {
         return true
       }
     }
     if (parent.key.type === AST_NODE_TYPES.Literal && typeof parent.key.value === "string") {
       const name = parent.key.value
-      if (ignoreProperties.includes(name) || isStylingProperty(name)) {
+      if (isTechnicalPropertyName(name, ignoreProperties)) {
         return true
       }
     }
@@ -938,8 +1013,13 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
         return
       }
 
-      // Value for ignored property
+      // Value for ignored property (direct)
       if (isIgnoredProperty(node, options.ignoreProperties)) {
+        return
+      }
+
+      // Inside a styling property value (e.g., className={cn("class1", "class2")})
+      if (isInsideStylingPropertyValue(node, options.ignoreProperties)) {
         return
       }
 

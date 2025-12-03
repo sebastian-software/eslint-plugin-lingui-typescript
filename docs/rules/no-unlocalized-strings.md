@@ -175,9 +175,16 @@ In addition to the explicit list, the rule automatically ignores camelCase prope
 <Box backgroundColor="#ff0000" />
 <Card backgroundImage="url(/hero.jpg)" />
 <Avatar iconSize="24" />
+
+// Also works with className utility functions (cn, clsx, classnames, etc.)
+<div className={cn("px-4 py-2", "text-white")} />
+<div className={clsx("base", condition && "extra")} />
+<div className={condition ? "class-a" : "class-b"} />
 ```
 
 This covers common patterns in component libraries like Chakra UI, Material UI, and custom component props.
+
+**Note**: Strings inside callback functions (like `onClick`) are NOT ignored, even when `className` is present on the same element.
 
 #### Auto-Detected Styling Constants
 
