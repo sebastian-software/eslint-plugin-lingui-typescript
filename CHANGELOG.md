@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0](///compare/v1.6.0...v1.7.0) (2025-12-03)
+
+### Features
+
+* add GitHub Pages marketing site 49f736c
+* **types:** add branded types for marking strings as unlocalized 1f38b6b
+
+### Bug Fixes
+
+* sync plugin version, fix changelog URLs, remove duplicate dep dcacca8
+
 ## [1.6.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.5.0...v1.6.0) (2025-12-03)
 
 ### Features
