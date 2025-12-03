@@ -490,7 +490,7 @@ function isErrorConstructorArgument(
 const CAMEL_CASE_PATTERN = /^[a-z]+([A-Z][a-z]+)+$/
 
 /** Technical suffixes with at least one lowercase char before (ensures prefix exists) */
-const STYLING_SUFFIX_PATTERN = /[a-z](ClassNames?|Class|Colors?|Styles?|Icons?|Images?|Sizes?|Ids?)$/
+const STYLING_SUFFIX_PATTERN = /[a-z](ClassName|Class|Color|Style|Icon|Image|Size|Id)$/
 
 /**
  * Checks if a property name is a styling/technical property.

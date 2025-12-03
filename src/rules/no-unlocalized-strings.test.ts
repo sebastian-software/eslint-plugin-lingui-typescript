@@ -134,9 +134,8 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       />`,
       filename: "test.tsx"
     },
-    // Plural styling properties
+    // classNames is in default ignore list (not a suffix pattern)
     { code: '<Calendar classNames={{ day: "bg-white", cell: "p-2" }} />', filename: "test.tsx" },
-    { code: '({ buttonColors: { primary: "#0000ff", secondary: "#cccccc" } })', filename: "test.tsx" },
     // Color properties
     { code: '<Box backgroundColor="#ff0000" />', filename: "test.tsx" },
     { code: '<Text textColor="red-500" />', filename: "test.tsx" },
