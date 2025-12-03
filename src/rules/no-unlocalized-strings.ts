@@ -568,28 +568,37 @@ function isIgnoredProperty(node: TSESTree.Node, ignoreProperties: string[]): boo
 }
 
 /**
- * Checks if a string is inside an object assigned to a styling constant.
+ * Checks if a string is a direct property value in an object assigned to a styling constant.
  *
- * Matches patterns like:
+ * Only matches the exact structure:
  *   const STATUS_COLORS = { active: "bg-green-100..." }
- *   const BUTTON_STYLES = { primary: "px-4 py-2..." }
+ *
+ * Does NOT match strings inside functions, IIFEs, or nested structures:
+ *   const STATUS_COLORS = { active: (() => "value")() }  // ❌ not matched
+ *   const STATUS_COLORS = { active: fn("value") }        // ❌ not matched
  */
 function isInsideStylingConstant(node: TSESTree.Node): boolean {
-  let current: TSESTree.Node | undefined = node.parent ?? undefined
-
-  while (current !== undefined) {
-    // Look for: const NAME = { ... } or let NAME = { ... }
-    if (
-      current.type === AST_NODE_TYPES.VariableDeclarator &&
-      current.id.type === AST_NODE_TYPES.Identifier &&
-      isStylingConstant(current.id.name)
-    ) {
-      return true
-    }
-    current = current.parent ?? undefined
+  // Must be: Literal → Property (as value) → ObjectExpression → VariableDeclarator
+  const property = node.parent
+  if (property?.type !== AST_NODE_TYPES.Property || property.value !== node) {
+    return false
   }
 
-  return false
+  const objectExpr = property.parent
+  if (objectExpr.type !== AST_NODE_TYPES.ObjectExpression) {
+    return false
+  }
+
+  const declarator = objectExpr.parent
+  if (
+    declarator.type !== AST_NODE_TYPES.VariableDeclarator ||
+    declarator.id.type !== AST_NODE_TYPES.Identifier ||
+    declarator.init !== objectExpr
+  ) {
+    return false
+  }
+
+  return isStylingConstant(declarator.id.name)
 }
 
 // ============================================================================

@@ -127,6 +127,8 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     // Singular forms
     { code: 'const DEFAULT_COLOR = { value: "#ff0000" }', filename: "test.tsx" },
     { code: 'const MAIN_CLASS = { container: "mx-auto max-w-7xl" }', filename: "test.tsx" },
+    // Nested objects should NOT be ignored (only direct property values)
+    // These are in the invalid section below
 
     // Technical strings (no spaces, identifiers)
     { code: 'const x = "myIdentifier"', filename: "test.tsx" },
@@ -433,6 +435,24 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     },
     {
       code: 'export const testAction = () => { return "Something went wrong!" }',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Styling constants: only DIRECT property values are ignored
+    // Functions, IIFEs, nested objects, etc. should still be flagged
+    {
+      code: 'const STATUS_COLORS = { active: (() => "Hello World")() }',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+    {
+      code: 'const STATUS_COLORS = { active: fn("Hello World") }',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+    {
+      code: 'const STATUS_COLORS = { active: { nested: "Hello World" } }',
       filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     }
