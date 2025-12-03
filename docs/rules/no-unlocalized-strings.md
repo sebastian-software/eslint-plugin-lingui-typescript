@@ -153,6 +153,30 @@ Default:
 
 **Note**: Properties like `type`, `role`, `href`, `id` are NOT in the default list because TypeScript automatically detects them as technical when they have string literal union types.
 
+#### Auto-Detected Styling Properties
+
+In addition to the explicit list, the rule automatically ignores camelCase properties ending with common styling suffixes:
+
+| Suffix | Examples |
+|--------|----------|
+| `ClassName` | `containerClassName`, `wrapperClassName` |
+| `Class` | `buttonClass`, `inputClass` |
+| `Color` | `backgroundColor`, `borderColor` |
+| `Style` | `containerStyle`, `buttonStyle` |
+| `Icon` | `leftIcon`, `statusIcon` |
+| `Size` | `fontSize`, `iconSize` |
+| `Id` | `containerId`, `elementId` |
+
+```tsx
+// All automatically ignored - no configuration needed
+<Button containerClassName="flex items-center" />
+<Input wrapperClassName="mt-4" />
+<Box backgroundColor="#ff0000" />
+<Avatar iconSize="24" />
+```
+
+This covers common patterns in component libraries like Chakra UI, Material UI, and custom component props.
+
 ### `ignoreNames`
 
 Array of variable names to ignore.
@@ -193,6 +217,24 @@ The rule uses heuristics to determine if a string looks like UI text:
 - Identifiers without spaces (`myFunction`, `my-css-class`)
 - CSS selectors (`:hover`, `.class`, `#id`)
 - SVG path data (`M10 10`, `L20 30`)
+- Strings without any letters — numeric/symbolic only
+
+### Numeric and Symbolic Strings
+
+Strings containing only numbers, punctuation, and symbols are automatically ignored:
+
+```tsx
+// All automatically ignored - no letters means no UI text
+const price = "1,00€"
+const amount = "$99.99"
+const time = "12:30"
+const date = "2024-01-15"
+const percentage = "100%"
+const list = "1,00 2,00 3,00"
+const arrows = "→ ← ↑ ↓"
+```
+
+This uses Unicode letter detection (`\p{L}`), so accented characters like `ä`, `ö`, `ü`, `é` are correctly recognized as letters.
 
 ## When Not To Use It
 

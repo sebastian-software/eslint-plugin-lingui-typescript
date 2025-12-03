@@ -22,12 +22,16 @@ date.toLocaleDateString("de-DE", { weekday: "long" })  // Intl.DateTimeFormatOpt
 type Status = "idle" | "loading" | "error"
 const status: Status = "loading"                 // String literal union
 
+// ✅ Automatically ignored - styling props and numeric strings
+<Box containerClassName="flex items-center" />   // *ClassName, *Class, *Color, etc.
+const price = "1,00€"                            // No letters = technical
+
 // ❌ Reported - actual user-visible text
 const message = "Welcome to our app"
 <button>Save changes</button>
 ```
 
-**No configuration needed** for DOM APIs, Intl methods, or your own string literal union types. TypeScript already knows!
+**No configuration needed** for DOM APIs, Intl methods, string literal unions, styling props, or numeric strings. TypeScript + smart heuristics handle it!
 
 ### Smart Lingui Detection
 
@@ -48,6 +52,8 @@ const label = t("save")  // ❌ Not confused with Lingui
 - 📝 Enforces simple, safe expressions inside translated messages
 - 🎯 Detects missing localization of user-visible text
 - 🧠 Zero-config recognition of technical strings via TypeScript types
+- 🎨 Auto-ignores styling props (`*ClassName`, `*Color`, `*Style`, `*Icon`, `*Size`, `*Id`)
+- 🔢 Auto-ignores numeric/symbolic strings without letters (`"1,00€"`, `"12:30"`)
 - 🔒 Verifies Lingui macros actually come from `@lingui/*` packages (no false positives from similarly-named functions)
 
 ## Requirements
@@ -126,6 +132,8 @@ This plugin is a TypeScript-focused alternative to the official [eslint-plugin-l
 | **String literal unions** | Manual whitelist | ✅ Auto-detected |
 | **DOM API strings** | Manual whitelist | ✅ Auto-detected |
 | **Intl method arguments** | Manual whitelist | ✅ Auto-detected |
+| **Styling props** (`*ClassName`, etc.) | Manual whitelist | ✅ Auto-detected |
+| **Numeric strings** (`"1,00€"`) | Manual whitelist | ✅ Auto-detected |
 | **Lingui macro verification** | Name-based only | ✅ Verifies package origin |
 | **ESLint version** | 8.x | 9.x (flat config) |
 | **Config format** | Legacy `.eslintrc` | Flat config only |
