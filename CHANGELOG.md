@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1](///compare/v1.1.0...v1.1.1) (2025-12-03)
+
+### Bug Fixes
+
+* **rules:** check strings inside exported functions 547c27e
+
 ## [1.1.0](///compare/v1.0.1...v1.1.0) (2025-12-02)
 
 ### Features
