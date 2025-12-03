@@ -656,37 +656,72 @@ function isIgnoredProperty(node: TSESTree.Node, ignoreProperties: string[]): boo
 }
 
 /**
- * Checks if a string is a direct property value in an object assigned to a styling constant.
+ * Checks if a string is inside a variable assignment to a styling constant/variable.
  *
- * Only matches the exact structure:
+ * Matches structures like:
  *   const STATUS_COLORS = { active: "bg-green-100..." }
+ *   const colorClasses = { primary: "text-blue-500" }
+ *   const indicatorClassName = cn("shrink-0", { "w-1": condition })
  *
- * Does NOT match strings inside functions, IIFEs, or nested structures:
- *   const STATUS_COLORS = { active: (() => "value")() }  // ❌ not matched
- *   const STATUS_COLORS = { active: fn("value") }        // ❌ not matched
+ * Does NOT match nested function calls or nested objects:
+ *   const STATUS_COLORS = { active: fn("Hello") }     // fn() is nested in property
+ *   const STATUS_COLORS = { active: { x: "Hello" } }  // nested object
  */
 function isInsideStylingConstant(node: TSESTree.Node): boolean {
-  // Must be: Literal → Property (as value) → ObjectExpression → VariableDeclarator
-  const property = node.parent
-  if (property?.type !== AST_NODE_TYPES.Property || property.value !== node) {
-    return false
+  let current: TSESTree.Node | undefined = node.parent ?? undefined
+  let lastCallExpression: TSESTree.Node | undefined = undefined
+  let objectDepth = 0
+
+  while (current !== undefined) {
+    // Track the most recent CallExpression we've passed through
+    if (current.type === AST_NODE_TYPES.CallExpression) {
+      lastCallExpression = current
+    }
+
+    // Track object nesting depth
+    if (current.type === AST_NODE_TYPES.ObjectExpression) {
+      objectDepth++
+    }
+
+    // Found a variable declarator - check if it has a styling name
+    if (
+      current.type === AST_NODE_TYPES.VariableDeclarator &&
+      current.id.type === AST_NODE_TYPES.Identifier &&
+      isStylingConstant(current.id.name)
+    ) {
+      // Check if the init is what we expect
+      const init = current.init
+
+      // Case 1: Direct object - const x = { key: "value" }
+      if (init?.type === AST_NODE_TYPES.ObjectExpression) {
+        // Only allow if:
+        // - We didn't pass through a CallExpression (fn() inside property)
+        // - We didn't pass through nested objects (depth must be 1)
+        return lastCallExpression === undefined && objectDepth === 1
+      }
+
+      // Case 2: Direct function call - const x = cn("value", {...})
+      if (init?.type === AST_NODE_TYPES.CallExpression) {
+        // Only allow if the CallExpression we passed through IS the init
+        return lastCallExpression === init
+      }
+
+      return false
+    }
+
+    // Stop at function boundaries (don't cross into function bodies)
+    if (
+      current.type === AST_NODE_TYPES.FunctionDeclaration ||
+      current.type === AST_NODE_TYPES.FunctionExpression ||
+      current.type === AST_NODE_TYPES.ArrowFunctionExpression
+    ) {
+      return false
+    }
+
+    current = current.parent ?? undefined
   }
 
-  const objectExpr = property.parent
-  if (objectExpr.type !== AST_NODE_TYPES.ObjectExpression) {
-    return false
-  }
-
-  const declarator = objectExpr.parent
-  if (
-    declarator.type !== AST_NODE_TYPES.VariableDeclarator ||
-    declarator.id.type !== AST_NODE_TYPES.Identifier ||
-    declarator.init !== objectExpr
-  ) {
-    return false
-  }
-
-  return isStylingConstant(declarator.id.name)
+  return false
 }
 
 // ============================================================================

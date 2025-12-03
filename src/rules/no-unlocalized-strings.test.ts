@@ -179,6 +179,15 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     },
     { code: 'const statusColors = { active: "#00ff00", inactive: "#cccccc" }', filename: "test.tsx" },
     { code: 'const iconSizes = { sm: "w-4 h-4", lg: "w-8 h-8" }', filename: "test.tsx" },
+    // Styling variable with cn() function call
+    {
+      code: `const indicatorClassName = cn(
+        "shrink-0 rounded-[2px] border-border",
+        { "h-2.5 w-2.5": indicator === "dot", "w-1": indicator === "line" }
+      )`,
+      filename: "test.tsx"
+    },
+    { code: 'const buttonClassName = cn("px-4 py-2", condition && "bg-blue-500")', filename: "test.tsx" },
     // Nested objects should NOT be ignored (only direct property values)
     // These are in the invalid section below
 
