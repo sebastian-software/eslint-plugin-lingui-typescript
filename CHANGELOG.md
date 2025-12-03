@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](///compare/v1.1.1...v1.2.0) (2025-12-03)
+
+### Features
+
+* **no-unlocalized-strings:** auto-ignore camelCase styling properties 8a88bf8
+* **no-unlocalized-strings:** skip strings without any letters ceae7a1
+
 ## [1.1.1](///compare/v1.1.0...v1.1.1) (2025-12-03)
 
 ### Bug Fixes
