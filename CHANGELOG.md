@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.0](///compare/v1.4.0...v1.5.0) (2025-12-03)
+
+### Features
+
+* **no-unlocalized-strings:** support cn() in styling variable assignments 2741be6
+
 ## [1.4.0](///compare/v1.3.0...v1.4.0) (2025-12-03)
 
 ### Features
