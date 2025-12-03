@@ -1,10 +1,11 @@
 # eslint-plugin-lingui-typescript
 
 [![npm version](https://img.shields.io/npm/v/eslint-plugin-lingui-typescript.svg)](https://www.npmjs.com/package/eslint-plugin-lingui-typescript)
+[![npm downloads](https://img.shields.io/npm/dm/eslint-plugin-lingui-typescript.svg)](https://www.npmjs.com/package/eslint-plugin-lingui-typescript)
 [![CI](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/actions/workflows/ci.yml/badge.svg)](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-ESLint plugin for [Lingui](https://lingui.dev/) with TypeScript type-aware rules.
+> 🔍 Type-aware ESLint rules for [Lingui](https://lingui.dev/) — catch unlocalized strings with zero configuration using TypeScript's type system.
 
 ## Why TypeScript?
 
@@ -212,6 +213,10 @@ The `no-unlocalized-strings` rule has different options because TypeScript types
 
 5. Review your ignore lists — many entries may no longer be needed thanks to type-aware detection.
 
+## Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before submitting a PR.
+
 ## Related Projects
 
 - [Lingui](https://lingui.dev/) – The excellent i18n library this plugin is built for. Provides powerful macros like `t`, `<Trans>`, and `plural` for seamless internationalization.
@@ -221,3 +226,7 @@ The `no-unlocalized-strings` rule has different options because TypeScript types
 ## License
 
 [MIT](LICENSE)
+
+---
+
+Made with ❤️ by [Sebastian Software](https://www.sebastian-software.de)
