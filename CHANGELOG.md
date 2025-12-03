@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.1](///compare/v1.2.0...v1.2.1) (2025-12-03)
+
+### Features
+
+* **no-unlocalized-strings:** auto-ignore UPPER_CASE styling constants 4d4955a
+
+### Bug Fixes
+
+* **no-unlocalized-strings:** only ignore direct property values in styling constants 1f10da8
+
 ## [1.2.0](///compare/v1.1.1...v1.2.0) (2025-12-03)
 
 ### Features
