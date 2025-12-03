@@ -224,6 +224,29 @@ const buttonStyles = {
 }
 ```
 
+**Styling helper functions** (singular suffixes for return values):
+
+| Suffix | Examples |
+|--------|----------|
+| `Class`, `ClassName` | `getButtonClass`, `computeClassName` |
+| `Color` | `getStatusColor`, `computeBackgroundColor` |
+| `Style` | `getContainerStyle` |
+| `Icon`, `Image`, `Size`, `Id` | `getAvatarIcon`, `computeFontSize` |
+
+```tsx
+// Helper functions with styling names - all return values ignored
+function getStatusColor(status: string) {
+  switch (status) {
+    case "active": return "bg-green-100 text-green-800";
+    case "draft": return "bg-gray-100 text-gray-800";
+    default: return "bg-muted text-muted-foreground";
+  }
+}
+
+// Used in className - the rule understands this pattern
+<Badge className={getStatusColor(goal.status)}>
+```
+
 **UPPER_CASE constants**:
 
 | Suffix | Examples |

@@ -518,6 +518,9 @@ const UPPER_CASE_STYLING_PATTERN =
 /** camelCase variable names with styling-related suffixes (plural forms for objects) */
 const CAMEL_CASE_STYLING_VAR_PATTERN = /^[a-z][a-zA-Z]*(Classes|ClassNames?|Colors|Styles|Icons|Images|Sizes|Ids)$/
 
+/** camelCase function names with styling-related suffixes (singular forms for return values) */
+const STYLING_FUNCTION_NAME_PATTERN = /^[a-z][a-zA-Z]*(Class(Name)?|Color|Style|Icon|Image|Size|Id)$/
+
 /**
  * Checks if a variable name is a styling/technical constant or variable.
  *
@@ -538,6 +541,44 @@ const CAMEL_CASE_STYLING_VAR_PATTERN = /^[a-z][a-zA-Z]*(Classes|ClassNames?|Colo
  */
 function isStylingConstant(variableName: string): boolean {
   return UPPER_CASE_STYLING_PATTERN.test(variableName) || CAMEL_CASE_STYLING_VAR_PATTERN.test(variableName)
+}
+
+/**
+ * Checks if a function name indicates it returns styling/technical values.
+ *
+ * Matches camelCase function names ending with:
+ * - "Class", "ClassName": getButtonClass, computeClassName
+ * - "Color": getStatusColor, computeBackgroundColor
+ * - "Style": getContainerStyle
+ * - "Icon", "Image", "Size", "Id"
+ *
+ * Examples: getStatusColor, getButtonClass, computeClassName
+ */
+function isStylingFunction(functionName: string): boolean {
+  return STYLING_FUNCTION_NAME_PATTERN.test(functionName)
+}
+
+/**
+ * Gets the name of a function declaration/expression if available.
+ */
+function getFunctionName(node: TSESTree.Node): string | null {
+  if (node.type === AST_NODE_TYPES.FunctionDeclaration && node.id !== null) {
+    return node.id.name
+  }
+
+  if (node.type === AST_NODE_TYPES.FunctionExpression || node.type === AST_NODE_TYPES.ArrowFunctionExpression) {
+    // Check if assigned to a variable: const fn = () => {}
+    const parent = node.parent
+    if (parent.type === AST_NODE_TYPES.VariableDeclarator && parent.id.type === AST_NODE_TYPES.Identifier) {
+      return parent.id.name
+    }
+    // Check if it's an object method: { fn: () => {} }
+    if (parent.type === AST_NODE_TYPES.Property && parent.key.type === AST_NODE_TYPES.Identifier) {
+      return parent.key.name
+    }
+  }
+
+  return null
 }
 
 /**
@@ -588,6 +629,9 @@ function isTechnicalPropertyName(name: string, ignoreProperties: string[]): bool
  *   className={condition ? "a" : "b"}
  *   classNames={{ day: "text-white", cell: "bg-gray-100" }}
  *
+ * Also handles styling helper functions:
+ *   function getStatusColor(status) { return "bg-green-100" }
+ *
  * Walks up the tree looking for a JSXAttribute or Property with a styling name.
  * Continues past non-styling properties to find parent styling properties.
  */
@@ -604,13 +648,18 @@ function isInsideStylingPropertyValue(node: TSESTree.Node, ignoreProperties: str
     // If we found a non-styling property, continue up the tree
     // (the property might be nested inside a styling property like classNames: { day: "..." })
 
-    // Stop at function declarations/expressions (don't cross function boundaries)
-    // This prevents: onClick={() => { return "Hello" }} from being ignored
+    // At function boundary - check if it's a styling helper function
     if (
       current.type === AST_NODE_TYPES.FunctionDeclaration ||
       current.type === AST_NODE_TYPES.FunctionExpression ||
       current.type === AST_NODE_TYPES.ArrowFunctionExpression
     ) {
+      // If the function has a styling name, ignore strings inside it
+      const fnName = getFunctionName(current)
+      if (fnName !== null && isStylingFunction(fnName)) {
+        return true
+      }
+      // Otherwise, stop here (don't cross into non-styling functions)
       return false
     }
 

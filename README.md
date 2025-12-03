@@ -57,6 +57,7 @@ const label = t("save")  // ❌ Not confused with Lingui
 - 🧠 Zero-config recognition of technical strings via TypeScript types
 - 🎨 Auto-ignores styling props (`*ClassName`, `*Color`, `*Style`, `*Icon`, `*Image`, `*Size`, `*Id`)
 - 📦 Auto-ignores styling variables (`colorClasses`, `STATUS_COLORS`, `buttonStyles`, etc.)
+- 🔧 Auto-ignores styling helper functions (`getStatusColor`, `getButtonClass`, etc.)
 - 🔢 Auto-ignores numeric/symbolic strings without letters (`"1,00€"`, `"12:30"`)
 - 🔒 Verifies Lingui macros actually come from `@lingui/*` packages (no false positives from similarly-named functions)
 

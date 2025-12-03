@@ -188,6 +188,29 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       filename: "test.tsx"
     },
     { code: 'const buttonClassName = cn("px-4 py-2", condition && "bg-blue-500")', filename: "test.tsx" },
+
+    // Styling helper functions (function name indicates return value is styling)
+    {
+      code: `function getStatusColor(status: string) {
+        switch (status) {
+          case "active": return "bg-green-100 text-green-800";
+          case "draft": return "bg-gray-100 text-gray-800";
+          default: return "bg-muted text-muted-foreground";
+        }
+      }`,
+      filename: "test.tsx"
+    },
+    {
+      code: `const getButtonClass = (variant: string) => {
+        return variant === "primary" ? "bg-blue-500 text-white" : "bg-gray-200";
+      }`,
+      filename: "test.tsx"
+    },
+    {
+      code: 'function computeClassName(active: boolean) { return active ? "bg-green-500" : "bg-red-500" }',
+      filename: "test.tsx"
+    },
+    { code: 'const getContainerStyle = () => "flex items-center justify-between"', filename: "test.tsx" },
     // Nested objects should NOT be ignored (only direct property values)
     // These are in the invalid section below
 
