@@ -1,0 +1,77 @@
+name: 💡 Feature Request
+description: Suggest a new feature or improvement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Please describe what you'd like to see.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: |
+        Is your feature request related to a problem? Describe the use case.
+      placeholder: |
+        I'm frustrated when the rule flags strings inside [...] because [...]
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: |
+        Describe the solution you'd like to see.
+      placeholder: |
+        The rule should automatically detect [...] and not report these strings.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: |
+        Have you considered any alternative solutions or workarounds?
+      placeholder: |
+        Currently I'm using `ignorePattern` to work around this, but it's not ideal because [...]
+
+  - type: textarea
+    id: code-example
+    attributes:
+      label: Code Example
+      description: |
+        If applicable, provide code examples showing the desired behavior.
+      render: typescript
+      placeholder: |
+        // This should be valid (not reported)
+        const x = "..."
+
+        // This should be invalid (reported)
+        const y = "..."
+
+  - type: dropdown
+    id: rule
+    attributes:
+      label: Related Rule
+      description: Which rule is this feature request related to?
+      options:
+        - no-unlocalized-strings
+        - no-single-variables-to-translate
+        - no-single-tag-to-translate
+        - no-nested-macros
+        - no-expression-in-message
+        - t-call-in-function
+        - consistent-plural-format
+        - text-restrictions
+        - New rule
+        - Plugin infrastructure
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I'm willing to submit a PR for this feature

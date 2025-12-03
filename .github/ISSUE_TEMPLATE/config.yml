@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: https://github.com/sebastian-software/eslint-plugin-lingui-typescript#readme
+    about: Check the README for usage and configuration
+  - name: 💬 Discussions
+    url: https://github.com/sebastian-software/eslint-plugin-lingui-typescript/discussions
+    about: Ask questions and discuss ideas

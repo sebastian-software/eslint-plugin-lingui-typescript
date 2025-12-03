@@ -1,0 +1,86 @@
+name: 🐛 Bug Report
+description: Report a bug or unexpected behavior
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the form below.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of the bug.
+      placeholder: When I do X, Y happens instead of Z...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: |
+        Steps to reproduce the behavior. Ideally, provide a minimal code example.
+      placeholder: |
+        ```tsx
+        // Code that triggers the issue
+        const message = "Hello World"
+        ```
+
+        Expected: No error (it's inside a function that returns a technical value)
+        Actual: Error "String appears to be user-visible text"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Plugin Version
+      description: What version of eslint-plugin-lingui-typescript are you using?
+      placeholder: "1.6.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: |
+        Please provide your environment details.
+      value: |
+        - Node.js:
+        - ESLint:
+        - TypeScript:
+        - typescript-eslint:
+    validations:
+      required: true
+
+  - type: textarea
+    id: eslint-config
+    attributes:
+      label: ESLint Configuration
+      description: |
+        Relevant parts of your ESLint config (eslint.config.ts or similar).
+      render: typescript
+      placeholder: |
+        import linguiPlugin from "eslint-plugin-lingui-typescript"
+
+        export default [
+          linguiPlugin.configs["flat/recommended"],
+          // ...
+        ]
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context about the problem (screenshots, related issues, etc.)
