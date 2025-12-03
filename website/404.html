@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eslint-plugin-lingui-typescript — Type-aware i18n linting</title>
+  <meta name="description" content="Zero-config ESLint rules for Lingui. Catch unlocalized strings automatically using TypeScript's type system.">
+  <meta name="keywords" content="eslint, lingui, i18n, internationalization, typescript, localization">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="eslint-plugin-lingui-typescript">
+  <meta property="og:description" content="Zero-config ESLint rules for Lingui. Catch unlocalized strings automatically using TypeScript's type system.">
+  <meta property="og:type" content="website">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwindcss.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              200: '#bbf7d0',
+              300: '#86efac',
+              400: '#4ade80',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+            },
+            lingui: '#F9A825',
+            eslint: '#4B32C3',
+            typescript: '#3178C6',
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .gradient-text {
+      background: linear-gradient(135deg, #16a34a 0%, #3178C6 50%, #4B32C3 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .code-block {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+    .feature-card {
+      background: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+    }
+    .feature-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 8px 24px rgba(0,0,0,0.06);
+    }
+    pre code .comment { color: #64748b; }
+    pre code .keyword { color: #7c3aed; }
+    pre code .string { color: #059669; }
+    pre code .function { color: #2563eb; }
+    pre code .type { color: #d97706; }
+    pre code .check { color: #16a34a; }
+    pre code .error { color: #dc2626; }
+    .hero-pattern {
+      background-color: #f8fafc;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2394a3b8' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .logo-strip {
+      filter: grayscale(100%);
+      opacity: 0.6;
+      transition: all 0.2s ease;
+    }
+    .logo-strip:hover {
+      filter: grayscale(0%);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="bg-white text-slate-800 antialiased">
+
+  <!-- Navigation -->
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-b border-slate-200">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-3 font-semibold text-lg text-slate-900">
+        <span class="text-2xl">🌍</span>
+        <span class="hidden sm:inline">eslint-plugin-lingui-typescript</span>
+        <span class="sm:hidden">lingui-ts</span>
+      </a>
+      <div class="flex items-center gap-6">
+        <a href="#features" class="text-sm text-slate-600 hover:text-slate-900 transition-colors hidden sm:block">Features</a>
+        <a href="#comparison" class="text-sm text-slate-600 hover:text-slate-900 transition-colors hidden sm:block">Why TypeScript?</a>
+        <a href="#quickstart" class="text-sm text-slate-600 hover:text-slate-900 transition-colors hidden sm:block">Quick Start</a>
+        <a href="https://github.com/sebastian-software/eslint-plugin-lingui-typescript" target="_blank" class="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors text-sm">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="min-h-screen flex items-center pt-20 hero-pattern">
+    <div class="max-w-6xl mx-auto px-6 py-20">
+      <!-- Logo Strip -->
+      <div class="flex items-center justify-center gap-8 mb-12">
+        <a href="https://eslint.org/" target="_blank" class="logo-strip" title="ESLint">
+          <svg class="h-10 w-auto" viewBox="0 0 124 112" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M42.2 0L0 24.2v48.4L42.2 97l42.2-24.3V24.2L42.2 0z" fill="#4B32C3"/>
+            <path d="M42.2 11.5L10.8 29.6v36.2l31.4 18.1 31.4-18.1V29.6L42.2 11.5z" fill="#8080F2"/>
+            <path d="M42.2 23L21.6 34.9v23.8l20.6 11.9 20.6-11.9V34.9L42.2 23z" fill="#fff"/>
+            <path d="M92.5 45.5L85 41.2l-2.3 4 7.5 4.3v8.7l-15 8.6v-17.3l7.4-4.3-2.3-4-7.4 4.3-17.4-10v-8.6l7.5-4.3-2.3-4-7.5 4.3-7.5-4.3-2.3 4 7.5 4.3v8.6l-17.4 10-7.4-4.3-2.3 4 7.4 4.3v17.3l-15-8.6v-8.7l7.5-4.3-2.3-4L5 49.8v17.3l17.4 10v8.6l-7.5 4.3 2.3 4 7.5-4.3 7.5 4.3 2.3-4-7.5-4.3v-8.6l17.4-10 17.4 10v8.6l-7.5 4.3 2.3 4 7.5-4.3 7.5 4.3 2.3-4-7.5-4.3v-8.6l17.4-10V49.8z" fill="#4B32C3"/>
+          </svg>
+        </a>
+        <span class="text-3xl text-slate-300">+</span>
+        <a href="https://lingui.dev/" target="_blank" class="logo-strip" title="Lingui">
+          <svg class="h-10 w-auto" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="100" cy="100" r="90" fill="#F9A825"/>
+            <path d="M100 40c-33.1 0-60 26.9-60 60s26.9 60 60 60 60-26.9 60-60-26.9-60-60-60zm0 100c-22.1 0-40-17.9-40-40s17.9-40 40-40 40 17.9 40 40-17.9 40-40 40z" fill="#fff"/>
+            <circle cx="100" cy="100" r="20" fill="#fff"/>
+          </svg>
+        </a>
+        <span class="text-3xl text-slate-300">+</span>
+        <a href="https://www.typescriptlang.org/" target="_blank" class="logo-strip" title="TypeScript">
+          <svg class="h-10 w-auto" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+            <rect width="128" height="128" rx="6" fill="#3178C6"/>
+            <path d="M82.8 89.2c1.8 3 4.2 5.3 7.2 6.8 3 1.5 6.4 2.3 10 2.3 3.5 0 6.6-.7 9.2-2 2.6-1.4 4.6-3.3 6-5.7 1.4-2.4 2.1-5.2 2.1-8.3 0-2.8-.5-5.2-1.6-7.2-1.1-2-2.6-3.7-4.6-5.2-2-1.4-4.9-2.9-8.7-4.3-2.9-1.1-5.1-2.1-6.7-3-1.6-.9-2.8-1.9-3.5-2.9-.7-1.1-1.1-2.4-1.1-3.9 0-1.6.4-3 1.3-4.2.9-1.2 2.1-2.1 3.7-2.8 1.6-.7 3.5-1 5.6-1 2.2 0 4.2.4 5.9 1.1 1.7.8 3.1 1.9 4.2 3.4 1.1 1.5 1.8 3.4 2.1 5.6l10.7-1.2c-.5-3.7-1.8-6.9-3.7-9.6-2-2.7-4.6-4.8-7.8-6.3-3.3-1.5-7.1-2.2-11.4-2.2-4.2 0-7.9.7-11.1 2.2-3.2 1.4-5.7 3.5-7.5 6.1-1.8 2.6-2.7 5.7-2.7 9.2 0 4.5 1.4 8.2 4.3 11.1 2.8 2.9 7.1 5.4 12.8 7.4 3.4 1.2 6.1 2.4 8 3.4 1.9 1 3.3 2.2 4.1 3.4.8 1.2 1.2 2.7 1.2 4.3 0 2.5-1 4.5-3 6.1-2 1.6-4.8 2.4-8.4 2.4-3.8 0-7-.9-9.6-2.8-2.6-1.9-4.3-4.7-5.2-8.4l-10.7 1.5zm-32-41.9v8.2H35.4v42H24.6v-42H9.2v-8.2h41.6z" fill="#fff"/>
+          </svg>
+        </a>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div class="text-center lg:text-left">
+          <div class="inline-flex items-center gap-2 px-3 py-1 bg-brand-100 border border-brand-200 rounded-full text-brand-700 text-sm mb-6">
+            <span class="w-2 h-2 bg-brand-500 rounded-full animate-pulse"></span>
+            ESLint 9 + TypeScript
+          </div>
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 text-slate-900">
+            <span class="gradient-text">Type-aware</span> i18n<br>linting for Lingui
+          </h1>
+          <p class="text-xl text-slate-600 mb-8 leading-relaxed">
+            Catch unlocalized strings with <strong class="text-slate-900">zero configuration</strong>.
+            TypeScript's type system automatically identifies technical strings —
+            no more endless whitelists.
+          </p>
+          <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+            <a href="#quickstart" class="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg transition-colors shadow-lg">
+              Get Started
+            </a>
+            <a href="https://github.com/sebastian-software/eslint-plugin-lingui-typescript" target="_blank" class="px-6 py-3 bg-white hover:bg-slate-50 text-slate-800 font-medium rounded-lg transition-colors border border-slate-200 shadow-sm">
+              View on GitHub
+            </a>
+          </div>
+          <div class="mt-8 flex items-center gap-6 text-sm text-slate-500 justify-center lg:justify-start">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              8 Rules
+            </div>
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              Type-safe
+            </div>
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              MIT License
+            </div>
+          </div>
+        </div>
+        <div class="code-block rounded-2xl p-6 shadow-2xl overflow-hidden">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+            <span class="ml-4 text-slate-500 text-sm">example.tsx</span>
+          </div>
+          <pre class="font-mono text-sm leading-relaxed overflow-x-auto text-slate-700"><code><span class="comment">// ✅ Automatically ignored — TypeScript knows these</span>
+document.<span class="function">createElement</span>(<span class="string">"div"</span>)
+element.<span class="function">addEventListener</span>(<span class="string">"click"</span>, handler)
+fetch(url, { mode: <span class="string">"cors"</span> })
+
+<span class="keyword">type</span> <span class="type">Status</span> = <span class="string">"idle"</span> | <span class="string">"loading"</span> | <span class="string">"error"</span>
+<span class="keyword">const</span> status: <span class="type">Status</span> = <span class="string">"loading"</span>  <span class="check">// ✅ ignored</span>
+
+<span class="comment">// ❌ Reported — actual user text</span>
+<span class="keyword">const</span> message = <span class="string">"Welcome to our app"</span>  <span class="error">// 🚨</span>
+&lt;<span class="function">button</span>&gt;Save changes&lt;/<span class="function">button</span>&gt;  <span class="error">// 🚨</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="py-20 bg-white">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Smart Detection, Zero Config</h2>
+        <p class="text-slate-600 max-w-2xl mx-auto">
+          TypeScript's type system + intelligent heuristics handle the heavy lifting.
+          Focus on your app, not your linter config.
+        </p>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Feature 1 -->
+        <div class="feature-card rounded-2xl p-6 border border-slate-100 transition-shadow">
+          <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-2xl mb-4">🎯</div>
+          <h3 class="text-lg font-semibold mb-2 text-slate-900">String Literal Unions</h3>
+          <p class="text-slate-600 text-sm">
+            <code class="text-blue-600 bg-blue-50 px-1 rounded">"idle" | "loading" | "error"</code> automatically detected as technical strings.
+          </p>
+        </div>
+        <!-- Feature 2 -->
+        <div class="feature-card rounded-2xl p-6 border border-slate-100 transition-shadow">
+          <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-2xl mb-4">🌐</div>
+          <h3 class="text-lg font-semibold mb-2 text-slate-900">DOM & Intl APIs</h3>
+          <p class="text-slate-600 text-sm">
+            Event names, element types, Intl options — all recognized via TypeScript definitions.
+          </p>
+        </div>
+        <!-- Feature 3 -->
+        <div class="feature-card rounded-2xl p-6 border border-slate-100 transition-shadow">
+          <div class="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center text-2xl mb-4">🎨</div>
+          <h3 class="text-lg font-semibold mb-2 text-slate-900">Styling Props</h3>
+          <p class="text-slate-600 text-sm">
+            <code class="text-pink-600 bg-pink-50 px-1 rounded">className</code>, <code class="text-pink-600 bg-pink-50 px-1 rounded">backgroundColor</code>, Tailwind classes — auto-ignored.
+          </p>
+        </div>
+        <!-- Feature 4 -->
+        <div class="feature-card rounded-2xl p-6 border border-slate-100 transition-shadow">
+          <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl mb-4">🔢</div>
+          <h3 class="text-lg font-semibold mb-2 text-slate-900">Numeric Strings</h3>
+          <p class="text-slate-600 text-sm">
+            Prices, dates, times like <code class="text-amber-600 bg-amber-50 px-1 rounded">"€99.99"</code> or <code class="text-amber-600 bg-amber-50 px-1 rounded">"12:30"</code> are not user text.
+          </p>
+        </div>
+        <!-- Feature 5 -->
+        <div class="feature-card rounded-2xl p-6 border border-slate-100 transition-shadow">
+          <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-2xl mb-4">🏷️</div>
+          <h3 class="text-lg font-semibold mb-2 text-slate-900">Branded Types</h3>
+          <p class="text-slate-600 text-sm">
+            Mark custom loggers, analytics, storage keys as unlocalized with <code class="text-green-600 bg-green-50 px-1 rounded">unlocalized()</code>.
+          </p>
+        </div>
+        <!-- Feature 6 -->
+        <div class="feature-card rounded-2xl p-6 border border-slate-100 transition-shadow">
+          <div class="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center text-2xl mb-4">🔒</div>
+          <h3 class="text-lg font-semibold mb-2 text-slate-900">Package Verification</h3>
+          <p class="text-slate-600 text-sm">
+            Verifies <code class="text-cyan-600 bg-cyan-50 px-1 rounded">t</code>, <code class="text-cyan-600 bg-cyan-50 px-1 rounded">Trans</code> come from <code class="text-cyan-600 bg-cyan-50 px-1 rounded">@lingui/*</code> — no false positives.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Branded Types Section -->
+  <section class="py-20 bg-slate-50">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Custom Ignore Patterns</h2>
+          <p class="text-slate-600 mb-6">
+            For loggers, analytics, or any strings that shouldn't be translated —
+            use <strong class="text-slate-900">branded types</strong> for type-safe ignore patterns.
+          </p>
+          <div class="space-y-4 text-sm">
+            <div class="flex items-start gap-3">
+              <span class="text-brand-600 mt-0.5 font-bold">✓</span>
+              <span class="text-slate-700"><code class="text-brand-600 bg-brand-50 px-1 rounded">UnlocalizedFunction&lt;T&gt;</code> — wrap entire interfaces</span>
+            </div>
+            <div class="flex items-start gap-3">
+              <span class="text-brand-600 mt-0.5 font-bold">✓</span>
+              <span class="text-slate-700"><code class="text-brand-600 bg-brand-50 px-1 rounded">unlocalized()</code> — helper for automatic type inference</span>
+            </div>
+            <div class="flex items-start gap-3">
+              <span class="text-brand-600 mt-0.5 font-bold">✓</span>
+              <span class="text-slate-700"><code class="text-brand-600 bg-brand-50 px-1 rounded">UnlocalizedEvent</code>, <code class="text-brand-600 bg-brand-50 px-1 rounded">UnlocalizedKey</code> — specific use cases</span>
+            </div>
+          </div>
+        </div>
+        <div class="code-block rounded-2xl p-6 shadow-xl overflow-hidden">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+            <span class="ml-4 text-slate-500 text-sm">logger.ts</span>
+          </div>
+          <pre class="font-mono text-sm leading-relaxed overflow-x-auto text-slate-700"><code><span class="keyword">import</span> { <span class="function">unlocalized</span> } <span class="keyword">from</span> <span class="string">"eslint-plugin-lingui-typescript/types"</span>
+
+<span class="keyword">function</span> <span class="function">createLogger</span>(prefix = <span class="string">"[App]"</span>) {
+  <span class="keyword">return</span> <span class="function">unlocalized</span>({
+    <span class="function">info</span>: (...args) =&gt; console.<span class="function">info</span>(prefix, ...args),
+    <span class="function">error</span>: (...args) =&gt; console.<span class="function">error</span>(prefix, ...args),
+  })
+}
+
+<span class="keyword">const</span> logger = <span class="function">createLogger</span>()
+logger.<span class="function">info</span>(<span class="string">"Server started"</span>)   <span class="check">// ✅ ignored</span>
+logger.<span class="function">error</span>(<span class="string">"Connection failed"</span>) <span class="check">// ✅ ignored</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison Section -->
+  <section id="comparison" class="py-20 bg-white">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Why TypeScript-Aware?</h2>
+        <p class="text-slate-600 max-w-2xl mx-auto">
+          Traditional i18n linters rely on heuristics and manual whitelists.
+          This plugin leverages TypeScript to do the work for you.
+        </p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left bg-white rounded-xl overflow-hidden shadow-lg">
+          <thead>
+            <tr class="bg-slate-100">
+              <th class="py-4 px-6 font-semibold text-slate-700">Feature</th>
+              <th class="py-4 px-6 font-semibold text-slate-500">Traditional</th>
+              <th class="py-4 px-6 font-semibold text-brand-700">This Plugin</th>
+            </tr>
+          </thead>
+          <tbody class="text-sm">
+            <tr class="border-t border-slate-100">
+              <td class="py-4 px-6 text-slate-800">String literal unions</td>
+              <td class="py-4 px-6 text-slate-500">Manual whitelist</td>
+              <td class="py-4 px-6 text-brand-600 font-medium">✓ Auto-detected</td>
+            </tr>
+            <tr class="border-t border-slate-100 bg-slate-50">
+              <td class="py-4 px-6 text-slate-800">DOM API strings</td>
+              <td class="py-4 px-6 text-slate-500">Manual whitelist</td>
+              <td class="py-4 px-6 text-brand-600 font-medium">✓ Auto-detected</td>
+            </tr>
+            <tr class="border-t border-slate-100">
+              <td class="py-4 px-6 text-slate-800">Intl method arguments</td>
+              <td class="py-4 px-6 text-slate-500">Manual whitelist</td>
+              <td class="py-4 px-6 text-brand-600 font-medium">✓ Auto-detected</td>
+            </tr>
+            <tr class="border-t border-slate-100 bg-slate-50">
+              <td class="py-4 px-6 text-slate-800">Styling props & constants</td>
+              <td class="py-4 px-6 text-slate-500">Manual whitelist</td>
+              <td class="py-4 px-6 text-brand-600 font-medium">✓ Auto-detected</td>
+            </tr>
+            <tr class="border-t border-slate-100">
+              <td class="py-4 px-6 text-slate-800">Numeric/symbolic strings</td>
+              <td class="py-4 px-6 text-slate-500">Manual whitelist</td>
+              <td class="py-4 px-6 text-brand-600 font-medium">✓ Auto-detected</td>
+            </tr>
+            <tr class="border-t border-slate-100 bg-slate-50">
+              <td class="py-4 px-6 text-slate-800">Custom ignore patterns</td>
+              <td class="py-4 px-6 text-slate-500">Config arrays</td>
+              <td class="py-4 px-6 text-brand-600 font-medium">✓ Branded types</td>
+            </tr>
+            <tr class="border-t border-slate-100">
+              <td class="py-4 px-6 text-slate-800">Lingui macro verification</td>
+              <td class="py-4 px-6 text-slate-500">Name-based only</td>
+              <td class="py-4 px-6 text-brand-600 font-medium">✓ Package origin</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Rules Section -->
+  <section class="py-20 bg-slate-50">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">8 Battle-Tested Rules</h2>
+        <p class="text-slate-600 max-w-2xl mx-auto">
+          Comprehensive coverage for Lingui best practices, from unlocalized strings to macro usage.
+        </p>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <a href="https://github.com/sebastian-software/eslint-plugin-lingui-typescript/blob/main/docs/rules/no-unlocalized-strings.md" class="feature-card rounded-xl p-5 border border-slate-200 hover:border-brand-300 transition-all group">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-mono text-brand-600 group-hover:text-brand-700 transition-colors font-medium">no-unlocalized-strings</h3>
+              <p class="text-slate-500 text-sm mt-1">Detect user-visible strings not wrapped in Lingui macros</p>
+            </div>
+            <span class="text-slate-400 group-hover:text-brand-600 transition-colors">→</span>
+          </div>
+        </a>
+        <a href="https://github.com/sebastian-software/eslint-plugin-lingui-typescript/blob/main/docs/rules/no-single-variables-to-translate.md" class="feature-card rounded-xl p-5 border border-slate-200 hover:border-brand-300 transition-all group">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-mono text-brand-600 group-hover:text-brand-700 transition-colors font-medium">no-single-variables-to-translate</h3>
+              <p class="text-slate-500 text-sm mt-1">Require context text around variables in messages</p>
+            </div>
+            <span class="text-slate-400 group-hover:text-brand-600 transition-colors">→</span>
+          </div>
+        </a>
+        <a href="https://github.com/sebastian-software/eslint-plugin-lingui-typescript/blob/main/docs/rules/no-nested-macros.md" class="feature-card rounded-xl p-5 border border-slate-200 hover:border-brand-300 transition-all group">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-mono text-brand-600 group-hover:text-brand-700 transition-colors font-medium">no-nested-macros</h3>
+              <p class="text-slate-500 text-sm mt-1">Prevent nesting Lingui macros inside each other</p>
+            </div>
+            <span class="text-slate-400 group-hover:text-brand-600 transition-colors">→</span>
+          </div>
+        </a>
+        <a href="https://github.com/sebastian-software/eslint-plugin-lingui-typescript/blob/main/docs/rules/no-expression-in-message.md" class="feature-card rounded-xl p-5 border border-slate-200 hover:border-brand-300 transition-all group">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-mono text-brand-600 group-hover:text-brand-700 transition-colors font-medium">no-expression-in-message</h3>
+              <p class="text-slate-500 text-sm mt-1">Restrict expressions to simple identifiers only</p>
+            </div>
+            <span class="text-slate-400 group-hover:text-brand-600 transition-colors">→</span>
+          </div>
+        </a>
+        <a href="https://github.com/sebastian-software/eslint-plugin-lingui-typescript/blob/main/docs/rules/t-call-in-function.md" class="feature-card rounded-xl p-5 border border-slate-200 hover:border-brand-300 transition-all group">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-mono text-brand-600 group-hover:text-brand-700 transition-colors font-medium">t-call-in-function</h3>
+              <p class="text-slate-500 text-sm mt-1">Ensure t macro calls are inside functions</p>
+            </div>
+            <span class="text-slate-400 group-hover:text-brand-600 transition-colors">→</span>
+          </div>
+        </a>
+        <a href="https://github.com/sebastian-software/eslint-plugin-lingui-typescript/blob/main/docs/rules/no-single-tag-to-translate.md" class="feature-card rounded-xl p-5 border border-slate-200 hover:border-brand-300 transition-all group">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-mono text-brand-600 group-hover:text-brand-700 transition-colors font-medium">no-single-tag-to-translate</h3>
+              <p class="text-slate-500 text-sm mt-1">Require text around single JSX elements in Trans</p>
+            </div>
+            <span class="text-slate-400 group-hover:text-brand-600 transition-colors">→</span>
+          </div>
+        </a>
+        <a href="https://github.com/sebastian-software/eslint-plugin-lingui-typescript/blob/main/docs/rules/consistent-plural-format.md" class="feature-card rounded-xl p-5 border border-slate-200 hover:border-brand-300 transition-all group">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-mono text-brand-600 group-hover:text-brand-700 transition-colors font-medium">consistent-plural-format</h3>
+              <p class="text-slate-500 text-sm mt-1">Enforce consistent plural value format</p>
+            </div>
+            <span class="text-slate-400 group-hover:text-brand-600 transition-colors">→</span>
+          </div>
+        </a>
+        <a href="https://github.com/sebastian-software/eslint-plugin-lingui-typescript/blob/main/docs/rules/text-restrictions.md" class="feature-card rounded-xl p-5 border border-slate-200 hover:border-brand-300 transition-all group">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-mono text-brand-600 group-hover:text-brand-700 transition-colors font-medium">text-restrictions</h3>
+              <p class="text-slate-500 text-sm mt-1">Enforce project-specific text patterns</p>
+            </div>
+            <span class="text-slate-400 group-hover:text-brand-600 transition-colors">→</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Start Section -->
+  <section id="quickstart" class="py-20 bg-white">
+    <div class="max-w-4xl mx-auto px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Quick Start</h2>
+        <p class="text-slate-600">Get up and running in under a minute.</p>
+      </div>
+      <div class="space-y-8">
+        <!-- Step 1 -->
+        <div class="flex gap-6">
+          <div class="flex-shrink-0 w-10 h-10 bg-brand-100 border-2 border-brand-500 rounded-full flex items-center justify-center text-brand-700 font-bold">1</div>
+          <div class="flex-grow">
+            <h3 class="font-semibold mb-3 text-slate-900">Install the plugin</h3>
+            <div class="code-block rounded-xl p-4">
+              <pre class="font-mono text-sm text-slate-700"><code>npm install --save-dev eslint-plugin-lingui-typescript</code></pre>
+            </div>
+          </div>
+        </div>
+        <!-- Step 2 -->
+        <div class="flex gap-6">
+          <div class="flex-shrink-0 w-10 h-10 bg-brand-100 border-2 border-brand-500 rounded-full flex items-center justify-center text-brand-700 font-bold">2</div>
+          <div class="flex-grow">
+            <h3 class="font-semibold mb-3 text-slate-900">Add to your ESLint config</h3>
+            <div class="code-block rounded-xl p-4 overflow-x-auto">
+              <pre class="font-mono text-sm leading-relaxed text-slate-700"><code><span class="comment">// eslint.config.ts</span>
+<span class="keyword">import</span> eslint <span class="keyword">from</span> <span class="string">"@eslint/js"</span>
+<span class="keyword">import</span> tseslint <span class="keyword">from</span> <span class="string">"typescript-eslint"</span>
+<span class="keyword">import</span> linguiPlugin <span class="keyword">from</span> <span class="string">"eslint-plugin-lingui-typescript"</span>
+
+<span class="keyword">export default</span> [
+  eslint.configs.recommended,
+  ...tseslint.configs.strictTypeChecked,
+  linguiPlugin.configs[<span class="string">"flat/recommended"</span>],
+  {
+    languageOptions: {
+      parserOptions: {
+        projectService: <span class="keyword">true</span>,
+        tsconfigRootDir: <span class="keyword">import</span>.meta.dirname
+      }
+    }
+  }
+]</code></pre>
+            </div>
+          </div>
+        </div>
+        <!-- Step 3 -->
+        <div class="flex gap-6">
+          <div class="flex-shrink-0 w-10 h-10 bg-brand-100 border-2 border-brand-500 rounded-full flex items-center justify-center text-brand-700 font-bold">3</div>
+          <div class="flex-grow">
+            <h3 class="font-semibold mb-3 text-slate-900">Run ESLint</h3>
+            <div class="code-block rounded-xl p-4">
+              <pre class="font-mono text-sm text-slate-700"><code>npx eslint .</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-12 bg-slate-900 text-slate-400">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">🌍</span>
+          <span>eslint-plugin-lingui-typescript</span>
+        </div>
+        <div class="flex items-center gap-6 text-sm">
+          <a href="https://github.com/sebastian-software/eslint-plugin-lingui-typescript" class="hover:text-white transition-colors">GitHub</a>
+          <a href="https://www.npmjs.com/package/eslint-plugin-lingui-typescript" class="hover:text-white transition-colors">npm</a>
+          <a href="https://lingui.dev/" class="hover:text-white transition-colors">Lingui</a>
+        </div>
+        <div class="text-sm">
+          Made with ❤️ by <a href="https://www.sebastian-software.de" class="text-slate-300 hover:text-white transition-colors">Sebastian Software</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
