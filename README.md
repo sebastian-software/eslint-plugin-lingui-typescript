@@ -7,6 +7,8 @@
 
 > 🔍 Type-aware ESLint rules for [Lingui](https://lingui.dev/) — catch unlocalized strings with zero configuration using TypeScript's type system.
 
+**[📖 Documentation & Examples](https://sebastian-software.github.io/eslint-plugin-lingui-typescript/)**
+
 ## Why TypeScript?
 
 Traditional i18n linters rely on heuristics and manual whitelists to distinguish user-visible text from technical strings. This leads to false positives and constant configuration tweaking.
