@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-lingui-typescript",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "description": "ESLint plugin for Lingui with TypeScript type-aware rules",
   "type": "module",
   "main": "./dist/index.js",
