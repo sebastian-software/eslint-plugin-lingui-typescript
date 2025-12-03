@@ -582,6 +582,72 @@ function getFunctionName(node: TSESTree.Node): string | null {
 }
 
 /**
+ * Checks if a function returns a string type (or string | null | undefined).
+ *
+ * This prevents false positives where a function named e.g. "getStatusColor"
+ * might return an object or array instead of a string.
+ */
+function functionReturnsString(
+  node: TSESTree.FunctionDeclaration | TSESTree.FunctionExpression | TSESTree.ArrowFunctionExpression,
+  typeChecker: ts.TypeChecker,
+  parserServices: ReturnType<typeof ESLintUtils.getParserServices>
+): boolean {
+  try {
+    const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node)
+    const signature = typeChecker.getSignatureFromDeclaration(tsNode as ts.SignatureDeclaration)
+
+    if (signature === undefined) {
+      // No signature info - allow by name to avoid false positives
+      return true
+    }
+
+    const returnType = typeChecker.getReturnTypeOfSignature(signature)
+
+    // Check if it's a string type or union containing string
+    return isStringishType(returnType, typeChecker)
+  } catch {
+    // Type checking can fail - allow by name to avoid false positives
+    return true
+  }
+}
+
+/**
+ * Checks if a type is string-ish: string, string literal, or union of these with null/undefined.
+ */
+function isStringishType(type: ts.Type, typeChecker: ts.TypeChecker): boolean {
+  // Check if it's a union type
+  if (type.isUnion()) {
+    // All non-null/undefined members must be string-ish
+    const nonNullableTypes = type.types.filter((t) => {
+      const flags = t.getFlags()
+      // Skip null and undefined
+      return !(flags & 32768) && !(flags & 65536) // Null = 32768, Undefined = 65536
+    })
+
+    // If only null/undefined, that's not a string return
+    if (nonNullableTypes.length === 0) {
+      return false
+    }
+
+    return nonNullableTypes.every((t) => isStringishType(t, typeChecker))
+  }
+
+  const flags = type.getFlags()
+
+  // String type (4) or string literal (128)
+  if ((flags & 4) !== 0 || (flags & 128) !== 0) {
+    return true
+  }
+
+  // Template literal type
+  if ((flags & 134217728) !== 0) {
+    return true
+  }
+
+  return false
+}
+
+/**
  * Gets the property name if this node is (directly) a property value.
  */
 function getPropertyName(node: TSESTree.Node): string | null {
@@ -629,13 +695,18 @@ function isTechnicalPropertyName(name: string, ignoreProperties: string[]): bool
  *   className={condition ? "a" : "b"}
  *   classNames={{ day: "text-white", cell: "bg-gray-100" }}
  *
- * Also handles styling helper functions:
- *   function getStatusColor(status) { return "bg-green-100" }
+ * Also handles styling helper functions (verified via TypeScript return type):
+ *   function getStatusColor(status): string { return "bg-green-100" }
  *
  * Walks up the tree looking for a JSXAttribute or Property with a styling name.
  * Continues past non-styling properties to find parent styling properties.
  */
-function isInsideStylingPropertyValue(node: TSESTree.Node, ignoreProperties: string[]): boolean {
+function isInsideStylingPropertyValue(
+  node: TSESTree.Node,
+  ignoreProperties: string[],
+  typeChecker: ts.TypeChecker,
+  parserServices: ReturnType<typeof ESLintUtils.getParserServices>
+): boolean {
   let current: TSESTree.Node | undefined = node
 
   while (current !== undefined) {
@@ -654,9 +725,9 @@ function isInsideStylingPropertyValue(node: TSESTree.Node, ignoreProperties: str
       current.type === AST_NODE_TYPES.FunctionExpression ||
       current.type === AST_NODE_TYPES.ArrowFunctionExpression
     ) {
-      // If the function has a styling name, ignore strings inside it
+      // If the function has a styling name AND returns a string type, ignore strings inside it
       const fnName = getFunctionName(current)
-      if (fnName !== null && isStylingFunction(fnName)) {
+      if (fnName !== null && isStylingFunction(fnName) && functionReturnsString(current, typeChecker, parserServices)) {
         return true
       }
       // Otherwise, stop here (don't cross into non-styling functions)
@@ -1116,7 +1187,7 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       }
 
       // Inside a styling property value (e.g., className={cn("class1", "class2")})
-      if (isInsideStylingPropertyValue(node, options.ignoreProperties)) {
+      if (isInsideStylingPropertyValue(node, options.ignoreProperties, typeChecker, parserServices)) {
         return
       }
 

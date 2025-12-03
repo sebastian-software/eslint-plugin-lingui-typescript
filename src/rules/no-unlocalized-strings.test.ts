@@ -211,6 +211,20 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       filename: "test.tsx"
     },
     { code: 'const getContainerStyle = () => "flex items-center justify-between"', filename: "test.tsx" },
+    // Styling helper functions with nullable return types should still be ignored
+    {
+      code: `function getStatusColor(status: string): string | null {
+        if (status === "unknown") return null;
+        return "bg-green-100 text-green-800";
+      }`,
+      filename: "test.tsx"
+    },
+    {
+      code: `const getButtonClass = (v: string): string | undefined => {
+        return v ? "bg-blue-500 text-white" : undefined;
+      }`,
+      filename: "test.tsx"
+    },
     // Nested objects should NOT be ignored (only direct property values)
     // These are in the invalid section below
 
@@ -549,6 +563,24 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     },
     {
       code: '<button className={cn("px-4")} onSubmit={() => showMessage("Form submitted!")}>X</button>',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Styling helper functions with non-string return types should NOT be ignored
+    {
+      // Function returns object, not string - should be flagged
+      code: `function getStatusColor(status: string): { color: string; label: string } {
+        return { color: "bg-green-100", label: "Hello World" };
+      }`,
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+    {
+      // Function returns array, not string - should be flagged
+      code: `const getButtonClass = (v: string): string[] => {
+        return ["Hello World", "bg-blue-500"];
+      }`,
       filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     }

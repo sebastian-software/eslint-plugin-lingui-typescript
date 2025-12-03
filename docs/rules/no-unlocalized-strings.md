@@ -247,6 +247,31 @@ function getStatusColor(status: string) {
 <Badge className={getStatusColor(goal.status)}>
 ```
 
+**Return type verification**: The rule uses TypeScript to verify that these functions actually return `string` (or `string | null | undefined`). Functions that return objects, arrays, or other types are NOT auto-ignored, even if they have a styling name:
+
+```tsx
+// ❌ FLAGGED - returns object, not string
+function getStatusColor(status: string): { color: string; label: string } {
+  return { color: "bg-green-100", label: "Hello World" };  // "Hello World" flagged
+}
+
+// ❌ FLAGGED - returns array, not string
+const getButtonClass = (v: string): string[] => {
+  return ["Hello World", "bg-blue-500"];  // "Hello World" flagged
+}
+
+// ✅ IGNORED - returns string
+function getStatusColor(status: string): string {
+  return "bg-green-100 text-green-800";
+}
+
+// ✅ IGNORED - returns string | null
+function getStatusColor(status: string): string | null {
+  if (status === "unknown") return null;
+  return "bg-green-100 text-green-800";
+}
+```
+
 **UPPER_CASE constants**:
 
 | Suffix | Examples |
