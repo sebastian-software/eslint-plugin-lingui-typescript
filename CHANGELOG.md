@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.0](///compare/v1.3.0...v1.4.0) (2025-12-03)
+
+### Features
+
+* **no-unlocalized-strings:** support camelCase styling variable names f0fb00c
+
 ## [1.3.0](///compare/v1.2.2...v1.3.0) (2025-12-03)
 
 ### Features
