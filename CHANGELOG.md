@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.2](///compare/v1.2.1...v1.2.2) (2025-12-03)
+
+### Features
+
+* **no-unlocalized-strings:** support className utility functions eda6256
+
 ## [1.2.1](///compare/v1.2.0...v1.2.1) (2025-12-03)
 
 ### Features
