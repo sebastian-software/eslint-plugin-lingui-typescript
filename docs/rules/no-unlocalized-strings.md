@@ -358,6 +358,171 @@ const arrows = "→ ← ↑ ↓"
 
 This uses Unicode letter detection (`\p{L}`), so accented characters like `ä`, `ö`, `ü`, `é` are correctly recognized as letters.
 
+## Branded Types
+
+This plugin exports branded types that you can use to mark parameters or properties as "no translation needed". The rule automatically detects these types and ignores strings passed to them.
+
+### Installation
+
+Import the types from the plugin:
+
+```ts
+import type {
+  UnlocalizedFunction,
+  UnlocalizedText,
+  UnlocalizedLog,
+  UnlocalizedStyle,
+  UnlocalizedClassName,
+  UnlocalizedEvent,
+  UnlocalizedKey,
+} from "eslint-plugin-lingui-typescript/types"
+```
+
+### Available Types
+
+| Type | Use Case |
+|------|----------|
+| `UnlocalizedFunction<T>` | Wrap entire function/object to ignore all string arguments |
+| `UnlocalizedText` | Generic catch-all for technical strings |
+| `UnlocalizedLog` | Logger message parameters (string only) |
+| `UnlocalizedStyle` | Style values (colors, fonts, spacing) |
+| `UnlocalizedClassName` | CSS class name strings |
+| `UnlocalizedEvent` | Analytics/tracking event names |
+| `UnlocalizedKey` | Storage keys, query keys, identifiers |
+
+### Example: Custom Logger (Recommended)
+
+Use the `unlocalized()` helper function to wrap logger objects. This is the most flexible approach - all string arguments to any method are automatically ignored, and TypeScript infers the type automatically.
+
+```ts
+import { unlocalized } from "eslint-plugin-lingui-typescript/types"
+
+function createLogger(prefix = "[App]") {
+  return unlocalized({
+    debug: (...args: unknown[]) => console.debug(prefix, ...args),
+    info: (...args: unknown[]) => console.info(prefix, ...args),
+    warn: (...args: unknown[]) => console.warn(prefix, ...args),
+    error: (...args: unknown[]) => console.error(prefix, ...args),
+  })
+}
+
+// Automatically typed - no manual type annotation needed!
+const logger = createLogger()
+
+// All string arguments are now ignored
+logger.info("Server started on port", 3000)  // ✅ Not flagged
+logger.error("Connection failed:", error)    // ✅ Not flagged
+logger.debug({ request }, "received")        // ✅ Not flagged
+```
+
+Alternatively, you can use `UnlocalizedFunction<T>` directly:
+
+```ts
+import type { UnlocalizedFunction } from "eslint-plugin-lingui-typescript/types"
+
+interface Logger {
+  debug(...args: unknown[]): void
+  info(...args: unknown[]): void
+}
+
+// Option A: Type the variable
+const logger: UnlocalizedFunction<Logger> = createLogger()
+
+// Option B: Type the factory return
+function createLogger(): UnlocalizedFunction<Logger> { ... }
+```
+
+### Example: Custom Logger (String Parameters Only)
+
+If your logger only accepts strings, you can use `UnlocalizedLog` for individual parameters:
+
+```ts
+import type { UnlocalizedLog } from "eslint-plugin-lingui-typescript/types"
+
+interface Logger {
+  debug(message: UnlocalizedLog): void
+  info(message: UnlocalizedLog): void
+  warn(message: UnlocalizedLog): void
+  error(message: UnlocalizedLog): void
+}
+
+const logger: Logger = createLogger()
+logger.info("Starting server on port 3000")  // ✅ Not flagged
+logger.error("Database connection failed")   // ✅ Not flagged
+```
+
+### Example: Analytics/Tracking
+
+```ts
+import type { UnlocalizedEvent } from "eslint-plugin-lingui-typescript/types"
+
+interface Analytics {
+  track(event: UnlocalizedEvent, data?: object): void
+  page(name: UnlocalizedEvent): void
+}
+
+analytics.track("User Signed Up")        // ✅ Not flagged
+analytics.track("Purchase Completed")    // ✅ Not flagged
+```
+
+### Example: Storage Keys
+
+```ts
+import type { UnlocalizedKey } from "eslint-plugin-lingui-typescript/types"
+
+interface Storage {
+  get(key: UnlocalizedKey): string | null
+  set(key: UnlocalizedKey, value: string): void
+}
+
+storage.get("User Preferences")     // ✅ Not flagged
+storage.set("Auth Token", token)    // ✅ Not flagged
+```
+
+### Example: Theme Configuration
+
+```ts
+import type { UnlocalizedStyle } from "eslint-plugin-lingui-typescript/types"
+
+interface ThemeConfig {
+  primaryColor: UnlocalizedStyle
+  fontFamily: UnlocalizedStyle
+  spacing: UnlocalizedStyle
+}
+
+const theme: ThemeConfig = {
+  primaryColor: "#3b82f6",        // ✅ Not flagged
+  fontFamily: "Inter, sans-serif", // ✅ Not flagged
+  spacing: "1rem",                // ✅ Not flagged
+}
+```
+
+### Example: Component Props
+
+```ts
+import type { UnlocalizedClassName } from "eslint-plugin-lingui-typescript/types"
+
+interface ButtonProps {
+  className?: UnlocalizedClassName
+  iconClassName?: UnlocalizedClassName
+  children: React.ReactNode
+}
+
+<Button className="px-4 py-2 bg-blue-500">  // ✅ Not flagged
+  <Trans>Click me</Trans>
+</Button>
+```
+
+### How It Works
+
+These types use TypeScript's branded type pattern:
+
+```ts
+type UnlocalizedLog = string & { readonly __linguiIgnore?: "UnlocalizedLog" }
+```
+
+The `__linguiIgnore` property is a phantom type marker—it never exists at runtime. The rule checks for this property in the contextual type to determine if a string should be ignored.
+
 ## When Not To Use It
 
 This rule requires TypeScript with type-aware linting enabled. If your project doesn't use TypeScript or doesn't need localization, disable this rule.

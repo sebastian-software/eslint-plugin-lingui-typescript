@@ -391,7 +391,185 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
 
     // Import/Export paths
     { code: 'import name from "hello"', filename: "test.tsx" },
-    { code: 'export * from "hello_export_all"', filename: "test.tsx" }
+    { code: 'export * from "hello_export_all"', filename: "test.tsx" },
+
+    // =========================================================================
+    // Branded types with __linguiIgnore
+    // =========================================================================
+
+    // UnlocalizedLog branded type
+    {
+      code: `
+        type UnlocalizedLog = string & { readonly __linguiIgnore?: "UnlocalizedLog" }
+        interface Logger {
+          info(message: UnlocalizedLog): void
+        }
+        declare const logger: Logger
+        logger.info("Starting server on port 3000")
+      `,
+      filename: "test.tsx"
+    },
+
+    // UnlocalizedStyle branded type
+    {
+      code: `
+        type UnlocalizedStyle = string & { readonly __linguiIgnore?: "UnlocalizedStyle" }
+        interface ThemeConfig {
+          primaryColor: UnlocalizedStyle
+          fontFamily: UnlocalizedStyle
+        }
+        const theme: ThemeConfig = {
+          primaryColor: "#3b82f6",
+          fontFamily: "Inter, sans-serif"
+        }
+      `,
+      filename: "test.tsx"
+    },
+
+    // UnlocalizedClassName branded type
+    {
+      code: `
+        type UnlocalizedClassName = string & { readonly __linguiIgnore?: "UnlocalizedClassName" }
+        interface ButtonProps {
+          className?: UnlocalizedClassName
+        }
+        function Button(props: ButtonProps) {}
+        <Button className="px-4 py-2 bg-blue-500" />
+      `,
+      filename: "test.tsx"
+    },
+
+    // UnlocalizedText branded type (catch-all)
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        interface ApiConfig {
+          endpoint: UnlocalizedText
+        }
+        const config: ApiConfig = {
+          endpoint: "Users endpoint configuration"
+        }
+      `,
+      filename: "test.tsx"
+    },
+
+    // UnlocalizedEvent branded type
+    {
+      code: `
+        type UnlocalizedEvent = string & { readonly __linguiIgnore?: "UnlocalizedEvent" }
+        interface Analytics {
+          track(event: UnlocalizedEvent): void
+        }
+        declare const analytics: Analytics
+        analytics.track("User Signed Up")
+      `,
+      filename: "test.tsx"
+    },
+
+    // UnlocalizedKey branded type
+    {
+      code: `
+        type UnlocalizedKey = string & { readonly __linguiIgnore?: "UnlocalizedKey" }
+        interface Storage {
+          get(key: UnlocalizedKey): string | null
+        }
+        declare const storage: Storage
+        storage.get("User Preferences")
+      `,
+      filename: "test.tsx"
+    },
+
+    // Branded type with function parameter
+    {
+      code: `
+        type UnlocalizedLog = string & { readonly __linguiIgnore?: "UnlocalizedLog" }
+        function log(msg: UnlocalizedLog) {}
+        log("Application started successfully")
+      `,
+      filename: "test.tsx"
+    },
+
+    // Branded type with multiple methods (Logger pattern)
+    {
+      code: `
+        type UnlocalizedLog = string & { readonly __linguiIgnore?: "UnlocalizedLog" }
+        interface Logger {
+          debug(message: UnlocalizedLog, ...args: unknown[]): void
+          info(message: UnlocalizedLog, ...args: unknown[]): void
+          warn(message: UnlocalizedLog, ...args: unknown[]): void
+          error(message: UnlocalizedLog, ...args: unknown[]): void
+        }
+        declare const logger: Logger
+        logger.debug("Debug information here")
+        logger.info("Processing request now")
+        logger.warn("This might be problematic")
+        logger.error("Something went wrong!")
+      `,
+      filename: "test.tsx"
+    },
+
+    // UnlocalizedFunction<T> - wrap entire logger interface
+    {
+      code: `
+        type UnlocalizedFunction<T> = T & { readonly __linguiIgnoreArgs?: true }
+        interface Logger {
+          info(...args: unknown[]): void
+          debug(...args: unknown[]): void
+        }
+        declare const logger: UnlocalizedFunction<Logger>
+        logger.info("Server started on port", 3000)
+        logger.info("Request received")
+        logger.debug({ complex: "object" }, "with message")
+      `,
+      filename: "test.tsx"
+    },
+
+    // UnlocalizedFunction<T> - with factory function return type
+    {
+      code: `
+        type UnlocalizedFunction<T> = T & { readonly __linguiIgnoreArgs?: true }
+        interface Logger {
+          info(...args: unknown[]): void
+          warn(...args: unknown[]): void
+          error(...args: unknown[]): void
+        }
+        declare function createLogger(): UnlocalizedFunction<Logger>
+        const logger = createLogger()
+        logger.info("Application started successfully")
+        logger.warn("This might be a problem")
+        logger.error("Something went wrong!")
+      `,
+      filename: "test.tsx"
+    },
+
+    // UnlocalizedFunction<T> - direct function
+    {
+      code: `
+        type UnlocalizedFunction<T> = T & { readonly __linguiIgnoreArgs?: true }
+        type LogFn = (...args: unknown[]) => void
+        declare const log: UnlocalizedFunction<LogFn>
+        log("Direct function call ignored")
+      `,
+      filename: "test.tsx"
+    },
+
+    // unlocalized() helper function
+    {
+      code: `
+        type UnlocalizedFunction<T> = T & { readonly __linguiIgnoreArgs?: true }
+        function unlocalized<T>(value: T): UnlocalizedFunction<T> { return value }
+        function createLogger() {
+          return unlocalized({
+            info: (...args: unknown[]) => console.info(...args),
+            error: (...args: unknown[]) => console.error(...args),
+          })
+        }
+        const logger = createLogger()
+        logger.info("Server started successfully")
+        logger.error("Connection failed!")
+      `,
+      filename: "test.tsx"
+    }
   ],
   invalid: [
     // Plain string that looks like UI text
@@ -581,6 +759,17 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       code: `const getButtonClass = (v: string): string[] => {
         return ["Hello World", "bg-blue-500"];
       }`,
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Branded types without __linguiIgnore should still be flagged
+    {
+      code: `
+        type CustomString = string & { readonly __custom?: "test" }
+        function test(msg: CustomString) {}
+        test("Hello World")
+      `,
       filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     }

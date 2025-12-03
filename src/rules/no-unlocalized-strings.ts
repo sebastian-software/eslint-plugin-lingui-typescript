@@ -1,6 +1,7 @@
 import { AST_NODE_TYPES, ESLintUtils, type TSESTree } from "@typescript-eslint/utils"
 import ts from "typescript"
 
+import { LINGUI_IGNORE_ARGS_BRAND, LINGUI_IGNORE_BRAND } from "../types.js"
 import { createRule } from "../utils/create-rule.js"
 
 type MessageId = "unlocalizedString"
@@ -974,6 +975,221 @@ function isIntlRelatedType(typeName: string): boolean {
 }
 
 /**
+ * Checks if a type has the __linguiIgnore brand marker.
+ *
+ * This detects branded types exported from this plugin:
+ * - UnlocalizedText, UnlocalizedLog, UnlocalizedLogParam, etc.
+ *
+ * These types are defined as: `string & { readonly __linguiIgnore?: "TypeName" }`
+ * For flexible types like UnlocalizedLogParam, it's a union of branded primitives.
+ */
+function hasLinguiIgnoreBrand(type: ts.Type, typeChecker: ts.TypeChecker): boolean {
+  // Check if the type is a union - for UnlocalizedLogParam which is (string & X) | (number & X) | ...
+  // We check if ANY member of the union has the brand (since we're checking if strings should be ignored)
+  if (type.isUnion()) {
+    return type.types.some((t) => hasLinguiIgnoreBrand(t, typeChecker))
+  }
+
+  // Check if the type is an intersection (string & { __linguiIgnore: ... })
+  if (type.isIntersection()) {
+    return type.types.some((t) => hasLinguiIgnoreBrand(t, typeChecker))
+  }
+
+  // Check if the type has the brand property
+  const brandProperty = type.getProperty(LINGUI_IGNORE_BRAND)
+  if (brandProperty !== undefined) {
+    return true
+  }
+
+  // Fallback: check type string for __linguiIgnore
+  const typeString = typeChecker.typeToString(type)
+  return typeString.includes(LINGUI_IGNORE_BRAND)
+}
+
+/**
+ * Checks if a function call's callee (the function/method being called) has the
+ * __linguiIgnoreArgs brand, meaning all string arguments should be ignored.
+ *
+ * This handles the `UnlocalizedFunction<T>` wrapper type:
+ * ```ts
+ * const logger: UnlocalizedFunction<Logger> = createLogger()
+ * logger.info("All strings ignored")  // ✅ Not flagged
+ * ```
+ */
+function isUnlocalizedFunctionCall(
+  node: TSESTree.Node,
+  typeChecker: ts.TypeChecker,
+  parserServices: ReturnType<typeof ESLintUtils.getParserServices>
+): boolean {
+  const parent = node.parent
+  if (parent?.type !== AST_NODE_TYPES.CallExpression) {
+    return false
+  }
+
+  try {
+    const callee = parent.callee
+
+    // For method calls (obj.method()), check the object's type
+    if (callee.type === AST_NODE_TYPES.MemberExpression) {
+      const objectTsNode = parserServices.esTreeNodeToTSNodeMap.get(callee.object)
+      const objectType = typeChecker.getTypeAtLocation(objectTsNode)
+
+      // Check if the object type has __linguiIgnoreArgs
+      const ignoreArgsProp = objectType.getProperty(LINGUI_IGNORE_ARGS_BRAND)
+      if (ignoreArgsProp !== undefined) {
+        return true
+      }
+
+      // Fallback: check type string
+      const typeString = typeChecker.typeToString(objectType)
+      if (typeString.includes(LINGUI_IGNORE_ARGS_BRAND)) {
+        return true
+      }
+    }
+
+    // For direct function calls (fn()), check the function's type
+    if (callee.type === AST_NODE_TYPES.Identifier) {
+      const calleeTsNode = parserServices.esTreeNodeToTSNodeMap.get(callee)
+      const calleeType = typeChecker.getTypeAtLocation(calleeTsNode)
+
+      const ignoreArgsProp = calleeType.getProperty(LINGUI_IGNORE_ARGS_BRAND)
+      if (ignoreArgsProp !== undefined) {
+        return true
+      }
+
+      const typeString = typeChecker.typeToString(calleeType)
+      if (typeString.includes(LINGUI_IGNORE_ARGS_BRAND)) {
+        return true
+      }
+    }
+  } catch {
+    // Type checking can fail
+  }
+
+  return false
+}
+
+/**
+ * Gets the parameter type for an argument in a function call.
+ *
+ * This is needed for branded types in function parameters.
+ */
+function getParameterTypeForArgument(
+  node: TSESTree.Node,
+  typeChecker: ts.TypeChecker,
+  parserServices: ReturnType<typeof ESLintUtils.getParserServices>
+): ts.Type | undefined {
+  const parent = node.parent
+  if (parent?.type !== AST_NODE_TYPES.CallExpression) {
+    return undefined
+  }
+
+  // Find the argument index
+  const argIndex = parent.arguments.indexOf(node as TSESTree.CallExpressionArgument)
+  if (argIndex === -1) {
+    return undefined
+  }
+
+  try {
+    const calleeTsNode = parserServices.esTreeNodeToTSNodeMap.get(parent.callee)
+    const calleeType = typeChecker.getTypeAtLocation(calleeTsNode)
+    const callSignatures = calleeType.getCallSignatures()
+
+    if (callSignatures.length === 0) {
+      return undefined
+    }
+
+    // Use the first call signature
+    const signature = callSignatures[0]
+    if (signature === undefined) {
+      return undefined
+    }
+
+    const parameters = signature.getParameters()
+
+    // Check if it's a rest parameter
+    const lastParam = parameters[parameters.length - 1]
+    if (lastParam !== undefined && argIndex >= parameters.length - 1) {
+      const lastParamDecl = lastParam.valueDeclaration
+      if (lastParamDecl !== undefined && ts.isParameter(lastParamDecl) && lastParamDecl.dotDotDotToken !== undefined) {
+        // It's a rest parameter, get the element type
+        const restType = typeChecker.getTypeOfSymbol(lastParam)
+        if (typeChecker.isArrayType(restType)) {
+          const typeArgs = typeChecker.getTypeArguments(restType as ts.TypeReference)
+          if (typeArgs.length > 0) {
+            return typeArgs[0]
+          }
+        }
+        return restType
+      }
+    }
+
+    // Regular parameter
+    const param = parameters[argIndex]
+    if (param === undefined) {
+      return undefined
+    }
+
+    return typeChecker.getTypeOfSymbol(param)
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * Checks if a string literal is passed to a parameter with a Lingui branded type,
+ * or if the callee has the __linguiIgnoreArgs brand (UnlocalizedFunction<T>).
+ *
+ * This enables users to mark their own types as "no translation needed" by using
+ * the branded types exported from this plugin:
+ *
+ * ```ts
+ * // Option 1: Brand individual parameters
+ * import type { UnlocalizedLog } from "eslint-plugin-lingui-typescript/types"
+ *
+ * interface Logger {
+ *   info(message: UnlocalizedLog): void
+ * }
+ *
+ * // Option 2: Brand the entire function/object
+ * import type { UnlocalizedFunction } from "eslint-plugin-lingui-typescript/types"
+ *
+ * const logger: UnlocalizedFunction<Logger> = createLogger()
+ * logger.info("All strings ignored")  // ✅ Not flagged
+ * ```
+ */
+function isLinguiBrandedType(
+  node: TSESTree.Literal,
+  typeChecker: ts.TypeChecker,
+  parserServices: ReturnType<typeof ESLintUtils.getParserServices>
+): boolean {
+  try {
+    // Check if the entire function/object is branded with __linguiIgnoreArgs
+    if (isUnlocalizedFunctionCall(node, typeChecker, parserServices)) {
+      return true
+    }
+
+    const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node)
+    const contextualType = typeChecker.getContextualType(tsNode)
+
+    // Check contextual type (works for string-based branded types)
+    if (contextualType !== undefined && hasLinguiIgnoreBrand(contextualType, typeChecker)) {
+      return true
+    }
+
+    // Check parameter type directly (needed for branded types in function parameters)
+    const paramType = getParameterTypeForArgument(node, typeChecker, parserServices)
+    if (paramType !== undefined && hasLinguiIgnoreBrand(paramType, typeChecker)) {
+      return true
+    }
+  } catch {
+    // Type checking can fail, fall back to false
+  }
+
+  return false
+}
+
+/**
  * Checks if a type is a string literal union (technical type).
  */
 function isStringLiteralUnion(type: ts.Type): boolean {
@@ -1202,6 +1418,11 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
 
       // TypeScript type-aware: string literal union, Intl API, etc.
       if (isTechnicalStringType(node, typeChecker, parserServices)) {
+        return
+      }
+
+      // Lingui branded types: LogMessage, CSSValue, CSSClassName, TechnicalString
+      if (isLinguiBrandedType(node, typeChecker, parserServices)) {
         return
       }
 
