@@ -164,6 +164,7 @@ In addition to the explicit list, the rule automatically ignores camelCase prope
 | `Color` | `backgroundColor`, `borderColor` |
 | `Style` | `containerStyle`, `buttonStyle` |
 | `Icon` | `leftIcon`, `statusIcon` |
+| `Image` | `backgroundImage`, `avatarImage` |
 | `Size` | `fontSize`, `iconSize` |
 | `Id` | `containerId`, `elementId` |
 
@@ -172,10 +173,40 @@ In addition to the explicit list, the rule automatically ignores camelCase prope
 <Button containerClassName="flex items-center" />
 <Input wrapperClassName="mt-4" />
 <Box backgroundColor="#ff0000" />
+<Card backgroundImage="url(/hero.jpg)" />
 <Avatar iconSize="24" />
 ```
 
 This covers common patterns in component libraries like Chakra UI, Material UI, and custom component props.
+
+#### Auto-Detected Styling Constants
+
+UPPER_CASE constant names with styling-related suffixes are also automatically ignored:
+
+| Suffix | Examples |
+|--------|----------|
+| `_CLASS`, `_CLASSES`, `_CLASSNAME`, `_CLASSNAMES` | `BUTTON_CLASSES`, `CARD_CLASSNAME` |
+| `_COLOR`, `_COLORS` | `STATUS_COLORS`, `THEME_COLOR` |
+| `_STYLE`, `_STYLES` | `CARD_STYLES`, `INPUT_STYLE` |
+| `_ICON`, `_ICONS` | `NAV_ICONS`, `STATUS_ICON` |
+| `_IMAGE`, `_IMAGES` | `HERO_IMAGES`, `CARD_IMAGE` |
+| `_SIZE`, `_SIZES` | `AVATAR_SIZES`, `FONT_SIZE` |
+| `_ID`, `_IDS` | `ELEMENT_IDS`, `SECTION_ID` |
+
+```tsx
+// All string values inside these constants are automatically ignored
+const STATUS_COLORS = {
+  active: "bg-green-100 text-green-800",
+  error: "bg-red-100 text-red-800",
+}
+
+const BUTTON_CLASSES = {
+  primary: "px-4 py-2 bg-blue-500 text-white rounded",
+  secondary: "px-4 py-2 bg-gray-200 text-gray-800 rounded",
+}
+```
+
+This is useful for Tailwind CSS class mappings and similar styling configuration objects.
 
 ### `ignoreNames`
 

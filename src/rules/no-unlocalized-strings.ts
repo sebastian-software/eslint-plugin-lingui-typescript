@@ -489,7 +489,7 @@ function isErrorConstructorArgument(
 const CAMEL_CASE_PATTERN = /^[a-z]+([A-Z][a-z]+)+$/
 
 /** Technical suffixes with at least one lowercase char before (ensures prefix exists) */
-const STYLING_SUFFIX_PATTERN = /[a-z](ClassName|Class|Color|Style|Icon|Size|Id)$/
+const STYLING_SUFFIX_PATTERN = /[a-z](ClassName|Class|Color|Style|Icon|Image|Size|Id)$/
 
 /**
  * Checks if a property name is a styling/technical property.
@@ -499,6 +499,7 @@ const STYLING_SUFFIX_PATTERN = /[a-z](ClassName|Class|Color|Style|Icon|Size|Id)$
  * - "Color": backgroundColor, borderColor, textColor
  * - "Style": containerStyle, buttonStyle
  * - "Icon": leftIcon, statusIcon
+ * - "Image": backgroundImage, avatarImage
  * - "Size": fontSize, iconSize
  * - "Id": containerId, elementId
  *
@@ -507,6 +508,28 @@ const STYLING_SUFFIX_PATTERN = /[a-z](ClassName|Class|Color|Style|Icon|Size|Id)$
  */
 function isStylingProperty(propertyName: string): boolean {
   return CAMEL_CASE_PATTERN.test(propertyName) && STYLING_SUFFIX_PATTERN.test(propertyName)
+}
+
+/** UPPER_CASE constant names with styling-related suffixes (singular and plural) */
+const UPPER_CASE_STYLING_PATTERN =
+  /^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*_(CLASSNAMES?|CLASSES?|CLASS|COLORS?|STYLES?|ICONS?|IMAGES?|SIZES?|IDS?)$/
+
+/**
+ * Checks if a variable name is a styling/technical constant.
+ *
+ * Matches UPPER_CASE constants ending with:
+ * - "_CLASS", "_CLASSES", "_CLASSNAME", "_CLASSNAMES"
+ * - "_COLOR", "_COLORS"
+ * - "_STYLE", "_STYLES"
+ * - "_ICON", "_ICONS"
+ * - "_IMAGE", "_IMAGES"
+ * - "_SIZE", "_SIZES"
+ * - "_ID", "_IDS"
+ *
+ * Examples: STATUS_COLORS, BUTTON_CLASSES, THEME_STYLES
+ */
+function isStylingConstant(variableName: string): boolean {
+  return UPPER_CASE_STYLING_PATTERN.test(variableName)
 }
 
 /**
@@ -539,6 +562,31 @@ function isIgnoredProperty(node: TSESTree.Node, ignoreProperties: string[]): boo
         return true
       }
     }
+  }
+
+  return false
+}
+
+/**
+ * Checks if a string is inside an object assigned to a styling constant.
+ *
+ * Matches patterns like:
+ *   const STATUS_COLORS = { active: "bg-green-100..." }
+ *   const BUTTON_STYLES = { primary: "px-4 py-2..." }
+ */
+function isInsideStylingConstant(node: TSESTree.Node): boolean {
+  let current: TSESTree.Node | undefined = node.parent ?? undefined
+
+  while (current !== undefined) {
+    // Look for: const NAME = { ... } or let NAME = { ... }
+    if (
+      current.type === AST_NODE_TYPES.VariableDeclarator &&
+      current.id.type === AST_NODE_TYPES.Identifier &&
+      isStylingConstant(current.id.name)
+    ) {
+      return true
+    }
+    current = current.parent ?? undefined
   }
 
   return false
@@ -883,6 +931,11 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
 
       // Value for ignored property
       if (isIgnoredProperty(node, options.ignoreProperties)) {
+        return
+      }
+
+      // Inside a styling constant (e.g., STATUS_COLORS, BUTTON_CLASSES)
+      if (isInsideStylingConstant(node)) {
         return
       }
 

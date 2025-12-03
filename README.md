@@ -22,8 +22,9 @@ date.toLocaleDateString("de-DE", { weekday: "long" })  // Intl.DateTimeFormatOpt
 type Status = "idle" | "loading" | "error"
 const status: Status = "loading"                 // String literal union
 
-// ✅ Automatically ignored - styling props and numeric strings
+// ✅ Automatically ignored - styling props, constants, and numeric strings
 <Box containerClassName="flex items-center" />   // *ClassName, *Class, *Color, etc.
+const STATUS_COLORS = { active: "bg-green-100" } // *_COLORS, *_CLASSES, etc.
 const price = "1,00€"                            // No letters = technical
 
 // ❌ Reported - actual user-visible text
@@ -52,7 +53,8 @@ const label = t("save")  // ❌ Not confused with Lingui
 - 📝 Enforces simple, safe expressions inside translated messages
 - 🎯 Detects missing localization of user-visible text
 - 🧠 Zero-config recognition of technical strings via TypeScript types
-- 🎨 Auto-ignores styling props (`*ClassName`, `*Color`, `*Style`, `*Icon`, `*Size`, `*Id`)
+- 🎨 Auto-ignores styling props (`*ClassName`, `*Color`, `*Style`, `*Icon`, `*Image`, `*Size`, `*Id`)
+- 📦 Auto-ignores styling constants (`STATUS_COLORS`, `BUTTON_CLASSES`, `THEME_STYLES`, etc.)
 - 🔢 Auto-ignores numeric/symbolic strings without letters (`"1,00€"`, `"12:30"`)
 - 🔒 Verifies Lingui macros actually come from `@lingui/*` packages (no false positives from similarly-named functions)
 
@@ -133,6 +135,7 @@ This plugin is a TypeScript-focused alternative to the official [eslint-plugin-l
 | **DOM API strings** | Manual whitelist | ✅ Auto-detected |
 | **Intl method arguments** | Manual whitelist | ✅ Auto-detected |
 | **Styling props** (`*ClassName`, etc.) | Manual whitelist | ✅ Auto-detected |
+| **Styling constants** (`*_COLORS`, etc.) | Manual whitelist | ✅ Auto-detected |
 | **Numeric strings** (`"1,00€"`) | Manual whitelist | ✅ Auto-detected |
 | **Lingui macro verification** | Name-based only | ✅ Verifies package origin |
 | **ESLint version** | 8.x | 9.x (flat config) |

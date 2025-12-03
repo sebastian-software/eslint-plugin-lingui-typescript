@@ -112,6 +112,21 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     // Id properties
     { code: '<Section containerId="main-section" />', filename: "test.tsx" },
     { code: '({ elementId: "header" })', filename: "test.tsx" },
+    // Image properties
+    { code: '<Card backgroundImage="url(/bg.png)" />', filename: "test.tsx" },
+    { code: '({ avatarImage: "user-default.svg" })', filename: "test.tsx" },
+
+    // UPPER_CASE styling constants
+    { code: 'const STATUS_COLORS = { active: "bg-green-100 text-green-800" }', filename: "test.tsx" },
+    { code: 'const BUTTON_CLASSES = { primary: "px-4 py-2 rounded" }', filename: "test.tsx" },
+    { code: 'const THEME_STYLES = { dark: "bg-gray-900 text-white" }', filename: "test.tsx" },
+    { code: 'const NAV_ICONS = { home: "house-solid", settings: "gear-outline" }', filename: "test.tsx" },
+    { code: 'const AVATAR_SIZES = { sm: "w-8 h-8", lg: "w-16 h-16" }', filename: "test.tsx" },
+    { code: 'const CARD_IMAGES = { hero: "/images/hero.jpg" }', filename: "test.tsx" },
+    { code: 'const ELEMENT_IDS = { header: "main-header", footer: "main-footer" }', filename: "test.tsx" },
+    // Singular forms
+    { code: 'const DEFAULT_COLOR = { value: "#ff0000" }', filename: "test.tsx" },
+    { code: 'const MAIN_CLASS = { container: "mx-auto max-w-7xl" }', filename: "test.tsx" },
 
     // Technical strings (no spaces, identifiers)
     { code: 'const x = "myIdentifier"', filename: "test.tsx" },
