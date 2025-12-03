@@ -102,6 +102,17 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: '<div className={classnames("a", "b", "c")} />', filename: "test.tsx" },
     { code: '<div className={twMerge("px-4", "px-8")} />', filename: "test.tsx" },
     { code: '<div className={condition ? "class-a" : "class-b"} />', filename: "test.tsx" },
+    // Complex ternary in styling property
+    {
+      code: `<DatePicker
+        buttonClassName={
+          errors.date
+            ? "border-red-500 focus-visible:ring-red-500 w-full"
+            : "w-full dark:bg-slate-800"
+        }
+      />`,
+      filename: "test.tsx"
+    },
     {
       code: '<div className={cn("base", variant === "primary" ? "bg-blue-500" : "bg-gray-500")} />',
       filename: "test.tsx"
