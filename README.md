@@ -26,7 +26,7 @@ const status: Status = "loading"                 // String literal union
 <Box containerClassName="flex items-center" />   // *ClassName, *Color, *Style, etc.
 <div className={clsx("px-4", "py-2")} />         // className utilities (clsx, cn, etc.)
 <Calendar classNames={{ day: "bg-white" }} />    // nested classNames objects
-const STATUS_COLORS = { active: "bg-green-100" } // *_COLORS, *_CLASSES, etc.
+const colorClasses = { active: "bg-green-100" }  // *Classes, *Colors, *Styles, etc.
 const price = "1,00€"                            // No letters = technical
 
 // ❌ Reported - actual user-visible text
@@ -56,7 +56,7 @@ const label = t("save")  // ❌ Not confused with Lingui
 - 🎯 Detects missing localization of user-visible text
 - 🧠 Zero-config recognition of technical strings via TypeScript types
 - 🎨 Auto-ignores styling props (`*ClassName`, `*Color`, `*Style`, `*Icon`, `*Image`, `*Size`, `*Id`)
-- 📦 Auto-ignores styling constants (`STATUS_COLORS`, `BUTTON_CLASSES`, `THEME_STYLES`, etc.)
+- 📦 Auto-ignores styling variables (`colorClasses`, `STATUS_COLORS`, `buttonStyles`, etc.)
 - 🔢 Auto-ignores numeric/symbolic strings without letters (`"1,00€"`, `"12:30"`)
 - 🔒 Verifies Lingui macros actually come from `@lingui/*` packages (no false positives from similarly-named functions)
 

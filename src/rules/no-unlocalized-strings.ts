@@ -515,8 +515,11 @@ function isStylingProperty(propertyName: string): boolean {
 const UPPER_CASE_STYLING_PATTERN =
   /^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*_(CLASSNAMES?|CLASSES?|CLASS|COLORS?|STYLES?|ICONS?|IMAGES?|SIZES?|IDS?)$/
 
+/** camelCase variable names with styling-related suffixes (plural forms for objects) */
+const CAMEL_CASE_STYLING_VAR_PATTERN = /^[a-z][a-zA-Z]*(Classes|ClassNames?|Colors|Styles|Icons|Images|Sizes|Ids)$/
+
 /**
- * Checks if a variable name is a styling/technical constant.
+ * Checks if a variable name is a styling/technical constant or variable.
  *
  * Matches UPPER_CASE constants ending with:
  * - "_CLASS", "_CLASSES", "_CLASSNAME", "_CLASSNAMES"
@@ -527,10 +530,14 @@ const UPPER_CASE_STYLING_PATTERN =
  * - "_SIZE", "_SIZES"
  * - "_ID", "_IDS"
  *
- * Examples: STATUS_COLORS, BUTTON_CLASSES, THEME_STYLES
+ * Also matches camelCase variables ending with:
+ * - "Classes", "ClassName", "ClassNames"
+ * - "Colors", "Styles", "Icons", "Images", "Sizes", "Ids"
+ *
+ * Examples: STATUS_COLORS, BUTTON_CLASSES, colorClasses, buttonStyles
  */
 function isStylingConstant(variableName: string): boolean {
-  return UPPER_CASE_STYLING_PATTERN.test(variableName)
+  return UPPER_CASE_STYLING_PATTERN.test(variableName) || CAMEL_CASE_STYLING_VAR_PATTERN.test(variableName)
 }
 
 /**

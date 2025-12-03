@@ -165,9 +165,20 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: 'const AVATAR_SIZES = { sm: "w-8 h-8", lg: "w-16 h-16" }', filename: "test.tsx" },
     { code: 'const CARD_IMAGES = { hero: "/images/hero.jpg" }', filename: "test.tsx" },
     { code: 'const ELEMENT_IDS = { header: "main-header", footer: "main-footer" }', filename: "test.tsx" },
-    // Singular forms
+    // Singular forms (UPPER_CASE)
     { code: 'const DEFAULT_COLOR = { value: "#ff0000" }', filename: "test.tsx" },
     { code: 'const MAIN_CLASS = { container: "mx-auto max-w-7xl" }', filename: "test.tsx" },
+    // camelCase styling variables
+    {
+      code: 'const colorClasses = { Solar: "bg-orange-100 text-orange-800", Wind: "bg-blue-100" }',
+      filename: "test.tsx"
+    },
+    {
+      code: 'const buttonStyles = { primary: "px-4 py-2 bg-blue-500", secondary: "px-4 py-2 bg-gray-200" }',
+      filename: "test.tsx"
+    },
+    { code: 'const statusColors = { active: "#00ff00", inactive: "#cccccc" }', filename: "test.tsx" },
+    { code: 'const iconSizes = { sm: "w-4 h-4", lg: "w-8 h-8" }', filename: "test.tsx" },
     // Nested objects should NOT be ignored (only direct property values)
     // These are in the invalid section below
 

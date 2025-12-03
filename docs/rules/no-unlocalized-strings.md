@@ -195,9 +195,36 @@ This covers common patterns in component libraries like Chakra UI, Material UI, 
 
 **Note**: Strings inside callback functions (like `onClick`) are NOT ignored, even when `className` is present on the same element.
 
-#### Auto-Detected Styling Constants
+#### Auto-Detected Styling Variables
 
-UPPER_CASE constant names with styling-related suffixes are also automatically ignored:
+Variable names (both UPPER_CASE and camelCase) with styling-related suffixes are automatically ignored:
+
+**camelCase variables** (for object mappings):
+
+| Suffix | Examples |
+|--------|----------|
+| `Classes`, `ClassName`, `ClassNames` | `colorClasses`, `buttonClassNames` |
+| `Colors` | `statusColors`, `themeColors` |
+| `Styles` | `buttonStyles`, `cardStyles` |
+| `Icons` | `navIcons`, `statusIcons` |
+| `Images` | `heroImages`, `avatarImages` |
+| `Sizes` | `iconSizes`, `fontSizes` |
+| `Ids` | `elementIds`, `sectionIds` |
+
+```tsx
+// camelCase variables with styling suffixes
+const colorClasses = {
+  Solar: "bg-orange-100 text-orange-800",
+  Wind: "bg-blue-100 text-blue-800",
+}
+
+const buttonStyles = {
+  primary: "px-4 py-2 bg-blue-500",
+  secondary: "px-4 py-2 bg-gray-200",
+}
+```
+
+**UPPER_CASE constants**:
 
 | Suffix | Examples |
 |--------|----------|
