@@ -138,6 +138,7 @@ Default:
 ```ts
 [
   "className",    // CSS classes - arbitrary strings, always technical
+  "classNames",   // CSS classes object (e.g., for component libraries)
   "key",          // React key prop
   "data-testid"   // DOM Testing Library standard
 ]
@@ -180,9 +181,17 @@ In addition to the explicit list, the rule automatically ignores camelCase prope
 <div className={cn("px-4 py-2", "text-white")} />
 <div className={clsx("base", condition && "extra")} />
 <div className={condition ? "class-a" : "class-b"} />
+
+// Nested classNames objects are fully supported
+<Calendar
+  classNames={{
+    day: "bg-white text-gray-900",
+    cell: "p-2 hover:bg-gray-100",
+  }}
+/>
 ```
 
-This covers common patterns in component libraries like Chakra UI, Material UI, and custom component props.
+This covers common patterns in component libraries like Chakra UI, Material UI, react-day-picker, and custom component props.
 
 **Note**: Strings inside callback functions (like `onClick`) are NOT ignored, even when `className` is present on the same element.
 

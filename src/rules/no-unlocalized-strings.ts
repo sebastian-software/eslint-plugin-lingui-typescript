@@ -38,6 +38,7 @@ const DEFAULT_IGNORE_FUNCTIONS = ["require", "import"]
 const DEFAULT_IGNORE_PROPERTIES = [
   // CSS class names - accept arbitrary strings, always technical
   "className",
+  "classNames",
   // React key prop
   "key",
   // Testing ID - DOM Testing Library standard
@@ -489,7 +490,7 @@ function isErrorConstructorArgument(
 const CAMEL_CASE_PATTERN = /^[a-z]+([A-Z][a-z]+)+$/
 
 /** Technical suffixes with at least one lowercase char before (ensures prefix exists) */
-const STYLING_SUFFIX_PATTERN = /[a-z](ClassName|Class|Color|Style|Icon|Image|Size|Id)$/
+const STYLING_SUFFIX_PATTERN = /[a-z](ClassNames?|Class|Colors?|Styles?|Icons?|Images?|Sizes?|Ids?)$/
 
 /**
  * Checks if a property name is a styling/technical property.
@@ -578,8 +579,10 @@ function isTechnicalPropertyName(name: string, ignoreProperties: string[]): bool
  *   className={cn("class1", "class2")}
  *   className={cn("base", condition && "extra")}
  *   className={condition ? "a" : "b"}
+ *   classNames={{ day: "text-white", cell: "bg-gray-100" }}
  *
  * Walks up the tree looking for a JSXAttribute or Property with a styling name.
+ * Continues past non-styling properties to find parent styling properties.
  */
 function isInsideStylingPropertyValue(node: TSESTree.Node, ignoreProperties: string[]): boolean {
   let current: TSESTree.Node | undefined = node
@@ -587,9 +590,12 @@ function isInsideStylingPropertyValue(node: TSESTree.Node, ignoreProperties: str
   while (current !== undefined) {
     // Check if current node is directly the value of a styling property
     const propName = getPropertyName(current)
-    if (propName !== null) {
-      return isTechnicalPropertyName(propName, ignoreProperties)
+    if (propName !== null && isTechnicalPropertyName(propName, ignoreProperties)) {
+      // Found a styling property - ignore this string
+      return true
     }
+    // If we found a non-styling property, continue up the tree
+    // (the property might be nested inside a styling property like classNames: { day: "..." })
 
     // Stop at function declarations/expressions (don't cross function boundaries)
     // This prevents: onClick={() => { return "Hello" }} from being ignored

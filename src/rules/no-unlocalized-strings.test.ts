@@ -119,6 +119,24 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     },
     // Nested function calls
     { code: '<div className={cn(baseStyles, getVariantClass("primary"))} />', filename: "test.tsx" },
+
+    // Nested objects inside styling properties (e.g., classNames prop with sub-properties)
+    {
+      code: `<DatePicker
+        calendarProps={{
+          className: "dark:bg-slate-800",
+          classNames: {
+            caption_label: "dark:text-slate-100",
+            day: "dark:text-slate--300 dark:hover:bg-slate-700",
+            nav_button: "dark:text-slate-400",
+          },
+        }}
+      />`,
+      filename: "test.tsx"
+    },
+    // Plural styling properties
+    { code: '<Calendar classNames={{ day: "bg-white", cell: "p-2" }} />', filename: "test.tsx" },
+    { code: '({ buttonColors: { primary: "#0000ff", secondary: "#cccccc" } })', filename: "test.tsx" },
     // Color properties
     { code: '<Box backgroundColor="#ff0000" />', filename: "test.tsx" },
     { code: '<Text textColor="red-500" />', filename: "test.tsx" },
