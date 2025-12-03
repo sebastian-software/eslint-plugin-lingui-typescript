@@ -85,6 +85,34 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: '({ type: "button" })', filename: "test.tsx" },
     { code: '({ className: "my-class" })', filename: "test.tsx" },
 
+    // CSS class name properties (camelCase ending with Class or ClassName)
+    { code: '<Button containerClassName="flex items-center" />', filename: "test.tsx" },
+    { code: '<Input wrapperClassName="mt-4 mb-2" />', filename: "test.tsx" },
+    { code: '<Card headerClass="text-lg font-bold" />', filename: "test.tsx" },
+    { code: '<Modal overlayClass="bg-black opacity-50" />', filename: "test.tsx" },
+    { code: '({ buttonClassName: "px-4 py-2" })', filename: "test.tsx" },
+    { code: '({ inputClass: "border rounded" })', filename: "test.tsx" },
+    // Complex camelCase class name properties
+    { code: '<Select inputElementClassName="text-sm placeholder-gray-400" />', filename: "test.tsx" },
+    { code: '<DatePicker calendarPopoverClassName="shadow-lg rounded-xl" />', filename: "test.tsx" },
+    // Color properties
+    { code: '<Box backgroundColor="#ff0000" />', filename: "test.tsx" },
+    { code: '<Text textColor="red-500" />', filename: "test.tsx" },
+    { code: '<Button borderColor="gray.200" />', filename: "test.tsx" },
+    { code: '({ accentColor: "blue" })', filename: "test.tsx" },
+    // Style properties
+    { code: '<View containerStyle="flex-1" />', filename: "test.tsx" },
+    { code: '({ buttonStyle: "primary" })', filename: "test.tsx" },
+    // Icon properties
+    { code: '<Button leftIcon="arrow-left" />', filename: "test.tsx" },
+    { code: '<Alert statusIcon="warning" />', filename: "test.tsx" },
+    // Size properties
+    { code: '<Text fontSize="lg" />', filename: "test.tsx" },
+    { code: '<Avatar iconSize="24" />', filename: "test.tsx" },
+    // Id properties
+    { code: '<Section containerId="main-section" />', filename: "test.tsx" },
+    { code: '({ elementId: "header" })', filename: "test.tsx" },
+
     // Technical strings (no spaces, identifiers)
     { code: 'const x = "myIdentifier"', filename: "test.tsx" },
     { code: 'const x = "my-css-class"', filename: "test.tsx" },

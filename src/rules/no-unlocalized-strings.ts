@@ -480,6 +480,30 @@ function isErrorConstructorArgument(
   return false
 }
 
+/** Valid camelCase: lowercase start, then (Uppercase + lowercase+) sequences */
+const CAMEL_CASE_PATTERN = /^[a-z]+([A-Z][a-z]+)+$/
+
+/** Technical suffixes with at least one lowercase char before (ensures prefix exists) */
+const STYLING_SUFFIX_PATTERN = /[a-z](ClassName|Class|Color|Style|Icon|Size|Id)$/
+
+/**
+ * Checks if a property name is a styling/technical property.
+ *
+ * Matches camelCase properties ending with:
+ * - "Class" or "ClassName": containerClassName, buttonClass
+ * - "Color": backgroundColor, borderColor, textColor
+ * - "Style": containerStyle, buttonStyle
+ * - "Icon": leftIcon, statusIcon
+ * - "Size": fontSize, iconSize
+ * - "Id": containerId, elementId
+ *
+ * This covers common patterns for component libraries that accept
+ * styling/technical props which contain technical values, not user text.
+ */
+function isStylingProperty(propertyName: string): boolean {
+  return CAMEL_CASE_PATTERN.test(propertyName) && STYLING_SUFFIX_PATTERN.test(propertyName)
+}
+
 /**
  * Checks if a string is a value for an ignored property/attribute.
  */
@@ -489,17 +513,26 @@ function isIgnoredProperty(node: TSESTree.Node, ignoreProperties: string[]): boo
   // JSX attribute: <div className="..." />
   if (parent?.type === AST_NODE_TYPES.JSXAttribute) {
     if (parent.name.type === AST_NODE_TYPES.JSXIdentifier) {
-      return ignoreProperties.includes(parent.name.name)
+      const name = parent.name.name
+      if (ignoreProperties.includes(name) || isStylingProperty(name)) {
+        return true
+      }
     }
   }
 
   // Object property: { className: "..." }
   if (parent?.type === AST_NODE_TYPES.Property) {
     if (parent.key.type === AST_NODE_TYPES.Identifier) {
-      return ignoreProperties.includes(parent.key.name)
+      const name = parent.key.name
+      if (ignoreProperties.includes(name) || isStylingProperty(name)) {
+        return true
+      }
     }
     if (parent.key.type === AST_NODE_TYPES.Literal && typeof parent.key.value === "string") {
-      return ignoreProperties.includes(parent.key.value)
+      const name = parent.key.value
+      if (ignoreProperties.includes(name) || isStylingProperty(name)) {
+        return true
+      }
     }
   }
 
