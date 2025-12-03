@@ -58,16 +58,32 @@
       background-clip: text;
     }
     .code-block {
-      background: #f8fafc;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
       border: 1px solid #e2e8f0;
     }
     .feature-card {
       background: white;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+      position: relative;
+      overflow: hidden;
     }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--card-color, #3178C6), var(--card-color-end, #4B32C3));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .feature-card:hover::before { opacity: 1; }
     .feature-card:hover {
       box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 8px 24px rgba(0,0,0,0.06);
+      transform: translateY(-2px);
     }
+    .feature-card { transition: all 0.3s ease; }
     pre code .comment { color: #64748b; }
     pre code .keyword { color: #7c3aed; }
     pre code .string { color: #059669; }
@@ -75,18 +91,76 @@
     pre code .type { color: #d97706; }
     pre code .check { color: #16a34a; }
     pre code .error { color: #dc2626; }
-    .hero-pattern {
-      background-color: #f8fafc;
-      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2394a3b8' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    .hero-section {
+      background: linear-gradient(135deg, #f0fdf4 0%, #ecfeff 25%, #f5f3ff 50%, #fef3c7 75%, #fdf2f8 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-section::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(34, 197, 94, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-section::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      left: -10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(79, 70, 229, 0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .section-gradient-1 {
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
+    }
+    .section-gradient-2 {
+      background: linear-gradient(135deg, #f0fdf4 0%, #ecfeff 50%, #f5f3ff 100%);
+    }
+    .section-gradient-3 {
+      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+    }
+    .btn-gradient {
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+      box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
+      transition: all 0.3s ease;
+    }
+    .btn-gradient:hover {
+      box-shadow: 0 6px 20px rgba(22, 163, 74, 0.45);
+      transform: translateY(-1px);
     }
     .logo-strip {
       filter: grayscale(100%);
       opacity: 0.6;
-      transition: all 0.2s ease;
+      transition: all 0.3s ease;
     }
     .logo-strip:hover {
       filter: grayscale(0%);
       opacity: 1;
+      transform: scale(1.1);
+    }
+    .glow-card {
+      position: relative;
+    }
+    .glow-card::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      background: linear-gradient(135deg, #22c55e, #3178C6, #4B32C3);
+      border-radius: inherit;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .glow-card:hover::after { opacity: 0.5; filter: blur(8px); }
+    .decorative-dots {
+      background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
+      background-size: 24px 24px;
     }
   </style>
 </head>
@@ -113,7 +187,7 @@
   </nav>
 
   <!-- Hero Section -->
-  <section class="min-h-screen flex items-center pt-20 hero-pattern">
+  <section class="min-h-screen flex items-center pt-20 hero-section">
     <div class="max-w-6xl mx-auto px-6 py-20">
       <!-- Logo Strip -->
       <div class="flex items-center justify-center gap-8 mb-12">
@@ -145,7 +219,7 @@
             TypeScript's type system eliminates false positives, no endless whitelists needed.
           </p>
           <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
-            <a href="#quickstart" class="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg transition-colors shadow-lg">
+            <a href="#quickstart" class="px-6 py-3 btn-gradient text-white font-semibold rounded-lg">
               Get Started
             </a>
             <a href="https://github.com/sebastian-software/eslint-plugin-lingui-typescript" target="_blank" class="px-6 py-3 bg-white hover:bg-slate-50 text-slate-800 font-medium rounded-lg transition-colors border border-slate-200 shadow-sm">
@@ -195,7 +269,7 @@ fetch(url, { mode: <span class="string">"cors"</span> })
   </section>
 
   <!-- Features Section -->
-  <section id="features" class="py-20 bg-white">
+  <section id="features" class="py-20 section-gradient-1">
     <div class="max-w-6xl mx-auto px-6">
       <div class="text-center mb-16">
         <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Smart Detection, Zero Config</h2>
@@ -206,8 +280,8 @@ fetch(url, { mode: <span class="string">"cors"</span> })
       </div>
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <!-- Feature 1 -->
-        <div class="feature-card rounded-2xl p-6 border border-slate-100 transition-shadow">
-          <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+        <div class="feature-card rounded-2xl p-6 border border-slate-100" style="--card-color: #3b82f6; --card-color-end: #6366f1;">
+          <div class="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center mb-4">
             <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
           </div>
           <h3 class="text-lg font-semibold mb-2 text-slate-900">String Literal Unions</h3>
@@ -216,8 +290,8 @@ fetch(url, { mode: <span class="string">"cors"</span> })
           </p>
         </div>
         <!-- Feature 2 -->
-        <div class="feature-card rounded-2xl p-6 border border-slate-100 transition-shadow">
-          <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+        <div class="feature-card rounded-2xl p-6 border border-slate-100" style="--card-color: #8b5cf6; --card-color-end: #a855f7;">
+          <div class="w-12 h-12 bg-gradient-to-br from-purple-100 to-fuchsia-100 rounded-xl flex items-center justify-center mb-4">
             <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></svg>
           </div>
           <h3 class="text-lg font-semibold mb-2 text-slate-900">DOM & Intl APIs</h3>
@@ -226,8 +300,8 @@ fetch(url, { mode: <span class="string">"cors"</span> })
           </p>
         </div>
         <!-- Feature 3 -->
-        <div class="feature-card rounded-2xl p-6 border border-slate-100 transition-shadow">
-          <div class="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center mb-4">
+        <div class="feature-card rounded-2xl p-6 border border-slate-100" style="--card-color: #ec4899; --card-color-end: #f43f5e;">
+          <div class="w-12 h-12 bg-gradient-to-br from-pink-100 to-rose-100 rounded-xl flex items-center justify-center mb-4">
             <svg class="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="11.5" r="2.5"/><circle cx="17" cy="18.5" r="2.5"/><circle cx="8.5" cy="13.5" r="2.5"/><path d="M21 12a9 9 0 1 1-9-9c0 4 2 6 4 8s4 5 5 5 0-4 0-4z"/></svg>
           </div>
           <h3 class="text-lg font-semibold mb-2 text-slate-900">Styling Props</h3>
@@ -236,8 +310,8 @@ fetch(url, { mode: <span class="string">"cors"</span> })
           </p>
         </div>
         <!-- Feature 4 -->
-        <div class="feature-card rounded-2xl p-6 border border-slate-100 transition-shadow">
-          <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-4">
+        <div class="feature-card rounded-2xl p-6 border border-slate-100" style="--card-color: #f59e0b; --card-color-end: #f97316;">
+          <div class="w-12 h-12 bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl flex items-center justify-center mb-4">
             <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></svg>
           </div>
           <h3 class="text-lg font-semibold mb-2 text-slate-900">Numeric Strings</h3>
@@ -246,8 +320,8 @@ fetch(url, { mode: <span class="string">"cors"</span> })
           </p>
         </div>
         <!-- Feature 5 -->
-        <div class="feature-card rounded-2xl p-6 border border-slate-100 transition-shadow">
-          <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+        <div class="feature-card rounded-2xl p-6 border border-slate-100" style="--card-color: #22c55e; --card-color-end: #10b981;">
+          <div class="w-12 h-12 bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl flex items-center justify-center mb-4">
             <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.42 0l8.58-8.58a1 1 0 0 0 0-1.42L12 2Z"/><circle cx="7.5" cy="7.5" r="1.5" fill="currentColor"/></svg>
           </div>
           <h3 class="text-lg font-semibold mb-2 text-slate-900">Branded Types</h3>
@@ -256,8 +330,8 @@ fetch(url, { mode: <span class="string">"cors"</span> })
           </p>
         </div>
         <!-- Feature 6 -->
-        <div class="feature-card rounded-2xl p-6 border border-slate-100 transition-shadow">
-          <div class="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center mb-4">
+        <div class="feature-card rounded-2xl p-6 border border-slate-100" style="--card-color: #06b6d4; --card-color-end: #0ea5e9;">
+          <div class="w-12 h-12 bg-gradient-to-br from-cyan-100 to-sky-100 rounded-xl flex items-center justify-center mb-4">
             <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
           </div>
           <h3 class="text-lg font-semibold mb-2 text-slate-900">Package Verification</h3>
@@ -270,7 +344,7 @@ fetch(url, { mode: <span class="string">"cors"</span> })
   </section>
 
   <!-- Branded Types Section -->
-  <section class="py-20 bg-slate-50">
+  <section class="py-20 section-gradient-2">
     <div class="max-w-6xl mx-auto px-6">
       <div class="grid lg:grid-cols-2 gap-12 items-center">
         <div>
@@ -319,7 +393,7 @@ logger.<span class="function">error</span>(<span class="string">"Connection fail
   </section>
 
   <!-- Comparison Section -->
-  <section id="comparison" class="py-20 bg-white">
+  <section id="comparison" class="py-20 section-gradient-3">
     <div class="max-w-6xl mx-auto px-6">
       <div class="text-center mb-16">
         <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Why TypeScript-Aware?</h2>
@@ -380,7 +454,7 @@ logger.<span class="function">error</span>(<span class="string">"Connection fail
   </section>
 
   <!-- Rules Section -->
-  <section class="py-20 bg-slate-50">
+  <section class="py-20 section-gradient-2 decorative-dots">
     <div class="max-w-6xl mx-auto px-6">
       <div class="text-center mb-16">
         <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">8 Battle-Tested Rules</h2>
@@ -466,7 +540,7 @@ logger.<span class="function">error</span>(<span class="string">"Connection fail
   </section>
 
   <!-- Quick Start Section -->
-  <section id="quickstart" class="py-20 bg-white">
+  <section id="quickstart" class="py-20 section-gradient-1">
     <div class="max-w-4xl mx-auto px-6">
       <div class="text-center mb-16">
         <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Quick Start</h2>
