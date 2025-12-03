@@ -127,6 +127,19 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: 'const sep = "-"', filename: "test.tsx" },
     { code: 'const x = "."', filename: "test.tsx" },
 
+    // Numeric/symbolic strings (no letters at all)
+    { code: 'const x = "1000"', filename: "test.tsx" },
+    { code: 'const x = "1.000"', filename: "test.tsx" },
+    { code: 'const x = "1,00"', filename: "test.tsx" },
+    { code: 'const x = "1,00€"', filename: "test.tsx" },
+    { code: 'const x = "€100"', filename: "test.tsx" },
+    { code: 'const x = "1,00 2,00 3,00"', filename: "test.tsx" },
+    { code: 'const x = "100%"', filename: "test.tsx" },
+    { code: 'const x = "$99.99"', filename: "test.tsx" },
+    { code: 'const x = "12:30"', filename: "test.tsx" },
+    { code: 'const x = "2024-01-15"', filename: "test.tsx" },
+    { code: 'const x = "→ ← ↑ ↓"', filename: "test.tsx" },
+
     // Empty strings
     { code: 'const x = ""', filename: "test.tsx" },
     { code: 'const x = "   "', filename: "test.tsx" },

@@ -288,6 +288,11 @@ function looksLikeUIString(value: string): boolean {
     return true
   }
 
+  // No letters at all - likely numeric/symbolic (e.g., "1,00€", "1.000", "100%")
+  if (!/\p{L}/u.test(trimmed)) {
+    return false
+  }
+
   // Contains letters AND spaces - likely a phrase or sentence
   if (/[a-zA-Z]/.test(trimmed) && /\s/.test(trimmed)) {
     return true
