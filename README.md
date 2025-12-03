@@ -23,8 +23,9 @@ type Status = "idle" | "loading" | "error"
 const status: Status = "loading"                 // String literal union
 
 // ✅ Automatically ignored - styling props, constants, and numeric strings
-<Box containerClassName="flex items-center" />   // *ClassName, *Class, *Color, etc.
-<div className={clsx("px-4", "py-2")} />         // className utilities (cx, clsx, etc.)
+<Box containerClassName="flex items-center" />   // *ClassName, *Color, *Style, etc.
+<div className={clsx("px-4", "py-2")} />         // className utilities (clsx, cn, etc.)
+<Calendar classNames={{ day: "bg-white" }} />    // nested classNames objects
 const STATUS_COLORS = { active: "bg-green-100" } // *_COLORS, *_CLASSES, etc.
 const price = "1,00€"                            // No letters = technical
 
