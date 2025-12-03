@@ -60,7 +60,45 @@ const label = t("save")  // ❌ Not confused with Lingui
 - 📦 Auto-ignores styling variables (`colorClasses`, `STATUS_COLORS`, `buttonStyles`, etc.)
 - 🔧 Auto-ignores styling helper functions (`getStatusColor`, `getButtonClass`, etc.)
 - 🔢 Auto-ignores numeric/symbolic strings without letters (`"1,00€"`, `"12:30"`)
+- 🏷️ Branded types for custom ignore patterns (loggers, analytics, etc.)
 - 🔒 Verifies Lingui macros actually come from `@lingui/*` packages (no false positives from similarly-named functions)
+
+## Branded Types for Custom Ignore Patterns
+
+For cases not covered by automatic detection (like custom loggers or analytics), this plugin exports branded types you can use to mark strings as "no translation needed":
+
+```ts
+import { unlocalized } from "eslint-plugin-lingui-typescript/types"
+
+// Wrap your logger to ignore all string arguments
+function createLogger(prefix = "[App]") {
+  return unlocalized({
+    debug: (...args: unknown[]) => console.debug(prefix, ...args),
+    info: (...args: unknown[]) => console.info(prefix, ...args),
+    warn: (...args: unknown[]) => console.warn(prefix, ...args),
+    error: (...args: unknown[]) => console.error(prefix, ...args),
+  })
+}
+
+const logger = createLogger()
+logger.info("Server started on port", 3000)  // ✅ Automatically ignored
+logger.error("Connection failed:", error)    // ✅ Automatically ignored
+```
+
+### Available Types
+
+| Type | Use Case |
+|------|----------|
+| `UnlocalizedFunction<T>` | Wrap functions/objects to ignore all string arguments |
+| `unlocalized(value)` | Helper function for automatic type inference |
+| `UnlocalizedText` | Generic technical strings |
+| `UnlocalizedLog` | Logger message parameters (string only) |
+| `UnlocalizedStyle` | Style values (colors, fonts, spacing) |
+| `UnlocalizedClassName` | CSS class names |
+| `UnlocalizedEvent` | Analytics/tracking event names |
+| `UnlocalizedKey` | Storage keys, query keys |
+
+See the [no-unlocalized-strings documentation](docs/rules/no-unlocalized-strings.md#branded-types) for detailed examples.
 
 ## Requirements
 
@@ -141,6 +179,7 @@ This plugin is a TypeScript-focused alternative to the official [eslint-plugin-l
 | **Styling props** (`*ClassName`, etc.) | Manual whitelist | ✅ Auto-detected |
 | **Styling constants** (`*_COLORS`, etc.) | Manual whitelist | ✅ Auto-detected |
 | **Numeric strings** (`"1,00€"`) | Manual whitelist | ✅ Auto-detected |
+| **Custom ignore patterns** | `ignoreFunctions` only | ✅ Branded types (`unlocalized()`) |
 | **Lingui macro verification** | Name-based only | ✅ Verifies package origin |
 | **ESLint version** | 8.x | 9.x (flat config) |
 | **Config format** | Legacy `.eslintrc` | Flat config only |

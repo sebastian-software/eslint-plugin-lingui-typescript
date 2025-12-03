@@ -515,13 +515,33 @@ interface ButtonProps {
 
 ### How It Works
 
-These types use TypeScript's branded type pattern:
+These types use TypeScript's branded type pattern with two different markers:
+
+**Parameter-level branding** (`__linguiIgnore`):
 
 ```ts
 type UnlocalizedLog = string & { readonly __linguiIgnore?: "UnlocalizedLog" }
 ```
 
-The `__linguiIgnore` property is a phantom type marker—it never exists at runtime. The rule checks for this property in the contextual type to determine if a string should be ignored.
+The rule checks if the parameter's contextual type has this property.
+
+**Function-level branding** (`__linguiIgnoreArgs`):
+
+```ts
+type UnlocalizedFunction<T> = T & { readonly __linguiIgnoreArgs?: true }
+```
+
+The rule checks if the object/function being called has this property. If so, all string arguments are ignored.
+
+**The `unlocalized()` helper:**
+
+```ts
+function unlocalized<T>(value: T): UnlocalizedFunction<T> {
+  return value as UnlocalizedFunction<T>
+}
+```
+
+This is an identity function—it returns the input unchanged at runtime. But it changes the compile-time type to include the `__linguiIgnoreArgs` brand, enabling automatic type inference without manual annotations.
 
 ## When Not To Use It
 
