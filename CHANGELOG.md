@@ -1,37 +1,39 @@
 # Changelog
 
-## [1.6.0](///compare/v1.5.0...v1.6.0) (2025-12-03)
+All notable changes to this project will be documented in this file.
+
+## [1.6.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.5.0...v1.6.0) (2025-12-03)
 
 ### Features
 
 * **no-unlocalized-strings:** auto-ignore styling helper functions f1dc5ba
 * **no-unlocalized-strings:** verify return type of styling helper functions 02acd46
 
-## [1.5.0](///compare/v1.4.0...v1.5.0) (2025-12-03)
+## [1.5.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.4.0...v1.5.0) (2025-12-03)
 
 ### Features
 
 * **no-unlocalized-strings:** support cn() in styling variable assignments 2741be6
 
-## [1.4.0](///compare/v1.3.0...v1.4.0) (2025-12-03)
+## [1.4.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.3.0...v1.4.0) (2025-12-03)
 
 ### Features
 
 * **no-unlocalized-strings:** support camelCase styling variable names f0fb00c
 
-## [1.3.0](///compare/v1.2.2...v1.3.0) (2025-12-03)
+## [1.3.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.2.2...v1.3.0) (2025-12-03)
 
 ### Features
 
 * **no-unlocalized-strings:** support nested classNames objects 20eb965
 
-## [1.2.2](///compare/v1.2.1...v1.2.2) (2025-12-03)
+## [1.2.2](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.2.1...v1.2.2) (2025-12-03)
 
 ### Features
 
 * **no-unlocalized-strings:** support className utility functions eda6256
 
-## [1.2.1](///compare/v1.2.0...v1.2.1) (2025-12-03)
+## [1.2.1](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.2.0...v1.2.1) (2025-12-03)
 
 ### Features
 
@@ -41,20 +43,20 @@
 
 * **no-unlocalized-strings:** only ignore direct property values in styling constants 1f10da8
 
-## [1.2.0](///compare/v1.1.1...v1.2.0) (2025-12-03)
+## [1.2.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.1.1...v1.2.0) (2025-12-03)
 
 ### Features
 
 * **no-unlocalized-strings:** auto-ignore camelCase styling properties 8a88bf8
 * **no-unlocalized-strings:** skip strings without any letters ceae7a1
 
-## [1.1.1](///compare/v1.1.0...v1.1.1) (2025-12-03)
+## [1.1.1](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.1.0...v1.1.1) (2025-12-03)
 
 ### Bug Fixes
 
 * **rules:** check strings inside exported functions 547c27e
 
-## [1.1.0](///compare/v1.0.1...v1.1.0) (2025-12-02)
+## [1.1.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.0.1...v1.1.0) (2025-12-02)
 
 ### Features
 
@@ -69,6 +71,10 @@
 
 * Revert "test: name slow test for cleaner vitest output" bf6eede
 
-## [1.0.1](///compare/v1.0.0...v1.0.1) (2025-12-02)
+## [1.0.1](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.0.0...v1.0.1) (2025-12-02)
 
-All notable changes to this project will be documented in this file.
+Initial stable release.
+
+## 1.0.0 (2025-12-02)
+
+Initial release with 8 rules for Lingui TypeScript projects.
