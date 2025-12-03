@@ -1,5 +1,5 @@
 import { AST_NODE_TYPES, ESLintUtils, type TSESTree } from "@typescript-eslint/utils"
-import type ts from "typescript"
+import ts from "typescript"
 
 import { createRule } from "../utils/create-rule.js"
 
@@ -594,17 +594,21 @@ function functionReturnsString(
 ): boolean {
   try {
     const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node)
-    const signature = typeChecker.getSignatureFromDeclaration(tsNode as ts.SignatureDeclaration)
 
-    if (signature === undefined) {
-      // No signature info - allow by name to avoid false positives
+    // Get the type of the function itself
+    const functionType = typeChecker.getTypeAtLocation(tsNode)
+    const callSignatures = functionType.getCallSignatures()
+
+    if (callSignatures.length === 0) {
+      // No call signatures - allow by name to avoid false positives
       return true
     }
 
-    const returnType = typeChecker.getReturnTypeOfSignature(signature)
-
-    // Check if it's a string type or union containing string
-    return isStringishType(returnType, typeChecker)
+    // Check all call signatures - all must return string-ish
+    return callSignatures.every((signature) => {
+      const returnType = typeChecker.getReturnTypeOfSignature(signature)
+      return isStringishType(returnType, typeChecker)
+    })
   } catch {
     // Type checking can fail - allow by name to avoid false positives
     return true
@@ -614,14 +618,16 @@ function functionReturnsString(
 /**
  * Checks if a type is string-ish: string, string literal, or union of these with null/undefined.
  */
-function isStringishType(type: ts.Type, typeChecker: ts.TypeChecker): boolean {
+function isStringishType(type: ts.Type, _typeChecker: ts.TypeChecker): boolean {
+  const flags = type.getFlags()
+
   // Check if it's a union type
   if (type.isUnion()) {
     // All non-null/undefined members must be string-ish
     const nonNullableTypes = type.types.filter((t) => {
-      const flags = t.getFlags()
+      const f = t.getFlags()
       // Skip null and undefined
-      return !(flags & 32768) && !(flags & 65536) // Null = 32768, Undefined = 65536
+      return (f & ts.TypeFlags.Null) === 0 && (f & ts.TypeFlags.Undefined) === 0
     })
 
     // If only null/undefined, that's not a string return
@@ -629,18 +635,16 @@ function isStringishType(type: ts.Type, typeChecker: ts.TypeChecker): boolean {
       return false
     }
 
-    return nonNullableTypes.every((t) => isStringishType(t, typeChecker))
+    return nonNullableTypes.every((t) => isStringishType(t, _typeChecker))
   }
 
-  const flags = type.getFlags()
-
-  // String type (4) or string literal (128)
-  if ((flags & 4) !== 0 || (flags & 128) !== 0) {
+  // String type or string literal
+  if ((flags & ts.TypeFlags.String) !== 0 || (flags & ts.TypeFlags.StringLiteral) !== 0) {
     return true
   }
 
   // Template literal type
-  if ((flags & 134217728) !== 0) {
+  if ((flags & ts.TypeFlags.TemplateLiteral) !== 0) {
     return true
   }
 
