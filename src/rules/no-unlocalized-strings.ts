@@ -853,6 +853,37 @@ function isInsideStylingConstant(node: TSESTree.Node): boolean {
 // Syntax Context Checks (non-user-facing locations)
 // ============================================================================
 
+/** Known JavaScript/React directive prologues */
+const DIRECTIVE_PROLOGUES = new Set(["use strict", "use client", "use server"])
+
+/**
+ * Checks if a string literal is a JavaScript directive prologue.
+ *
+ * Directive prologues are special string literals at the start of a script/module:
+ * - "use strict" - JavaScript strict mode
+ * - "use client" - React Server Components client boundary
+ * - "use server" - React Server Components server actions
+ */
+function isDirectivePrologue(node: TSESTree.Node): boolean {
+  if (node.type !== AST_NODE_TYPES.Literal || typeof node.value !== "string") {
+    return false
+  }
+
+  // Check if this is a known directive
+  if (!DIRECTIVE_PROLOGUES.has(node.value)) {
+    return false
+  }
+
+  // Directive prologues must be expression statements at the program level
+  const parent = node.parent
+  if (parent.type !== AST_NODE_TYPES.ExpressionStatement) {
+    return false
+  }
+
+  const grandparent = parent.parent
+  return grandparent.type === AST_NODE_TYPES.Program
+}
+
 /**
  * Checks if a string is in a TypeScript type context (not runtime code).
  *
@@ -1353,6 +1384,11 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
 
       // Already inside Lingui localization
       if (isInsideLinguiContext(node, typeChecker, parserServices)) {
+        return
+      }
+
+      // JavaScript/React directive prologues: "use strict", "use client", "use server"
+      if (isDirectivePrologue(node)) {
         return
       }
 
