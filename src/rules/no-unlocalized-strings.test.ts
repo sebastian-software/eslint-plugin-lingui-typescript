@@ -393,12 +393,14 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: 'import name from "hello"', filename: "test.tsx" },
     { code: 'export * from "hello_export_all"', filename: "test.tsx" },
 
-    // JavaScript/React directive prologues
-    { code: '"use strict"', filename: "test.tsx" },
+    // React directives
     { code: '"use client"', filename: "test.tsx" },
     { code: '"use server"', filename: "test.tsx" },
     { code: '"use client"\nimport React from "react"', filename: "test.tsx" },
     { code: '"use server"\nexport async function action() {}', filename: "test.tsx" },
+    // "use server" inside function body (server actions)
+    { code: 'async function myAction() { "use server"; return null }', filename: "test.tsx" },
+    { code: 'const action = async () => { "use server"; return null }', filename: "test.tsx" },
 
     // =========================================================================
     // Branded types with __linguiIgnore

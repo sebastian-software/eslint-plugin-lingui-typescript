@@ -853,35 +853,49 @@ function isInsideStylingConstant(node: TSESTree.Node): boolean {
 // Syntax Context Checks (non-user-facing locations)
 // ============================================================================
 
-/** Known JavaScript/React directive prologues */
-const DIRECTIVE_PROLOGUES = new Set(["use strict", "use client", "use server"])
+/** React directive strings */
+const REACT_DIRECTIVES = new Set(["use client", "use server"])
 
 /**
- * Checks if a string literal is a JavaScript directive prologue.
+ * Checks if a string literal is a React directive.
  *
- * Directive prologues are special string literals at the start of a script/module:
- * - "use strict" - JavaScript strict mode
- * - "use client" - React Server Components client boundary
- * - "use server" - React Server Components server actions
+ * React directives are special string literals:
+ * - "use client" - marks a client component boundary (file level)
+ * - "use server" - marks server actions (file level or inside async functions)
  */
-function isDirectivePrologue(node: TSESTree.Node): boolean {
+function isReactDirective(node: TSESTree.Node): boolean {
   if (node.type !== AST_NODE_TYPES.Literal || typeof node.value !== "string") {
     return false
   }
 
-  // Check if this is a known directive
-  if (!DIRECTIVE_PROLOGUES.has(node.value)) {
+  if (!REACT_DIRECTIVES.has(node.value)) {
     return false
   }
 
-  // Directive prologues must be expression statements at the program level
+  // Must be wrapped in an expression statement
   const parent = node.parent
   if (parent.type !== AST_NODE_TYPES.ExpressionStatement) {
     return false
   }
 
   const grandparent = parent.parent
-  return grandparent.type === AST_NODE_TYPES.Program
+
+  // File-level directive
+  if (grandparent.type === AST_NODE_TYPES.Program) {
+    return true
+  }
+
+  // Function-level directive (e.g., "use server" inside async function)
+  if (grandparent.type === AST_NODE_TYPES.BlockStatement) {
+    const functionParent = grandparent.parent
+    return (
+      functionParent.type === AST_NODE_TYPES.FunctionDeclaration ||
+      functionParent.type === AST_NODE_TYPES.FunctionExpression ||
+      functionParent.type === AST_NODE_TYPES.ArrowFunctionExpression
+    )
+  }
+
+  return false
 }
 
 /**
@@ -1387,8 +1401,8 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
         return
       }
 
-      // JavaScript/React directive prologues: "use strict", "use client", "use server"
-      if (isDirectivePrologue(node)) {
+      // React directives: "use client", "use server"
+      if (isReactDirective(node)) {
         return
       }
 
