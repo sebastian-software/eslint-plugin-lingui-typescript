@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.1](///compare/v1.8.0...v1.8.1) (2025-12-04)
+
+### Bug Fixes
+
+* **no-unlocalized-strings:** ignore directive prologues 6a5cdaa
+
 ## [1.8.0](///compare/v1.7.1...v1.8.0) (2025-12-03)
 
 ### Features
