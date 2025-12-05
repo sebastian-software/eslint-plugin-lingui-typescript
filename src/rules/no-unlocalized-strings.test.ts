@@ -41,6 +41,11 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: '<Select value={gender} male="He" female="She" other="They" />', filename: "test.tsx" },
     { code: '<SelectOrdinal value={pos} one="#st" two="#nd" few="#rd" other="#th" />', filename: "test.tsx" },
 
+    // Inside t() function call with object syntax (not just tagged template)
+    { code: 't({ message: "Hello World" })', filename: "test.tsx" },
+    { code: 't({ message: "e.g., Philippe L.", context: "placeholder for full name field" })', filename: "test.tsx" },
+    { code: 't({ id: "msg.hello", comment: "Greetings at homepage", message: "Hello World" })', filename: "test.tsx" },
+
     // Inside msg/defineMessage
     { code: 'msg({ message: "Hello World" })', filename: "test.tsx" },
     { code: 'defineMessage({ message: "Save changes" })', filename: "test.tsx" },

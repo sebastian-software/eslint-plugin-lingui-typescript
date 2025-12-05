@@ -64,8 +64,8 @@ const LINGUI_TAGGED_TEMPLATES = new Set(["t"])
 /** JSX components from Lingui that handle localization */
 const LINGUI_JSX_COMPONENTS = new Set(["Trans", "Plural", "Select", "SelectOrdinal"])
 
-/** Function-style macros from Lingui */
-const LINGUI_FUNCTION_MACROS = new Set(["msg", "defineMessage", "plural", "select", "selectOrdinal"])
+/** Function-style macros from Lingui (t can be both tagged template and function call) */
+const LINGUI_FUNCTION_MACROS = new Set(["t", "msg", "defineMessage", "plural", "select", "selectOrdinal"])
 
 /**
  * Checks if a symbol originates from a Lingui package using TypeScript's type system.
