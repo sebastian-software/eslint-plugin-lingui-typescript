@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.4](///compare/v1.8.3...v1.8.4) (2025-12-05)
+
+### Bug Fixes
+
+* **no-unlocalized-strings:** recognize t() function call syntax 1426d35
+
 ## [1.8.3](///compare/v1.8.1...v1.8.3) (2025-12-05)
 
 ### Bug Fixes
