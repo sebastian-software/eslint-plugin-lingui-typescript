@@ -43,7 +43,23 @@ const DEFAULT_IGNORE_PROPERTIES = [
   // React key prop
   "key",
   // Testing ID - DOM Testing Library standard
-  "data-testid"
+  "data-testid",
+  // SVG attributes with technical string values
+  "transform",
+  "gradientTransform",
+  "patternTransform",
+  "preserveAspectRatio",
+  "clipPath",
+  "filter",
+  "mask",
+  "markerStart",
+  "markerMid",
+  "markerEnd",
+  "strokeDasharray",
+  "strokeLinecap",
+  "strokeLinejoin",
+  "fillRule",
+  "clipRule"
 ]
 
 /**

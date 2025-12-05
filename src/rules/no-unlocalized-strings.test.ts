@@ -389,6 +389,10 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: '<svg viewBox="0 0 20 40"></svg>', filename: "test.tsx" },
     { code: '<path d="M10 10" />', filename: "test.tsx" },
     { code: '<circle cx="10" cy="10" r="2" fill="red" />', filename: "test.tsx" },
+    { code: '<g transform="translate(10, 20) rotate(45)" />', filename: "test.tsx" },
+    { code: '<svg preserveAspectRatio="xMidYMid meet" />', filename: "test.tsx" },
+    { code: '<linearGradient gradientTransform="rotate(90)" />', filename: "test.tsx" },
+    { code: '<path strokeDasharray="5 10" strokeLinecap="round" />', filename: "test.tsx" },
 
     // Computed member expressions (object keys)
     { code: 'obj["key with spaces"] = value', filename: "test.tsx" },
