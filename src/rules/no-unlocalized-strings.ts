@@ -44,7 +44,9 @@ const DEFAULT_IGNORE_PROPERTIES = [
   "key",
   // Testing ID - DOM Testing Library standard
   "data-testid",
-  // SVG attributes with technical string values
+  // SVG attributes that accept arbitrary strings (not detected by TypeScript types)
+  // Note: Attributes with finite value sets like strokeLinecap, fillRule are auto-detected
+  // via TypeScript's string literal union types
   "transform",
   "gradientTransform",
   "patternTransform",
@@ -55,11 +57,7 @@ const DEFAULT_IGNORE_PROPERTIES = [
   "markerStart",
   "markerMid",
   "markerEnd",
-  "strokeDasharray",
-  "strokeLinecap",
-  "strokeLinejoin",
-  "fillRule",
-  "clipRule"
+  "strokeDasharray"
 ]
 
 /**
