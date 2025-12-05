@@ -245,6 +245,41 @@ function isInsideLinguiContext(
 // ============================================================================
 
 /**
+ * Checks if a string looks like a date/time format string.
+ *
+ * Uses very conservative patterns to avoid false positives:
+ * - 3+ consecutive same format token char (yyyy, MMMM, EEE) - very distinctive
+ * - Common time patterns: HH:mm, hh:mm, mm:ss
+ * - Common date patterns: MM/dd, yyyy-MM, etc.
+ *
+ * This prevents false positives on format strings from date-fns, moment, etc.
+ */
+function looksLikeDateFormatString(value: string): boolean {
+  // Date format strings are typically short
+  if (value.length > 25) {
+    return false
+  }
+
+  // Very distinctive: 3+ consecutive same letter (yyyy, MMMM, EEE, etc.)
+  // These are extremely rare in natural language
+  if (/([yYMdDHhmsSwWEeQqLcIiRtTpPaAgGkKxXzZO])\1\1+/.test(value)) {
+    return true
+  }
+
+  // Time format: HH:mm, hh:mm, HH:mm:ss
+  if (/[Hh]{2}:[mM]{2}/.test(value)) {
+    return true
+  }
+
+  // Date format with separators: yyyy-MM, MM-dd, MM/dd, etc.
+  if (/[yY]{2,4}[-/][mM]{2}/.test(value) || /[mM]{2}[-/][dD]{2}/.test(value)) {
+    return true
+  }
+
+  return false
+}
+
+/**
  * Determines if a string looks like user-visible UI text.
  *
  * Returns TRUE (needs localization) for:
@@ -297,6 +332,12 @@ function looksLikeUIString(value: string): boolean {
   // SVG path data: commands like M, L, C, etc. followed by coordinates
   // Examples: "M10 10", "M0 0 L100 100", "M10,10 L20,20"
   if (/^[MLHVCSQTAZmlhvcsqtaz][\d\s,.-]+/.test(trimmed)) {
+    return false
+  }
+
+  // Date/time format strings (e.g., "MMMM d, yyyy", "HH:mm:ss", "yyyy-MM-dd")
+  // Detected by: short string with repeated format tokens and no long natural words
+  if (looksLikeDateFormatString(trimmed)) {
     return false
   }
 

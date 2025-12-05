@@ -238,6 +238,16 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: 'const x = "my-css-class"', filename: "test.tsx" },
     { code: 'const x = "CONSTANT_VALUE"', filename: "test.tsx" },
 
+    // Date/time format strings (date-fns, moment, etc.)
+    { code: 'format(date, "MMMM d, yyyy")', filename: "test.tsx" },
+    { code: 'format(date, "yyyy-MM-dd")', filename: "test.tsx" },
+    { code: 'format(date, "HH:mm:ss")', filename: "test.tsx" },
+    { code: 'format(date, "EEE, MMM d")', filename: "test.tsx" },
+    { code: 'format(date, "PPP")', filename: "test.tsx" },
+    { code: "format(date, \"yyyy-MM-dd'T'HH:mm:ss\")", filename: "test.tsx" },
+    { code: "const fmt = 'MMMM d, yyyy'", filename: "test.tsx" },
+    // Note: Single-letter formats like "h:mm a" are not detected to avoid false positives
+
     // URLs and paths
     { code: 'const url = "https://example.com"', filename: "test.tsx" },
     { code: 'const path = "/api/users"', filename: "test.tsx" },
