@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.5](///compare/v1.8.4...v1.8.5) (2025-12-05)
+
+### Bug Fixes
+
+* **no-unlocalized-strings:** ignore date/time format strings e02b9d1
+* **no-unlocalized-strings:** ignore SVG technical attributes 81715ba
+
 ## [1.8.4](///compare/v1.8.3...v1.8.4) (2025-12-05)
 
 ### Bug Fixes
