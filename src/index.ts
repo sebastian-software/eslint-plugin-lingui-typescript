@@ -8,7 +8,7 @@ import { consistentPluralFormat } from "./rules/consistent-plural-format.js"
 
 // Read version from package.json at build time
 // This is resolved by TypeScript with resolveJsonModule or by the bundler
-const PLUGIN_VERSION = "1.8.1" // Synced with package.json during release
+const PLUGIN_VERSION = "1.8.3" // Synced with package.json during release
 import { noExpressionInMessage } from "./rules/no-expression-in-message.js"
 import { noNestedMacros } from "./rules/no-nested-macros.js"
 import { noSingleTagToTranslate } from "./rules/no-single-tag-to-translate.js"

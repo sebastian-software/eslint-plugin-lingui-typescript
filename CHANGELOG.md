@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.3](///compare/v1.8.1...v1.8.3) (2025-12-05)
+
+### Bug Fixes
+
+* bump c7c851b
+* **no-unlocalized-strings:** ignore React directives 36d40dc
+
 ## [1.8.1](///compare/v1.8.0...v1.8.1) (2025-12-04)
 
 ### Bug Fixes
