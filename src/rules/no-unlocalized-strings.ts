@@ -908,22 +908,20 @@ function isInsideStylingConstant(node: TSESTree.Node): boolean {
 // Syntax Context Checks (non-user-facing locations)
 // ============================================================================
 
-/** React directive strings */
-const REACT_DIRECTIVES = new Set(["use client", "use server"])
-
 /**
  * Checks if a string literal is a React directive.
  *
  * React directives are special string literals:
  * - "use client" - marks a client component boundary (file level)
  * - "use server" - marks server actions (file level or inside async functions)
+ * - "use ..." - marks a generic directive used outside of React context, e.g. Convex (file level)
  */
 function isReactDirective(node: TSESTree.Node): boolean {
   if (node.type !== AST_NODE_TYPES.Literal || typeof node.value !== "string") {
     return false
   }
 
-  if (!REACT_DIRECTIVES.has(node.value)) {
+  if (!node.value.startsWith("use ")) {
     return false
   }
 
