@@ -1117,18 +1117,18 @@ function getEntityNameText(entityName: ts.EntityName): string {
   return `${getEntityNameText(entityName.left)}.${entityName.right.text}`
 }
 
-function getBrandedRecordKeyTypeFromTypeNode(
+function getRecordKeyTypeFromTypeNode(
   typeNode: ts.TypeNode,
   typeChecker: ts.TypeChecker,
   visitedSymbols: Set<ts.Symbol>
 ): ts.Type | undefined {
   if (ts.isParenthesizedTypeNode(typeNode)) {
-    return getBrandedRecordKeyTypeFromTypeNode(typeNode.type, typeChecker, visitedSymbols)
+    return getRecordKeyTypeFromTypeNode(typeNode.type, typeChecker, visitedSymbols)
   }
 
   if (ts.isUnionTypeNode(typeNode) || ts.isIntersectionTypeNode(typeNode)) {
     for (const childType of typeNode.types) {
-      const keyType = getBrandedRecordKeyTypeFromTypeNode(childType, typeChecker, visitedSymbols)
+      const keyType = getRecordKeyTypeFromTypeNode(childType, typeChecker, visitedSymbols)
       if (keyType !== undefined) {
         return keyType
       }
@@ -1169,7 +1169,7 @@ function getBrandedRecordKeyTypeFromTypeNode(
   const declarations = resolved.getDeclarations() ?? []
   for (const declaration of declarations) {
     if (ts.isTypeAliasDeclaration(declaration)) {
-      const keyType = getBrandedRecordKeyTypeFromTypeNode(declaration.type, typeChecker, visitedSymbols)
+      const keyType = getRecordKeyTypeFromTypeNode(declaration.type, typeChecker, visitedSymbols)
       if (keyType !== undefined) {
         return keyType
       }
@@ -1187,7 +1187,7 @@ function getBrandedRecordKeyTypeFromTypeNode(
 
       for (const heritageClause of declaration.heritageClauses ?? []) {
         for (const clauseType of heritageClause.types) {
-          const keyType = getBrandedRecordKeyTypeFromTypeNode(clauseType, typeChecker, visitedSymbols)
+          const keyType = getRecordKeyTypeFromTypeNode(clauseType, typeChecker, visitedSymbols)
           if (keyType !== undefined) {
             return keyType
           }
@@ -1199,7 +1199,7 @@ function getBrandedRecordKeyTypeFromTypeNode(
   return undefined
 }
 
-function getBrandedRecordKeyType(
+function getRecordKeyType(
   type: ts.Type,
   typeChecker: ts.TypeChecker,
   visitedSymbols: Set<ts.Symbol> = new Set<ts.Symbol>()
@@ -1213,7 +1213,7 @@ function getBrandedRecordKeyType(
 
   if (type.isUnion() || type.isIntersection()) {
     for (const childType of type.types) {
-      const keyType = getBrandedRecordKeyType(childType, typeChecker, visitedSymbols)
+      const keyType = getRecordKeyType(childType, typeChecker, visitedSymbols)
       if (keyType !== undefined) {
         return keyType
       }
@@ -1234,7 +1234,7 @@ function getBrandedRecordKeyType(
   const declarations = resolved.getDeclarations() ?? []
   for (const declaration of declarations) {
     if (ts.isTypeAliasDeclaration(declaration)) {
-      const keyType = getBrandedRecordKeyTypeFromTypeNode(declaration.type, typeChecker, visitedSymbols)
+      const keyType = getRecordKeyTypeFromTypeNode(declaration.type, typeChecker, visitedSymbols)
       if (keyType !== undefined) {
         return keyType
       }
@@ -1342,7 +1342,7 @@ function isTechnicalObjectKeyLiteral(
       return false
     }
 
-    const keyType = getBrandedRecordKeyType(contextualType, typeChecker)
+    const keyType = getRecordKeyType(contextualType, typeChecker)
     return keyType !== undefined && isTechnicalObjectKeyType(keyType, typeChecker)
   } catch {
     return false
