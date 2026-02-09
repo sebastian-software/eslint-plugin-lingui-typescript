@@ -507,6 +507,20 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       filename: "test.tsx"
     },
 
+    // Branded key type on contextual Record should ignore object-literal string keys
+    {
+      code: `
+        type UnlocalizedKey = string & { readonly __linguiIgnore?: "UnlocalizedKey" }
+        type Row = Record<UnlocalizedKey, number>
+
+        const row: Row = {
+          "First Name": 1,
+          "Last Name": 2,
+        }
+      `,
+      filename: "test.tsx"
+    },
+
     // Branded type with function parameter
     {
       code: `
@@ -797,6 +811,19 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
         type CustomString = string & { readonly __custom?: "test" }
         function test(msg: CustomString) {}
         test("Hello World")
+      `,
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Non-branded Record keys should still be reported
+    {
+      code: `
+        type Row = Record<string, number>
+
+        const row: Row = {
+          "First Name": 1,
+        }
       `,
       filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
