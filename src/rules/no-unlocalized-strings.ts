@@ -938,14 +938,14 @@ function isReactDirective(node: TSESTree.Node): boolean {
     return true
   }
 
-  // Function-level directive (e.g., "use server" inside async function)
+  // Function-level directive: only "use server" is valid
   if (grandparent.type === AST_NODE_TYPES.BlockStatement) {
     const functionParent = grandparent.parent
-    return (
+    const isFunction =
       functionParent.type === AST_NODE_TYPES.FunctionDeclaration ||
       functionParent.type === AST_NODE_TYPES.FunctionExpression ||
       functionParent.type === AST_NODE_TYPES.ArrowFunctionExpression
-    )
+    return isFunction && node.value === "use server"
   }
 
   return false
@@ -1102,6 +1102,249 @@ function hasLinguiIgnoreBrand(type: ts.Type, typeChecker: ts.TypeChecker): boole
   // Fallback: check type string for __linguiIgnore
   const typeString = typeChecker.typeToString(type)
   return typeString.includes(LINGUI_IGNORE_BRAND)
+}
+
+function resolveSymbol(symbol: ts.Symbol, typeChecker: ts.TypeChecker): ts.Symbol {
+  return (symbol.flags & ts.SymbolFlags.Alias) !== 0 ? typeChecker.getAliasedSymbol(symbol) : symbol
+}
+
+function getEntityNameText(entityName: ts.EntityName): string {
+  if (ts.isIdentifier(entityName)) {
+    return entityName.text
+  }
+  return `${getEntityNameText(entityName.left)}.${entityName.right.text}`
+}
+
+function getRecordKeyTypeFromTypeNode(
+  typeNode: ts.TypeNode,
+  typeChecker: ts.TypeChecker,
+  visitedSymbols: Set<ts.Symbol>
+): ts.Type | undefined {
+  if (ts.isParenthesizedTypeNode(typeNode)) {
+    return getRecordKeyTypeFromTypeNode(typeNode.type, typeChecker, visitedSymbols)
+  }
+
+  if (ts.isUnionTypeNode(typeNode) || ts.isIntersectionTypeNode(typeNode)) {
+    for (const childType of typeNode.types) {
+      const keyType = getRecordKeyTypeFromTypeNode(childType, typeChecker, visitedSymbols)
+      if (keyType !== undefined) {
+        return keyType
+      }
+    }
+    return undefined
+  }
+
+  if (ts.isMappedTypeNode(typeNode)) {
+    const constraint = typeNode.typeParameter.constraint
+    if (constraint !== undefined) {
+      return typeChecker.getTypeFromTypeNode(constraint)
+    }
+    return undefined
+  }
+
+  if (!ts.isTypeReferenceNode(typeNode)) {
+    return undefined
+  }
+
+  if (getEntityNameText(typeNode.typeName) === "Record") {
+    const keyTypeArg = typeNode.typeArguments?.[0]
+    if (keyTypeArg !== undefined) {
+      return typeChecker.getTypeFromTypeNode(keyTypeArg)
+    }
+    return undefined
+  }
+
+  const symbol = typeChecker.getSymbolAtLocation(typeNode.typeName)
+  if (symbol === undefined) {
+    return undefined
+  }
+  const resolved = resolveSymbol(symbol, typeChecker)
+  if (visitedSymbols.has(resolved)) {
+    return undefined
+  }
+  visitedSymbols.add(resolved)
+
+  const declarations = resolved.getDeclarations() ?? []
+  for (const declaration of declarations) {
+    if (ts.isTypeAliasDeclaration(declaration)) {
+      const keyType = getRecordKeyTypeFromTypeNode(declaration.type, typeChecker, visitedSymbols)
+      if (keyType !== undefined) {
+        return keyType
+      }
+    }
+
+    if (ts.isInterfaceDeclaration(declaration)) {
+      for (const member of declaration.members) {
+        if (ts.isIndexSignatureDeclaration(member)) {
+          const keyParamType = member.parameters[0]?.type
+          if (keyParamType !== undefined) {
+            return typeChecker.getTypeFromTypeNode(keyParamType)
+          }
+        }
+      }
+
+      for (const heritageClause of declaration.heritageClauses ?? []) {
+        for (const clauseType of heritageClause.types) {
+          const keyType = getRecordKeyTypeFromTypeNode(clauseType, typeChecker, visitedSymbols)
+          if (keyType !== undefined) {
+            return keyType
+          }
+        }
+      }
+    }
+  }
+
+  return undefined
+}
+
+function getRecordKeyType(
+  type: ts.Type,
+  typeChecker: ts.TypeChecker,
+  visitedSymbols: Set<ts.Symbol> = new Set<ts.Symbol>()
+): ts.Type | undefined {
+  if (type.aliasSymbol !== undefined && type.aliasSymbol.escapedName.toString() === "Record") {
+    const keyType = type.aliasTypeArguments?.[0]
+    if (keyType !== undefined) {
+      return keyType
+    }
+  }
+
+  if (type.isUnion() || type.isIntersection()) {
+    for (const childType of type.types) {
+      const keyType = getRecordKeyType(childType, typeChecker, visitedSymbols)
+      if (keyType !== undefined) {
+        return keyType
+      }
+    }
+  }
+
+  const symbol = type.aliasSymbol ?? type.getSymbol()
+  if (symbol === undefined) {
+    return undefined
+  }
+
+  const resolved = resolveSymbol(symbol, typeChecker)
+  if (visitedSymbols.has(resolved)) {
+    return undefined
+  }
+  visitedSymbols.add(resolved)
+
+  const declarations = resolved.getDeclarations() ?? []
+  for (const declaration of declarations) {
+    if (ts.isTypeAliasDeclaration(declaration)) {
+      const keyType = getRecordKeyTypeFromTypeNode(declaration.type, typeChecker, visitedSymbols)
+      if (keyType !== undefined) {
+        return keyType
+      }
+    }
+
+    if (ts.isInterfaceDeclaration(declaration)) {
+      for (const member of declaration.members) {
+        if (ts.isIndexSignatureDeclaration(member)) {
+          const keyParamType = member.parameters[0]?.type
+          if (keyParamType !== undefined) {
+            return typeChecker.getTypeFromTypeNode(keyParamType)
+          }
+        }
+      }
+    }
+  }
+
+  return undefined
+}
+
+function containsStringLikeKeyType(type: ts.Type, typeChecker: ts.TypeChecker): boolean {
+  if (type.isUnion() || type.isIntersection()) {
+    return type.types.some((t) => containsStringLikeKeyType(t, typeChecker))
+  }
+
+  const flags = type.getFlags()
+  if (
+    (flags & ts.TypeFlags.String) !== 0 ||
+    (flags & ts.TypeFlags.StringLiteral) !== 0 ||
+    (flags & ts.TypeFlags.TemplateLiteral) !== 0
+  ) {
+    return true
+  }
+
+  if ((flags & ts.TypeFlags.TypeParameter) !== 0) {
+    const constraint = typeChecker.getBaseConstraintOfType(type)
+    if (constraint !== undefined) {
+      return containsStringLikeKeyType(constraint, typeChecker)
+    }
+  }
+
+  return false
+}
+
+function hasUnrestrictedStringKeyType(type: ts.Type, typeChecker: ts.TypeChecker): boolean {
+  if (type.isUnion()) {
+    return type.types.some((t) => hasUnrestrictedStringKeyType(t, typeChecker))
+  }
+
+  if (type.isIntersection()) {
+    // Branded intersections like string & { __linguiIgnore?: ... } are intentionally constrained.
+    if (hasLinguiIgnoreBrand(type, typeChecker)) {
+      return false
+    }
+    return type.types.some((t) => hasUnrestrictedStringKeyType(t, typeChecker))
+  }
+
+  const flags = type.getFlags()
+  if ((flags & ts.TypeFlags.String) !== 0 || (flags & ts.TypeFlags.Any) !== 0 || (flags & ts.TypeFlags.Unknown) !== 0) {
+    return true
+  }
+
+  if ((flags & ts.TypeFlags.TypeParameter) !== 0) {
+    const constraint = typeChecker.getBaseConstraintOfType(type)
+    if (constraint !== undefined) {
+      return hasUnrestrictedStringKeyType(constraint, typeChecker)
+    }
+    return true
+  }
+
+  return false
+}
+
+function isTechnicalObjectKeyType(type: ts.Type, typeChecker: ts.TypeChecker): boolean {
+  if (hasLinguiIgnoreBrand(type, typeChecker)) {
+    return true
+  }
+
+  if (!containsStringLikeKeyType(type, typeChecker)) {
+    return false
+  }
+
+  return !hasUnrestrictedStringKeyType(type, typeChecker)
+}
+
+function isTechnicalObjectKeyLiteral(
+  node: TSESTree.Literal,
+  typeChecker: ts.TypeChecker,
+  parserServices: ReturnType<typeof ESLintUtils.getParserServices>
+): boolean {
+  const parent = node.parent
+  if (parent.type !== AST_NODE_TYPES.Property || parent.key !== node || parent.computed) {
+    return false
+  }
+
+  const objectExpression = parent.parent
+  if (objectExpression.type !== AST_NODE_TYPES.ObjectExpression) {
+    return false
+  }
+
+  try {
+    const objectTsNode = parserServices.esTreeNodeToTSNodeMap.get(objectExpression)
+    const contextualType = typeChecker.getContextualType(objectTsNode)
+    if (contextualType === undefined) {
+      return false
+    }
+
+    const keyType = getRecordKeyType(contextualType, typeChecker)
+    return keyType !== undefined && isTechnicalObjectKeyType(keyType, typeChecker)
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -1441,6 +1684,12 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
 
       // User-provided ignore pattern
       if (ignoreRegex?.test(value) === true) {
+        return
+      }
+
+      // Object-literal key in technical Record-key context
+      // (e.g., Record<UnlocalizedKey, ...> or Record<"First Name" | "Street", ...>)
+      if (isTechnicalObjectKeyLiteral(node, typeChecker, parserServices)) {
         return
       }
 

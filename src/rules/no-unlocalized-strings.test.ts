@@ -508,6 +508,35 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       filename: "test.tsx"
     },
 
+    // Branded key type on contextual Record should ignore object-literal string keys
+    {
+      code: `
+        type UnlocalizedKey = string & { readonly __linguiIgnore?: "UnlocalizedKey" }
+        type Row = Record<UnlocalizedKey, number>
+
+        const row: Row = {
+          "First Name": 1,
+          "Last Name": 2,
+        }
+      `,
+      filename: "test.tsx"
+    },
+
+    // String-literal union key type should ignore matching object-literal keys
+    {
+      code: `
+        type RowKey = "First Name" | "Street" | "Zip"
+        type Row = Record<RowKey, number>
+
+        const row: Row = {
+          "First Name": 1,
+          Street: 2,
+          Zip: 3,
+        }
+      `,
+      filename: "test.tsx"
+    },
+
     // Branded type with function parameter
     {
       code: `
@@ -821,6 +850,30 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
         }
       `,
       filename: "test.ts",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Generic "use X" inside function body should NOT be treated as a directive
+    {
+      code: `
+        function test() {
+          "use node";
+        }
+      `,
+      filename: "test.ts",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Non-branded Record keys should still be reported
+    {
+      code: `
+        type Row = Record<string, number>
+
+        const row: Row = {
+          "First Name": 1,
+        }
+      `,
+      filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     }
   ]
