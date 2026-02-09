@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.6](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.8.5...v1.8.6) (2026-02-09)
+
+
+### Bug Fixes
+
+* **no-unlocalized-strings:** allow constrained Record key types ([af3daaf](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/af3daaf8b4d9230ee320608745934aaec950cd7a))
+* **no-unlocalized-strings:** honor contextual Record&lt;UnlocalizedKey&gt; keys ([c395c5d](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/c395c5dafbaac86a315935c813efd622f203a984))
+* **no-unlocalized-strings:** honor Record&lt;UnlocalizedKey&gt; contextual keys ([e00d4cd](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/e00d4cdf72418192fb445f70e1636212da5fbbd5))
+* **no-unlocalized-strings:** support generic "use X" directives ([5e2ae6f](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/5e2ae6fdcd81961eb46cc58fb185dc7dd0a858ae))
+* **no-unlocalized-strings:** support generic "use X" directives ([d904623](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/d90462388772f060e1eaadf78aee537aaa76bf2b))
+
 ## [1.8.5](///compare/v1.8.4...v1.8.5) (2025-12-05)
 
 ### Bug Fixes
