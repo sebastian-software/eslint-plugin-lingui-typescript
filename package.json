@@ -37,9 +37,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build",
-    "prepare": "husky",
-    "release": "release-it",
-    "release:auto": "release-it --ci"
+    "prepare": "husky"
   },
   "keywords": [
     "eslint",
@@ -71,7 +69,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@release-it/conventional-changelog": "^10.0.2",
     "@types/eslint": "^9.6.1",
     "@types/node": "^24.10.1",
     "@typescript-eslint/eslint-plugin": "^8.48.1",
@@ -82,7 +79,6 @@
     "jiti": "^2.6.1",
     "lint-staged": "^16.2.7",
     "prettier": "^3.7.4",
-    "release-it": "^19.0.6",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.48.1",
     "vitest": "^4.0.15"

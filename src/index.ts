@@ -5,10 +5,13 @@
  */
 
 import { consistentPluralFormat } from "./rules/consistent-plural-format.js"
+import { readFileSync } from "node:fs"
+import { dirname, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
 
-// Read version from package.json at build time
-// This is resolved by TypeScript with resolveJsonModule or by the bundler
-const PLUGIN_VERSION = "1.8.5" // Synced with package.json during release
+const packageJsonPath = resolve(dirname(fileURLToPath(import.meta.url)), "../package.json")
+const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { version?: string }
+const PLUGIN_VERSION = packageJson.version ?? "0.0.0"
 import { noExpressionInMessage } from "./rules/no-expression-in-message.js"
 import { noNestedMacros } from "./rules/no-nested-macros.js"
 import { noSingleTagToTranslate } from "./rules/no-single-tag-to-translate.js"

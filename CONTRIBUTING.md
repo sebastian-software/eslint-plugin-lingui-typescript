@@ -166,22 +166,13 @@ ruleTester.run("my-rule", myRule, {
 
 ## Releasing
 
-Releases are handled by maintainers using `release-it`:
+Releases are handled automatically via `release-please` on `main`.
 
-```bash
-npm run release
-```
-
-This will:
-1. Run all checks (lint, typecheck, test)
-2. Bump the version based on conventional commits
-3. Update the CHANGELOG
-4. Create a git tag
-5. Push to GitHub
-6. Create a GitHub Release
-7. Publish to npm
+Flow:
+1. Conventional commits are collected into a release PR created/updated by GitHub Actions
+2. When the release PR is merged, a GitHub Release + tag is created
+3. The package is published to npm from GitHub Actions using Trusted Publishing (OIDC)
 
 ## Questions?
 
 Feel free to open an issue if you have questions or need help!
-
