@@ -908,22 +908,20 @@ function isInsideStylingConstant(node: TSESTree.Node): boolean {
 // Syntax Context Checks (non-user-facing locations)
 // ============================================================================
 
-/** React directive strings */
-const REACT_DIRECTIVES = new Set(["use client", "use server"])
-
 /**
  * Checks if a string literal is a React directive.
  *
  * React directives are special string literals:
  * - "use client" - marks a client component boundary (file level)
  * - "use server" - marks server actions (file level or inside async functions)
+ * - "use ..." - marks a generic directive used outside of React context, e.g. Convex (file level)
  */
 function isReactDirective(node: TSESTree.Node): boolean {
   if (node.type !== AST_NODE_TYPES.Literal || typeof node.value !== "string") {
     return false
   }
 
-  if (!REACT_DIRECTIVES.has(node.value)) {
+  if (!node.value.startsWith("use ")) {
     return false
   }
 
@@ -940,14 +938,14 @@ function isReactDirective(node: TSESTree.Node): boolean {
     return true
   }
 
-  // Function-level directive (e.g., "use server" inside async function)
+  // Function-level directive: only "use server" is valid
   if (grandparent.type === AST_NODE_TYPES.BlockStatement) {
     const functionParent = grandparent.parent
-    return (
+    const isFunction =
       functionParent.type === AST_NODE_TYPES.FunctionDeclaration ||
       functionParent.type === AST_NODE_TYPES.FunctionExpression ||
       functionParent.type === AST_NODE_TYPES.ArrowFunctionExpression
-    )
+    return isFunction && node.value === "use server"
   }
 
   return false

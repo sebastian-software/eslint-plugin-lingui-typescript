@@ -417,6 +417,7 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: '"use server"', filename: "test.tsx" },
     { code: '"use client"\nimport React from "react"', filename: "test.tsx" },
     { code: '"use server"\nexport async function action() {}', filename: "test.tsx" },
+    { code: '"use generic"', filename: "test.tsx" },
     // "use server" inside function body (server actions)
     { code: 'async function myAction() { "use server"; return null }', filename: "test.tsx" },
     { code: 'const action = async () => { "use server"; return null }', filename: "test.tsx" },
@@ -626,6 +627,16 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
         logger.error("Connection failed!")
       `,
       filename: "test.tsx"
+    },
+
+    // Generic string directive on file level
+    {
+      code: `
+        "use node"
+
+        console.log()
+      `,
+      filename: "test.ts"
     }
   ],
   invalid: [
@@ -828,6 +839,28 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
         test("Hello World")
       `,
       filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Looks like a generic string directive
+    {
+      code: `
+        function test() {
+          return "use node"
+        }
+      `,
+      filename: "test.ts",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Generic "use X" inside function body should NOT be treated as a directive
+    {
+      code: `
+        function test() {
+          "use node";
+        }
+      `,
+      filename: "test.ts",
       errors: [{ messageId: "unlocalizedString" }]
     },
 
