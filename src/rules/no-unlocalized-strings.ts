@@ -1255,7 +1255,72 @@ function getBrandedRecordKeyType(
   return undefined
 }
 
-function isBrandedObjectKeyLiteral(
+function containsStringLikeKeyType(type: ts.Type, typeChecker: ts.TypeChecker): boolean {
+  if (type.isUnion() || type.isIntersection()) {
+    return type.types.some((t) => containsStringLikeKeyType(t, typeChecker))
+  }
+
+  const flags = type.getFlags()
+  if (
+    (flags & ts.TypeFlags.String) !== 0 ||
+    (flags & ts.TypeFlags.StringLiteral) !== 0 ||
+    (flags & ts.TypeFlags.TemplateLiteral) !== 0
+  ) {
+    return true
+  }
+
+  if ((flags & ts.TypeFlags.TypeParameter) !== 0) {
+    const constraint = typeChecker.getBaseConstraintOfType(type)
+    if (constraint !== undefined) {
+      return containsStringLikeKeyType(constraint, typeChecker)
+    }
+  }
+
+  return false
+}
+
+function hasUnrestrictedStringKeyType(type: ts.Type, typeChecker: ts.TypeChecker): boolean {
+  if (type.isUnion()) {
+    return type.types.some((t) => hasUnrestrictedStringKeyType(t, typeChecker))
+  }
+
+  if (type.isIntersection()) {
+    // Branded intersections like string & { __linguiIgnore?: ... } are intentionally constrained.
+    if (hasLinguiIgnoreBrand(type, typeChecker)) {
+      return false
+    }
+    return type.types.some((t) => hasUnrestrictedStringKeyType(t, typeChecker))
+  }
+
+  const flags = type.getFlags()
+  if ((flags & ts.TypeFlags.String) !== 0 || (flags & ts.TypeFlags.Any) !== 0 || (flags & ts.TypeFlags.Unknown) !== 0) {
+    return true
+  }
+
+  if ((flags & ts.TypeFlags.TypeParameter) !== 0) {
+    const constraint = typeChecker.getBaseConstraintOfType(type)
+    if (constraint !== undefined) {
+      return hasUnrestrictedStringKeyType(constraint, typeChecker)
+    }
+    return true
+  }
+
+  return false
+}
+
+function isTechnicalObjectKeyType(type: ts.Type, typeChecker: ts.TypeChecker): boolean {
+  if (hasLinguiIgnoreBrand(type, typeChecker)) {
+    return true
+  }
+
+  if (!containsStringLikeKeyType(type, typeChecker)) {
+    return false
+  }
+
+  return !hasUnrestrictedStringKeyType(type, typeChecker)
+}
+
+function isTechnicalObjectKeyLiteral(
   node: TSESTree.Literal,
   typeChecker: ts.TypeChecker,
   parserServices: ReturnType<typeof ESLintUtils.getParserServices>
@@ -1278,7 +1343,7 @@ function isBrandedObjectKeyLiteral(
     }
 
     const keyType = getBrandedRecordKeyType(contextualType, typeChecker)
-    return keyType !== undefined && hasLinguiIgnoreBrand(keyType, typeChecker)
+    return keyType !== undefined && isTechnicalObjectKeyType(keyType, typeChecker)
   } catch {
     return false
   }
@@ -1624,8 +1689,9 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
         return
       }
 
-      // Object-literal key in Record<BrandedKey, ...> context (e.g., Record<UnlocalizedKey, ...>)
-      if (isBrandedObjectKeyLiteral(node, typeChecker, parserServices)) {
+      // Object-literal key in technical Record-key context
+      // (e.g., Record<UnlocalizedKey, ...> or Record<"First Name" | "Street", ...>)
+      if (isTechnicalObjectKeyLiteral(node, typeChecker, parserServices)) {
         return
       }
 

@@ -521,6 +521,21 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       filename: "test.tsx"
     },
 
+    // String-literal union key type should ignore matching object-literal keys
+    {
+      code: `
+        type RowKey = "First Name" | "Street" | "Zip"
+        type Row = Record<RowKey, number>
+
+        const row: Row = {
+          "First Name": 1,
+          Street: 2,
+          Zip: 3,
+        }
+      `,
+      filename: "test.tsx"
+    },
+
     // Branded type with function parameter
     {
       code: `
