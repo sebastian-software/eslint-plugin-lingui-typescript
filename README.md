@@ -5,119 +5,77 @@
 [![CI](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/actions/workflows/ci.yml/badge.svg)](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> 🔍 Type-aware ESLint rules for [Lingui](https://lingui.dev/) — catch unlocalized strings with zero configuration using TypeScript's type system.
+ESLint rules for [Lingui](https://lingui.dev/) that use TypeScript's type system to tell technical strings from user-facing text. No whitelists to maintain. No false positives to suppress. No configuration to tweak.
 
-**[📖 Documentation & Examples](https://sebastian-software.github.io/eslint-plugin-lingui-typescript/)**
+**[Documentation & Examples](https://sebastian-software.github.io/eslint-plugin-lingui-typescript/)**
 
-## Why TypeScript?
+## The problem with pattern-based i18n linting
 
-Traditional i18n linters rely on heuristics and manual whitelists to distinguish user-visible text from technical strings. This leads to false positives and constant configuration tweaking.
-
-This plugin leverages TypeScript's type system to **automatically** recognize technical strings:
+i18n linters that rely on pattern matching can't tell a CSS class name from a button label, or a DOM event name from an error message. You end up maintaining long ignore lists and still get false positives every time someone calls a new API:
 
 ```ts
-// ✅ Automatically ignored - TypeScript knows these are technical
-document.createElement("div")                    // keyof HTMLElementTagNameMap
-element.addEventListener("click", handler)       // keyof GlobalEventHandlersEventMap
-fetch(url, { mode: "cors" })                     // RequestMode
+// Pattern-based linters flag all of these as "missing translation"
+document.createElement("div")                    // It's a DOM tag name
+element.addEventListener("click", handler)       // It's an event name
+fetch(url, { mode: "cors" })                     // It's a typed option
+const status: "idle" | "loading" = "idle"        // It's a string literal union
+<Box className="flex items-center" />            // It's a CSS class
+```
+
+You add each one to a whitelist. The whitelist grows. New team members hit the same false positives all over again.
+
+## How this plugin solves it
+
+This plugin reads TypeScript's type information instead of guessing. When a string flows into a parameter typed as `keyof HTMLElementTagNameMap`, or is assigned to a variable typed as `"idle" | "loading" | "error"`, the plugin knows it's technical. You don't configure anything.
+
+```ts
+// Automatically ignored — TypeScript provides the context
+document.createElement("div")                           // keyof HTMLElementTagNameMap
+element.addEventListener("click", handler)              // keyof GlobalEventHandlersEventMap
+fetch(url, { mode: "cors" })                            // RequestMode
 date.toLocaleDateString("de-DE", { weekday: "long" })  // Intl.DateTimeFormatOptions
 
 type Status = "idle" | "loading" | "error"
-const status: Status = "loading"                 // String literal union
+const status: Status = "loading"                        // String literal union
 
-// ✅ Automatically ignored - styling props, constants, and numeric strings
-<Box containerClassName="flex items-center" />   // *ClassName, *Color, *Style, etc.
-<div className={clsx("px-4", "py-2")} />         // className utilities (clsx, cn, etc.)
-<Calendar classNames={{ day: "bg-white" }} />    // nested classNames objects
-const colorClasses = { active: "bg-green-100" }  // *Classes, *Colors, *Styles, etc.
-const price = "1,00€"                            // No letters = technical
+// Styling props and utility patterns — recognized automatically
+<Box containerClassName="flex items-center" />          // *ClassName, *Color, *Style
+<div className={clsx("px-4", "py-2")} />                // className utilities (clsx, cn)
+<Calendar classNames={{ day: "bg-white" }} />           // Nested classNames objects
+const colorClasses = { active: "bg-green-100" }         // *Classes, *Colors, *Styles
+const price = "1,00€"                                   // No letters = not user-facing
 
-// ❌ Reported - actual user-visible text
+// Reported — these actually need translation
 const message = "Welcome to our app"
 <button>Save changes</button>
 ```
 
-**No configuration needed** for DOM APIs, Intl methods, string literal unions, styling props, or numeric strings. TypeScript + smart heuristics handle it!
-
-### Smart Lingui Detection
-
-The plugin uses TypeScript's symbol resolution to verify that `t`, `Trans`, `msg`, etc. actually come from Lingui packages — not just any function with the same name:
+The plugin also verifies that `t`, `Trans`, and other macros actually come from `@lingui/*` packages through TypeScript's symbol resolution, not just name matching:
 
 ```ts
 import { t } from "@lingui/macro"
-const label = t`Save`  // ✅ Recognized as Lingui
+const label = t`Save`              // Recognized as Lingui
 
-// Your own function with the same name
-const t = (key: string) => translations[key]
-const label = t("save")  // ❌ Not confused with Lingui
+const t = (key: string) => map[key]
+const label = t("save")            // Not confused with Lingui
 ```
 
-## Features
+## Getting started
 
-- 🔍 Detects incorrect usage of Lingui translation macros
-- 📝 Enforces simple, safe expressions inside translated messages
-- 🎯 Detects missing localization of user-visible text
-- 🧠 Zero-config recognition of technical strings via TypeScript types
-- 🎨 Auto-ignores styling props (`*ClassName`, `*Color`, `*Style`, `*Icon`, `*Image`, `*Size`, `*Id`)
-- 📦 Auto-ignores styling variables (`colorClasses`, `STATUS_COLORS`, `buttonStyles`, etc.)
-- 🔧 Auto-ignores styling helper functions (`getStatusColor`, `getButtonClass`, etc.)
-- 🔢 Auto-ignores numeric/symbolic strings without letters (`"1,00€"`, `"12:30"`)
-- 🏷️ Branded types for custom ignore patterns (loggers, analytics, etc.)
-- 🔒 Verifies Lingui macros actually come from `@lingui/*` packages (no false positives from similarly-named functions)
+### Requirements
 
-## Branded Types for Custom Ignore Patterns
-
-For cases not covered by automatic detection (like custom loggers or analytics), this plugin exports branded types you can use to mark strings as "no translation needed":
-
-```ts
-import { unlocalized } from "eslint-plugin-lingui-typescript/types"
-
-// Wrap your logger to ignore all string arguments
-function createLogger(prefix = "[App]") {
-  return unlocalized({
-    debug: (...args: unknown[]) => console.debug(prefix, ...args),
-    info: (...args: unknown[]) => console.info(prefix, ...args),
-    warn: (...args: unknown[]) => console.warn(prefix, ...args),
-    error: (...args: unknown[]) => console.error(prefix, ...args),
-  })
-}
-
-const logger = createLogger()
-logger.info("Server started on port", 3000)  // ✅ Automatically ignored
-logger.error("Connection failed:", error)    // ✅ Automatically ignored
-```
-
-### Available Types
-
-| Type | Use Case |
-|------|----------|
-| `UnlocalizedFunction<T>` | Wrap functions/objects to ignore all string arguments |
-| `unlocalized(value)` | Helper function for automatic type inference |
-| `UnlocalizedText` | Generic technical strings |
-| `UnlocalizedLog` | Logger message parameters (string only) |
-| `UnlocalizedStyle` | Style values (colors, fonts, spacing) |
-| `UnlocalizedClassName` | CSS class names |
-| `UnlocalizedEvent` | Analytics/tracking event names |
-| `UnlocalizedKey` | Storage keys, query keys |
-
-See the [no-unlocalized-strings documentation](docs/rules/no-unlocalized-strings.md#branded-types) for detailed examples.
-
-## Requirements
-
-- Node.js ≥ 24
-- ESLint ≥ 9
-- TypeScript ≥ 5
+- Node.js >= 24, ESLint >= 9, TypeScript >= 5
 - `typescript-eslint` with type-aware linting enabled
 
-## Installation
+### Installation
 
 ```bash
 npm install --save-dev eslint-plugin-lingui-typescript
 ```
 
-## Usage
+### Configuration
 
-This plugin requires TypeScript and type-aware linting. Configure your `eslint.config.ts`:
+Add the recommended config to your `eslint.config.ts`:
 
 ```ts
 import eslint from "@eslint/js"
@@ -139,7 +97,7 @@ export default [
 ]
 ```
 
-Or configure rules manually:
+Or pick individual rules:
 
 ```ts
 {
@@ -153,81 +111,112 @@ Or configure rules manually:
 }
 ```
 
+That's it. The plugin starts working immediately — DOM APIs, Intl methods, string literal unions, styling props, and numeric strings are all handled out of the box.
+
 ## Rules
 
 | Rule | Description | Recommended |
 |------|-------------|:-----------:|
-| [no-unlocalized-strings](docs/rules/no-unlocalized-strings.md) | Detects user-visible strings not wrapped in Lingui macros. Uses TypeScript types to automatically ignore technical strings like string literal unions, DOM APIs, and Intl methods. | ✅ |
-| [no-single-variables-to-translate](docs/rules/no-single-variables-to-translate.md) | Disallows messages that consist only of variables without surrounding text. Such messages provide no context for translators. | ✅ |
-| [no-single-tag-to-translate](docs/rules/no-single-tag-to-translate.md) | Disallows `<Trans>` components that contain only a single JSX element without text. The wrapped element should have surrounding text for context. | ✅ |
-| [no-nested-macros](docs/rules/no-nested-macros.md) | Prevents nesting Lingui macros inside each other (e.g., `t` inside `<Trans>`). Nested macros create invalid message catalogs and confuse translators. | ✅ |
-| [no-expression-in-message](docs/rules/no-expression-in-message.md) | Restricts embedded expressions to simple identifiers only. Complex expressions like `${user.name}` or `${formatPrice(x)}` must be extracted to named variables first. | ✅ |
-| [t-call-in-function](docs/rules/t-call-in-function.md) | Ensures `t` macro calls are inside functions or class properties, not at module scope. Module-level calls execute before i18n is initialized and won't update on locale change. | ✅ |
-| [consistent-plural-format](docs/rules/consistent-plural-format.md) | Enforces consistent plural value format — either `#` hash syntax or `${var}` template literals throughout the codebase. | ✅ |
+| [no-unlocalized-strings](docs/rules/no-unlocalized-strings.md) | Detects user-visible strings not wrapped in Lingui macros. Uses TypeScript types to automatically ignore technical strings. | ✅ |
+| [no-single-variables-to-translate](docs/rules/no-single-variables-to-translate.md) | Disallows messages that consist only of variables without surrounding text — translators need context. | ✅ |
+| [no-single-tag-to-translate](docs/rules/no-single-tag-to-translate.md) | Disallows `<Trans>` components that contain only a single JSX element without text. | ✅ |
+| [no-nested-macros](docs/rules/no-nested-macros.md) | Prevents nesting Lingui macros inside each other. Nested macros create invalid message catalogs. | ✅ |
+| [no-expression-in-message](docs/rules/no-expression-in-message.md) | Restricts embedded expressions to simple identifiers. Complex expressions must be extracted to named variables. | ✅ |
+| [t-call-in-function](docs/rules/t-call-in-function.md) | Ensures `t` macro calls live inside functions, not at module scope where i18n isn't initialized yet. | ✅ |
+| [consistent-plural-format](docs/rules/consistent-plural-format.md) | Enforces consistent plural value format — either `#` hash syntax or `${var}` template literals. | ✅ |
 | [text-restrictions](docs/rules/text-restrictions.md) | Enforces project-specific text restrictions with custom patterns and messages. Requires configuration. | — |
+
+## Branded types for edge cases
+
+For strings that automatic detection can't cover (custom loggers, analytics events, internal keys), the plugin exports branded types:
+
+```ts
+import { unlocalized } from "eslint-plugin-lingui-typescript/types"
+
+const logger = unlocalized({
+  debug: (...args: unknown[]) => console.debug(...args),
+  info: (...args: unknown[]) => console.info(...args),
+  error: (...args: unknown[]) => console.error(...args),
+})
+
+logger.info("Server started on port", 3000)  // Automatically ignored
+logger.error("Connection failed:", error)    // Automatically ignored
+```
+
+| Type | Use Case |
+|------|----------|
+| `UnlocalizedFunction<T>` | Wrap functions/objects to ignore all string arguments |
+| `unlocalized(value)` | Helper function for automatic type inference |
+| `UnlocalizedText` | Generic technical strings |
+| `UnlocalizedLog` | Logger message parameters |
+| `UnlocalizedStyle` | Style values (colors, fonts, spacing) |
+| `UnlocalizedClassName` | CSS class names |
+| `UnlocalizedEvent` | Analytics/tracking event names |
+| `UnlocalizedKey` | Storage keys, query keys |
+
+See the [no-unlocalized-strings documentation](docs/rules/no-unlocalized-strings.md#branded-types) for detailed examples.
 
 ## Migrating from eslint-plugin-lingui
 
-This plugin is a TypeScript-focused alternative to the official [eslint-plugin-lingui](https://github.com/lingui/eslint-plugin-lingui). Rule names are compatible where possible, making migration straightforward.
+This plugin is a drop-in alternative to the official [eslint-plugin-lingui](https://github.com/lingui/eslint-plugin-lingui). Rule names are compatible, making migration straightforward.
 
-### Key Differences
+### What changes
 
-| Feature | eslint-plugin-lingui | eslint-plugin-lingui-typescript |
+| | eslint-plugin-lingui | This plugin |
 |---------|---------------------|--------------------------------|
-| **Type-aware detection** | ❌ Heuristics only | ✅ Uses TypeScript types |
-| **String literal unions** | Manual whitelist | ✅ Auto-detected |
-| **DOM API strings** | Manual whitelist | ✅ Auto-detected |
-| **Intl method arguments** | Manual whitelist | ✅ Auto-detected |
-| **Styling props** (`*ClassName`, etc.) | Manual whitelist | ✅ Auto-detected |
-| **Styling constants** (`*_COLORS`, etc.) | Manual whitelist | ✅ Auto-detected |
-| **Numeric strings** (`"1,00€"`) | Manual whitelist | ✅ Auto-detected |
-| **Custom ignore patterns** | `ignoreFunctions` only | ✅ Branded types (`unlocalized()`) |
-| **Lingui macro verification** | Name-based only | ✅ Verifies package origin |
-| **ESLint version** | 8.x | 9.x (flat config) |
-| **Config format** | Legacy `.eslintrc` | Flat config only |
+| **Detection method** | Heuristics + manual whitelists | TypeScript type system |
+| **String literal unions** | Manual whitelist | Auto-detected |
+| **DOM API strings** | Manual whitelist | Auto-detected |
+| **Intl method arguments** | Manual whitelist | Auto-detected |
+| **Styling props** | Manual whitelist | Auto-detected |
+| **Styling constants** | Manual whitelist | Auto-detected |
+| **Numeric strings** | Manual whitelist | Auto-detected |
+| **Custom ignore patterns** | `ignoreFunctions` only | Branded types (`unlocalized()`) |
+| **Macro verification** | Name-based | Package-origin verification |
+| **ESLint** | v8 legacy config | v9 flat config |
 
-### Why Switch?
+### Why switch?
 
-1. **Less configuration**: TypeScript's type system automatically identifies technical strings — no need to maintain long whitelists of ignored functions and patterns.
+**Less configuration.** TypeScript's type system handles what used to require dozens of whitelist entries.
 
-2. **Fewer false positives**: Strings typed as literal unions (like `"loading" | "error"`) are automatically recognized as non-translatable.
+**Fewer false positives.** Strings typed as literal unions are recognized as non-translatable without any setup.
 
-3. **Modern ESLint**: Built for ESLint 9's flat config from the ground up.
+**Modern ESLint.** Built for ESLint 9 flat config from the ground up.
 
-### Rule Mapping and Options Compatibility
+### Rule mapping
 
 | eslint-plugin-lingui | eslint-plugin-lingui-typescript | Options |
 |---------------------|--------------------------------|---------|
 | `lingui/no-unlocalized-strings` | `lingui-ts/no-unlocalized-strings` | ⚠️ Different (see below) |
-| `lingui/t-call-in-function` | `lingui-ts/t-call-in-function` | ✅ None |
-| `lingui/no-single-variables-to-translate` | `lingui-ts/no-single-variables-to-translate` | ✅ None |
-| `lingui/no-expression-in-message` | `lingui-ts/no-expression-in-message` | ✅ None |
-| `lingui/no-single-tag-to-translate` | `lingui-ts/no-single-tag-to-translate` | ✅ None |
+| `lingui/t-call-in-function` | `lingui-ts/t-call-in-function` | ✅ Compatible |
+| `lingui/no-single-variables-to-translate` | `lingui-ts/no-single-variables-to-translate` | ✅ Compatible |
+| `lingui/no-expression-in-message` | `lingui-ts/no-expression-in-message` | ✅ Compatible |
+| `lingui/no-single-tag-to-translate` | `lingui-ts/no-single-tag-to-translate` | ✅ Compatible |
 | `lingui/text-restrictions` | `lingui-ts/text-restrictions` | ✅ Compatible (`rules`), + `minLength` |
 | `lingui/consistent-plural-format` | `lingui-ts/consistent-plural-format` | ✅ Compatible (`style`) |
 | `lingui/no-trans-inside-trans` | `lingui-ts/no-nested-macros` | ✅ Extended (all macros) |
 
 ### Options Changes for `no-unlocalized-strings`
 
-The `no-unlocalized-strings` rule has different options because TypeScript types replace most manual configuration:
+TypeScript types replace most manual configuration:
 
 | Original Option | This Plugin | Notes |
 |-----------------|-------------|-------|
-| `useTsTypes` | — | Always enabled (TypeScript required) |
+| `useTsTypes` | — | Always enabled |
 | `ignore` (array of regex) | `ignorePattern` (single regex) | Simplified |
-| `ignoreFunctions` | `ignoreFunctions` | ✅ Simplified (Console/Error auto-detected) |
-| `ignoreNames` (with regex support) | `ignoreNames` | Simplified (no regex, plain strings only) |
+| `ignoreFunctions` | `ignoreFunctions` | Simplified (Console/Error auto-detected) |
+| `ignoreNames` (with regex support) | `ignoreNames` | Plain strings only |
 | — | `ignoreProperties` | New: separate option for JSX attributes and object properties |
-| `ignoreMethodsOnTypes` | — | Not needed (TypeScript handles this automatically) |
+| `ignoreMethodsOnTypes` | — | Not needed (handled by TypeScript) |
 
-**What you can remove from your config:**
+**What you can drop from your config:**
 - `useTsTypes: true` — always enabled
 - Most `ignoreFunctions` entries for DOM APIs — auto-detected via types
 - Most `ignoreNames` entries for typed parameters — auto-detected via types
 - Most `ignoreProperties` entries (like `type`, `role`, `href`) — auto-detected via types
 - `ignoreMethodsOnTypes` — handled automatically
 
-### Migration Steps
+### Migration steps
 
 1. Remove the old plugin:
    ```bash
@@ -252,17 +241,17 @@ The `no-unlocalized-strings` rule has different options because TypeScript types
 
 4. Update rule names in your config (change prefix from `lingui/` to `lingui-ts/`).
 
-5. Review your ignore lists — many entries may no longer be needed thanks to type-aware detection.
+5. Review your ignore lists — many entries are no longer needed.
 
 ## Contributing
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before submitting a PR.
+Contributions are welcome. Please read our [Contributing Guide](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before submitting a PR.
 
-## Related Projects
+## Related projects
 
-- [Lingui](https://lingui.dev/) – The excellent i18n library this plugin is built for. Provides powerful macros like `t`, `<Trans>`, and `plural` for seamless internationalization.
-- [eslint-plugin-lingui](https://github.com/lingui/eslint-plugin-lingui) – The official Lingui ESLint plugin. Great for JavaScript projects; this plugin extends the concept with TypeScript type-awareness.
-- [typescript-eslint](https://typescript-eslint.io/) – The foundation that makes type-aware linting possible. This plugin builds on their excellent tooling.
+- [Lingui](https://lingui.dev/) — The i18n library this plugin is built for
+- [eslint-plugin-lingui](https://github.com/lingui/eslint-plugin-lingui) — The official Lingui ESLint plugin for JavaScript projects
+- [typescript-eslint](https://typescript-eslint.io/) — The foundation that makes type-aware linting possible
 
 ## License
 
@@ -270,4 +259,4 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 
 ---
 
-Made with ❤️ by [Sebastian Software](https://www.sebastian-software.de)
+Made with care by [Sebastian Software](https://www.sebastian-software.de)
