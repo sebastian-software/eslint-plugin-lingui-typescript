@@ -327,6 +327,38 @@ Default: `null`
 }
 ```
 
+### `reportUnnecessaryBrands`
+
+Reports when a branded type (e.g., `UnlocalizedText`, `UnlocalizedLog`) is unnecessary because the string would not be flagged anyway.
+
+Default: `false`
+
+As the plugin improves with new heuristics (e.g., binary comparison detection, console method detection), some branded types become redundant. Enable this option to find and clean up unnecessary brands.
+
+```ts
+{
+  "lingui-ts/no-unlocalized-strings": ["error", {
+    "reportUnnecessaryBrands": true
+  }]
+}
+```
+
+```tsx
+// ❌ Unnecessary brand — console.log is auto-detected
+type UnlocalizedLog = string & { readonly __linguiIgnore?: "UnlocalizedLog" }
+console.log("Hello World" as UnlocalizedLog)
+
+// ❌ Unnecessary brand — binary comparison is auto-detected
+type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+if (status === ("Hello World" as UnlocalizedText)) {}
+
+// ✅ Brand is needed — string would be reported without it
+declare function log(msg: UnlocalizedText): void
+log("Starting server on port 3000")
+```
+
+**Note:** This option only checks string literals. It does not check template literals or JSX text (branded types don't apply there). No autofix is provided — removing branded types could cause TypeScript errors downstream, so review manually.
+
 ## Heuristics
 
 The rule uses heuristics to determine if a string looks like UI text:

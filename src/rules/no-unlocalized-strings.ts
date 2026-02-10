@@ -4,13 +4,14 @@ import ts from "typescript"
 import { LINGUI_IGNORE_ARGS_BRAND, LINGUI_IGNORE_BRAND } from "../types.js"
 import { createRule } from "../utils/create-rule.js"
 
-type MessageId = "unlocalizedString"
+type MessageId = "unlocalizedString" | "unnecessaryBrand"
 
 export interface Options {
   ignoreFunctions: string[]
   ignoreProperties: string[]
   ignoreNames: string[]
   ignorePattern: string | null
+  reportUnnecessaryBrands: boolean
 }
 
 // ============================================================================
@@ -1644,7 +1645,8 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       description: "Detect user-visible strings not wrapped in Lingui translation macros"
     },
     messages: {
-      unlocalizedString: 'String "{{text}}" appears to be user-visible text. Wrap it with t`...` or <Trans>.'
+      unlocalizedString: 'String "{{text}}" appears to be user-visible text. Wrap it with t`...` or <Trans>.',
+      unnecessaryBrand: "Unnecessary branded type — '{{text}}' would not be flagged without it"
     },
     schema: [
       {
@@ -1668,6 +1670,10 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
           ignorePattern: {
             type: ["string", "null"],
             default: null
+          },
+          reportUnnecessaryBrands: {
+            type: "boolean",
+            default: false
           }
         },
         additionalProperties: false
@@ -1679,7 +1685,8 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       ignoreFunctions: DEFAULT_IGNORE_FUNCTIONS,
       ignoreProperties: DEFAULT_IGNORE_PROPERTIES,
       ignoreNames: DEFAULT_IGNORE_NAMES,
-      ignorePattern: null
+      ignorePattern: null,
+      reportUnnecessaryBrands: false
     }
   ],
   create(context, [options]) {
@@ -1687,6 +1694,33 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
     const typeChecker = parserServices.program.getTypeChecker()
 
     const ignoreRegex = options.ignorePattern !== null ? new RegExp(options.ignorePattern) : null
+
+    /**
+     * Checks if a string literal would be skipped by all non-brand checks.
+     * Used both for the normal flow and to detect unnecessary branded types.
+     */
+    function wouldBeSkippedByOtherChecks(node: TSESTree.Literal, value: string): boolean {
+      if (ignoreRegex?.test(value) === true) return true
+      if (isTechnicalObjectKeyLiteral(node, typeChecker, parserServices)) return true
+      if (!looksLikeUIString(value)) return true
+      if (isInsideLinguiContext(node, typeChecker, parserServices)) return true
+      if (isReactDirective(node)) return true
+      if (isInTypeContext(node)) return true
+      if (isInSwitchCase(node)) return true
+      if (isBinaryComparison(node)) return true
+      if (isComputedMemberKey(node)) return true
+      if (isInNonLinguiTaggedTemplate(node)) return true
+      if (isImportExportSource(node)) return true
+      if (isAsConstAssertion(node)) return true
+      if (isIgnoredFunctionArgument(node, options.ignoreFunctions)) return true
+      if (isConsoleMethodArgument(node, typeChecker, parserServices)) return true
+      if (isErrorConstructorArgument(node, typeChecker, parserServices)) return true
+      if (isIgnoredProperty(node, options.ignoreProperties)) return true
+      if (isInsideStylingPropertyValue(node, options.ignoreProperties, typeChecker, parserServices)) return true
+      if (isInsideStylingConstant(node)) return true
+      if (isTechnicalStringType(node, typeChecker, parserServices)) return true
+      return false
+    }
 
     /**
      * Main check for string literals: "Hello World", 'Hello World'
@@ -1698,103 +1732,19 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
 
       const value = node.value
 
-      // User-provided ignore pattern
-      if (ignoreRegex?.test(value) === true) {
+      if (wouldBeSkippedByOtherChecks(node, value)) {
+        // String is technical — but if it has a brand, the brand is unnecessary
+        if (options.reportUnnecessaryBrands && isLinguiBrandedType(node, typeChecker, parserServices)) {
+          context.report({
+            node,
+            messageId: "unnecessaryBrand",
+            data: { text: value.length > 30 ? `${value.substring(0, 30)}...` : value }
+          })
+        }
         return
       }
 
-      // Object-literal key in technical Record-key context
-      // (e.g., Record<UnlocalizedKey, ...> or Record<"First Name" | "Street", ...>)
-      if (isTechnicalObjectKeyLiteral(node, typeChecker, parserServices)) {
-        return
-      }
-
-      // Heuristic: does it look like user text?
-      if (!looksLikeUIString(value)) {
-        return
-      }
-
-      // Already inside Lingui localization
-      if (isInsideLinguiContext(node, typeChecker, parserServices)) {
-        return
-      }
-
-      // React directives: "use client", "use server"
-      if (isReactDirective(node)) {
-        return
-      }
-
-      // TypeScript type definition (not runtime)
-      if (isInTypeContext(node)) {
-        return
-      }
-
-      // Switch case value
-      if (isInSwitchCase(node)) {
-        return
-      }
-
-      // Binary comparison: x === "value"
-      if (isBinaryComparison(node)) {
-        return
-      }
-
-      // Computed property access: obj["key"]
-      if (isComputedMemberKey(node)) {
-        return
-      }
-
-      // Non-Lingui tagged template: css`...`, styled.div`...`
-      if (isInNonLinguiTaggedTemplate(node)) {
-        return
-      }
-
-      // Import/export module source specifier
-      if (isImportExportSource(node)) {
-        return
-      }
-
-      // `as const` assertion
-      if (isAsConstAssertion(node)) {
-        return
-      }
-
-      // Argument to ignored function
-      if (isIgnoredFunctionArgument(node, options.ignoreFunctions)) {
-        return
-      }
-
-      // Console method argument (type-aware)
-      if (isConsoleMethodArgument(node, typeChecker, parserServices)) {
-        return
-      }
-
-      // Error constructor argument (type-aware)
-      if (isErrorConstructorArgument(node, typeChecker, parserServices)) {
-        return
-      }
-
-      // Value for ignored property (direct)
-      if (isIgnoredProperty(node, options.ignoreProperties)) {
-        return
-      }
-
-      // Inside a styling property value (e.g., className={cn("class1", "class2")})
-      if (isInsideStylingPropertyValue(node, options.ignoreProperties, typeChecker, parserServices)) {
-        return
-      }
-
-      // Inside a styling constant (e.g., STATUS_COLORS, BUTTON_CLASSES)
-      if (isInsideStylingConstant(node)) {
-        return
-      }
-
-      // TypeScript type-aware: string literal union, Intl API, etc.
-      if (isTechnicalStringType(node, typeChecker, parserServices)) {
-        return
-      }
-
-      // Lingui branded types: LogMessage, CSSValue, CSSClassName, TechnicalString
+      // String would be reported — check if brand saves it
       if (isLinguiBrandedType(node, typeChecker, parserServices)) {
         return
       }

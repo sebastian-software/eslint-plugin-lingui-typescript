@@ -71,12 +71,28 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     {
       code: 'myLogger.info("Log this message")',
       filename: "test.tsx",
-      options: [{ ignoreFunctions: ["myLogger.*"], ignoreProperties: [], ignoreNames: [], ignorePattern: null }]
+      options: [
+        {
+          ignoreFunctions: ["myLogger.*"],
+          ignoreProperties: [],
+          ignoreNames: [],
+          ignorePattern: null,
+          reportUnnecessaryBrands: false
+        }
+      ]
     },
     {
       code: 'context.headers.set("Authorization header")',
       filename: "test.tsx",
-      options: [{ ignoreFunctions: ["*.headers.set"], ignoreProperties: [], ignoreNames: [], ignorePattern: null }]
+      options: [
+        {
+          ignoreFunctions: ["*.headers.set"],
+          ignoreProperties: [],
+          ignoreNames: [],
+          ignorePattern: null,
+          reportUnnecessaryBrands: false
+        }
+      ]
     },
 
     // Ignored properties (className, type, etc.)
@@ -282,7 +298,15 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     {
       code: 'const x = "test_id_123"',
       filename: "test.tsx",
-      options: [{ ignoreFunctions: [], ignoreProperties: [], ignoreNames: [], ignorePattern: "^test_" }]
+      options: [
+        {
+          ignoreFunctions: [],
+          ignoreProperties: [],
+          ignoreNames: [],
+          ignorePattern: "^test_",
+          reportUnnecessaryBrands: false
+        }
+      ]
     },
 
     // Non-UI looking text
@@ -402,7 +426,15 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     {
       code: "myLogger.info(`User ${name} logged in`)",
       filename: "test.tsx",
-      options: [{ ignoreFunctions: ["myLogger.*"], ignoreProperties: [], ignoreNames: [], ignorePattern: null }]
+      options: [
+        {
+          ignoreFunctions: ["myLogger.*"],
+          ignoreProperties: [],
+          ignoreNames: [],
+          ignorePattern: null,
+          reportUnnecessaryBrands: false
+        }
+      ]
     },
 
     // Empty template literal
@@ -665,6 +697,33 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
         console.log()
       `,
       filename: "test.ts"
+    },
+
+    // Branded type needed - string would be reported without brand
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        declare function log(msg: UnlocalizedText): void
+        log("Starting server on port 3000")
+      `,
+      filename: "test.tsx"
+    },
+
+    // Branded type with reportUnnecessaryBrands OFF (default) — unnecessary brand should NOT be reported
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        declare const status: string
+        if (status === ("Hello World" as UnlocalizedText)) {}
+      `,
+      filename: "test.tsx"
+    },
+    {
+      code: `
+        type UnlocalizedLog = string & { readonly __linguiIgnore?: "UnlocalizedLog" }
+        console.log("Hello World" as UnlocalizedLog)
+      `,
+      filename: "test.tsx"
     }
   ],
   invalid: [
@@ -938,6 +997,66 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       code: "const obj = { error: `Tool ${id} not found` }",
       filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Unnecessary brand: binary comparison makes brand unnecessary
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        declare const status: string
+        if (status === ("Hello World" as UnlocalizedText)) {}
+      `,
+      options: [
+        {
+          reportUnnecessaryBrands: true,
+          ignoreFunctions: [],
+          ignoreProperties: [],
+          ignoreNames: [],
+          ignorePattern: null
+        }
+      ],
+      errors: [{ messageId: "unnecessaryBrand" }],
+      filename: "test.tsx"
+    },
+
+    // Unnecessary brand: string literal union type makes brand unnecessary
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        type Mode = "Light Mode" | "Dark Mode"
+        declare function setMode(mode: Mode): void
+        setMode("Light Mode" as UnlocalizedText)
+      `,
+      options: [
+        {
+          reportUnnecessaryBrands: true,
+          ignoreFunctions: [],
+          ignoreProperties: [],
+          ignoreNames: [],
+          ignorePattern: null
+        }
+      ],
+      errors: [{ messageId: "unnecessaryBrand" }],
+      filename: "test.tsx"
+    },
+
+    // Unnecessary brand: console method makes brand unnecessary
+    {
+      code: `
+        type UnlocalizedLog = string & { readonly __linguiIgnore?: "UnlocalizedLog" }
+        console.log("Hello World" as UnlocalizedLog)
+      `,
+      options: [
+        {
+          reportUnnecessaryBrands: true,
+          ignoreFunctions: [],
+          ignoreProperties: [],
+          ignoreNames: [],
+          ignorePattern: null
+        }
+      ],
+      errors: [{ messageId: "unnecessaryBrand" }],
+      filename: "test.tsx"
     }
   ]
 })

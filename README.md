@@ -155,6 +155,12 @@ logger.error("Connection failed:", error)    // Automatically ignored
 | `UnlocalizedEvent` | Analytics/tracking event names |
 | `UnlocalizedKey` | Storage keys, query keys |
 
+As the plugin gains new heuristics, some brands become redundant. Enable `reportUnnecessaryBrands` to find brands you can safely remove:
+
+```ts
+"lingui-ts/no-unlocalized-strings": ["error", { "reportUnnecessaryBrands": true }]
+```
+
 See the [no-unlocalized-strings documentation](docs/rules/no-unlocalized-strings.md#branded-types) for detailed examples.
 
 ## Migrating from eslint-plugin-lingui
