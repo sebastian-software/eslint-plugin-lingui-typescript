@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.11.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.10.1...v1.11.0) (2026-02-10)
+
+
+### Features
+
+* add suggestion fix to remove unnecessary type assertions ([e72e818](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/e72e818f715bfaf342eea5b278d329dcfcbc092e))
+
 ## [1.10.1](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.10.0...v1.10.1) (2026-02-10)
 
 
