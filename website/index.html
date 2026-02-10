@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>eslint-plugin-lingui-typescript — Type-aware i18n linting</title>
-  <meta name="description" content="Zero-config ESLint rules for Lingui. Catch unlocalized strings automatically using TypeScript's type system.">
+  <meta name="description" content="8 ESLint rules for Lingui that read TypeScript types instead of guessing. Your whitelist goes away.">
   <meta name="keywords" content="eslint, lingui, i18n, internationalization, typescript, localization">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
 
   <!-- Open Graph -->
   <meta property="og:title" content="eslint-plugin-lingui-typescript">
-  <meta property="og:description" content="Zero-config ESLint rules for Lingui. Catch unlocalized strings automatically using TypeScript's type system.">
+  <meta property="og:description" content="8 ESLint rules for Lingui that read TypeScript types instead of guessing. Your whitelist goes away.">
   <meta property="og:type" content="website">
 
   <!-- Tailwind CSS -->
@@ -211,12 +211,12 @@
             ESLint 9 + TypeScript
           </div>
           <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 text-slate-900">
-            <span class="gradient-text">Type-aware</span> i18n<br>linting for Lingui
+            i18n linting that<br><span class="gradient-text">reads your types</span>
           </h1>
           <p class="text-xl text-slate-600 mb-8 leading-relaxed">
-            <strong class="text-slate-900">8 rules</strong> for Lingui best practices —
-            from catching unlocalized strings to enforcing consistent plurals.
-            TypeScript's type system eliminates false positives, no endless whitelists needed.
+            <strong class="text-slate-900">8 ESLint rules</strong> for Lingui.
+            TypeScript's type system separates technical strings from user text —
+            no whitelist needed.
           </p>
           <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
             <a href="#quickstart" class="px-6 py-3 btn-gradient text-white font-semibold rounded-lg">
@@ -229,15 +229,15 @@
           <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-500 justify-center lg:justify-start">
             <div class="flex items-center gap-2">
               <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              String detection
+              Type-aware detection
             </div>
             <div class="flex items-center gap-2">
               <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              Macro validation
+              Macro verification
             </div>
             <div class="flex items-center gap-2">
               <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              Plural formatting
+              Plural enforcement
             </div>
             <div class="flex items-center gap-2">
               <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -272,10 +272,10 @@ fetch(url, { mode: <span class="string">"cors"</span> })
   <section id="features" class="py-20 section-gradient-1">
     <div class="max-w-6xl mx-auto px-6">
       <div class="text-center mb-16">
-        <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Smart Detection, Zero Config</h2>
+        <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">What the types already know</h2>
         <p class="text-slate-600 max-w-2xl mx-auto">
-          TypeScript's type system + intelligent heuristics handle the heavy lifting.
-          Focus on your app, not your linter config.
+          These patterns are recognized automatically from your TypeScript definitions.
+          Nothing to configure.
         </p>
       </div>
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -348,10 +348,10 @@ fetch(url, { mode: <span class="string">"cors"</span> })
     <div class="max-w-6xl mx-auto px-6">
       <div class="grid lg:grid-cols-2 gap-12 items-center">
         <div>
-          <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Custom Ignore Patterns</h2>
+          <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">When auto-detection isn't enough</h2>
           <p class="text-slate-600 mb-6">
-            For loggers, analytics, or any strings that shouldn't be translated —
-            use <strong class="text-slate-900">branded types</strong> for type-safe ignore patterns.
+            Custom loggers, analytics events, storage keys — some strings need a hint.
+            <strong class="text-slate-900">Branded types</strong> let you mark them once in the type system.
           </p>
           <div class="space-y-4 text-sm">
             <div class="flex items-start gap-3">
@@ -396,10 +396,10 @@ logger.<span class="function">error</span>(<span class="string">"Connection fail
   <section id="comparison" class="py-20 section-gradient-3">
     <div class="max-w-6xl mx-auto px-6">
       <div class="text-center mb-16">
-        <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Why TypeScript-Aware?</h2>
+        <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">Types vs. whitelists</h2>
         <p class="text-slate-600 max-w-2xl mx-auto">
-          Traditional i18n linters rely on heuristics and manual whitelists.
-          This plugin leverages TypeScript to do the work for you.
+          Traditional i18n linters guess, then need manual whitelists when they guess wrong.
+          This plugin reads TypeScript types directly.
         </p>
       </div>
       <div class="overflow-x-auto">
@@ -457,9 +457,9 @@ logger.<span class="function">error</span>(<span class="string">"Connection fail
   <section class="py-20 section-gradient-2 decorative-dots">
     <div class="max-w-6xl mx-auto px-6">
       <div class="text-center mb-16">
-        <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">8 Battle-Tested Rules</h2>
+        <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">All 8 rules</h2>
         <p class="text-slate-600 max-w-2xl mx-auto">
-          Comprehensive coverage for Lingui best practices, from unlocalized strings to macro usage.
+          From catching unlocalized strings to enforcing consistent plurals and clean macro usage.
         </p>
       </div>
       <div class="grid sm:grid-cols-2 gap-4">
