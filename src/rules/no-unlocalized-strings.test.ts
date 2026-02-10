@@ -724,6 +724,65 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
         console.log("Hello World" as UnlocalizedLog)
       `,
       filename: "test.tsx"
+    },
+
+    // Record<UnlocalizedText, UnlocalizedText> with UI-like keys and ALL_CAPS values
+    // Keys like "czech republic" need the brand (looksLikeUIString returns true for them)
+    // Values like "CZ" don't need it (ALL_CAPS heuristic skips them)
+    // With option OFF: nothing reported
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        const COUNTRY_OVERRIDES: Record<UnlocalizedText, UnlocalizedText> = {
+          "czech republic": "CZ",
+          "south korea": "KR",
+        }
+      `,
+      filename: "test.tsx"
+    },
+
+    // Record with mix of UI-like and technical values — option OFF: nothing reported
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        const CONFIG: Record<UnlocalizedText, UnlocalizedText> = {
+          greeting: "Hello World",
+          code: "CN",
+        }
+      `,
+      filename: "test.tsx"
+    },
+
+    // Record with mix of UI-like and technical values — option ON: nothing reported
+    // "CN" is technical but "Hello World" needs the brand, so brand is necessary overall
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        const CONFIG: Record<UnlocalizedText, UnlocalizedText> = {
+          greeting: "Hello World",
+          code: "CN",
+        }
+      `,
+      options: [
+        {
+          reportUnnecessaryBrands: true,
+          ignoreFunctions: [],
+          ignoreProperties: [],
+          ignoreNames: [],
+          ignorePattern: null
+        }
+      ],
+      filename: "test.tsx"
+    },
+
+    // Branded type needed — value would be flagged without brand
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        declare function getLabel(key: UnlocalizedText): string
+        getLabel("Hello World")
+      `,
+      filename: "test.tsx"
     }
   ],
   invalid: [
@@ -1056,6 +1115,54 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
         }
       ],
       errors: [{ messageId: "unnecessaryBrand" }],
+      filename: "test.tsx"
+    },
+
+    // Unnecessary brand: ALL_CAPS value in Record — "CN" matches ALL_CAPS heuristic
+    // so the brand on the Record value type is unnecessary for this specific string
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        const COUNTRY_OVERRIDES: Record<UnlocalizedText, UnlocalizedText> = {
+          china: "CN",
+          prc: "CN",
+        }
+      `,
+      options: [
+        {
+          reportUnnecessaryBrands: true,
+          ignoreFunctions: [],
+          ignoreProperties: [],
+          ignoreNames: [],
+          ignorePattern: null
+        }
+      ],
+      errors: [{ messageId: "unnecessaryBrand" }, { messageId: "unnecessaryBrand" }],
+      filename: "test.tsx"
+    },
+
+    // Unnecessary brand: Record with UI-like keys and ALL_CAPS values — option ON
+    // Keys ("czech republic", "south korea") are NOT reported as unnecessaryBrand
+    // because keys are detected via isTechnicalObjectKeyLiteral, not isLinguiBrandedType.
+    // Values ("CZ", "KR") ARE reported because ALL_CAPS heuristic skips them.
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        const COUNTRY_OVERRIDES: Record<UnlocalizedText, UnlocalizedText> = {
+          "czech republic": "CZ",
+          "south korea": "KR",
+        }
+      `,
+      options: [
+        {
+          reportUnnecessaryBrands: true,
+          ignoreFunctions: [],
+          ignoreProperties: [],
+          ignoreNames: [],
+          ignorePattern: null
+        }
+      ],
+      errors: [{ messageId: "unnecessaryBrand" }, { messageId: "unnecessaryBrand" }],
       filename: "test.tsx"
     }
   ]

@@ -1294,17 +1294,17 @@ function containsStringLikeKeyType(type: ts.Type, typeChecker: ts.TypeChecker): 
   return false
 }
 
-function hasUnrestrictedStringKeyType(type: ts.Type, typeChecker: ts.TypeChecker): boolean {
+function hasUnrestrictedStringKeyType(type: ts.Type, typeChecker: ts.TypeChecker, excludeBrand = false): boolean {
   if (type.isUnion()) {
-    return type.types.some((t) => hasUnrestrictedStringKeyType(t, typeChecker))
+    return type.types.some((t) => hasUnrestrictedStringKeyType(t, typeChecker, excludeBrand))
   }
 
   if (type.isIntersection()) {
     // Branded intersections like string & { __linguiIgnore?: ... } are intentionally constrained.
-    if (hasLinguiIgnoreBrand(type, typeChecker)) {
+    if (!excludeBrand && hasLinguiIgnoreBrand(type, typeChecker)) {
       return false
     }
-    return type.types.some((t) => hasUnrestrictedStringKeyType(t, typeChecker))
+    return type.types.some((t) => hasUnrestrictedStringKeyType(t, typeChecker, excludeBrand))
   }
 
   const flags = type.getFlags()
@@ -1323,8 +1323,8 @@ function hasUnrestrictedStringKeyType(type: ts.Type, typeChecker: ts.TypeChecker
   return false
 }
 
-function isTechnicalObjectKeyType(type: ts.Type, typeChecker: ts.TypeChecker): boolean {
-  if (hasLinguiIgnoreBrand(type, typeChecker)) {
+function isTechnicalObjectKeyType(type: ts.Type, typeChecker: ts.TypeChecker, excludeBrand = false): boolean {
+  if (!excludeBrand && hasLinguiIgnoreBrand(type, typeChecker)) {
     return true
   }
 
@@ -1332,13 +1332,14 @@ function isTechnicalObjectKeyType(type: ts.Type, typeChecker: ts.TypeChecker): b
     return false
   }
 
-  return !hasUnrestrictedStringKeyType(type, typeChecker)
+  return !hasUnrestrictedStringKeyType(type, typeChecker, excludeBrand)
 }
 
 function isTechnicalObjectKeyLiteral(
   node: TSESTree.Literal,
   typeChecker: ts.TypeChecker,
-  parserServices: ReturnType<typeof ESLintUtils.getParserServices>
+  parserServices: ReturnType<typeof ESLintUtils.getParserServices>,
+  excludeBrand = false
 ): boolean {
   const parent = node.parent
   if (parent.type !== AST_NODE_TYPES.Property || parent.key !== node || parent.computed) {
@@ -1358,7 +1359,7 @@ function isTechnicalObjectKeyLiteral(
     }
 
     const keyType = getRecordKeyType(contextualType, typeChecker)
-    return keyType !== undefined && isTechnicalObjectKeyType(keyType, typeChecker)
+    return keyType !== undefined && isTechnicalObjectKeyType(keyType, typeChecker, excludeBrand)
   } catch {
     return false
   }
@@ -1696,12 +1697,13 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
     const ignoreRegex = options.ignorePattern !== null ? new RegExp(options.ignorePattern) : null
 
     /**
-     * Checks if a string literal would be skipped by all non-brand checks.
-     * Used both for the normal flow and to detect unnecessary branded types.
+     * Checks if a string literal would be skipped by non-brand checks only.
+     * Brand-dependent checks (branded key types, branded value types) are excluded
+     * so we can separately determine if a brand is actually necessary.
      */
-    function wouldBeSkippedByOtherChecks(node: TSESTree.Literal, value: string): boolean {
+    function wouldBeSkippedWithoutBrands(node: TSESTree.Literal, value: string): boolean {
       if (ignoreRegex?.test(value) === true) return true
-      if (isTechnicalObjectKeyLiteral(node, typeChecker, parserServices)) return true
+      if (isTechnicalObjectKeyLiteral(node, typeChecker, parserServices, true)) return true
       if (!looksLikeUIString(value)) return true
       if (isInsideLinguiContext(node, typeChecker, parserServices)) return true
       if (isReactDirective(node)) return true
@@ -1723,6 +1725,82 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
     }
 
     /**
+     * Checks if a string literal would be skipped by brand-dependent checks.
+     * Covers both branded object keys (Record<UnlocalizedKey, ...>) and
+     * branded value types (UnlocalizedText, UnlocalizedFunction, etc.).
+     */
+    function wouldBeSkippedByBrands(node: TSESTree.Literal): boolean {
+      if (isTechnicalObjectKeyLiteral(node, typeChecker, parserServices)) return true
+      if (isLinguiBrandedType(node, typeChecker, parserServices)) return true
+      return false
+    }
+
+    /**
+     * Cache for object-level brand necessity. Computed once per ObjectExpression,
+     * then reused for all properties in that object. Turns O(N²) into O(N).
+     */
+    const objectBrandNeedCache = new WeakMap<TSESTree.ObjectExpression, { keys: boolean; values: boolean }>()
+
+    function getObjectBrandNeed(objectExpression: TSESTree.ObjectExpression): { keys: boolean; values: boolean } {
+      let cached = objectBrandNeedCache.get(objectExpression)
+      if (cached !== undefined) return cached
+
+      let anyKeyNeeds = false
+      let anyValueNeeds = false
+
+      for (const prop of objectExpression.properties) {
+        if (prop.type !== AST_NODE_TYPES.Property) continue
+
+        if (!anyKeyNeeds) {
+          const key = prop.key
+          if (key.type === AST_NODE_TYPES.Literal && typeof key.value === "string") {
+            if (!wouldBeSkippedWithoutBrands(key, key.value)) {
+              anyKeyNeeds = true
+            }
+          }
+        }
+
+        if (!anyValueNeeds) {
+          const val = prop.value
+          if (val.type === AST_NODE_TYPES.Literal && typeof val.value === "string") {
+            if (!wouldBeSkippedWithoutBrands(val as TSESTree.Literal, val.value)) {
+              anyValueNeeds = true
+            }
+          }
+        }
+
+        if (anyKeyNeeds && anyValueNeeds) break
+      }
+
+      cached = { keys: anyKeyNeeds, values: anyValueNeeds }
+      objectBrandNeedCache.set(objectExpression, cached)
+      return cached
+    }
+
+    /**
+     * For object properties, checks if any entry in the same position (all keys
+     * or all values) actually needs the brand. If so, the brand on the type is
+     * necessary and individual entries should not be reported as unnecessary.
+     *
+     * Example: Record<UnlocalizedText, UnlocalizedText> = { greeting: "Hello World", code: "CN" }
+     * "CN" is technical (ALL_CAPS), but "Hello World" needs the brand — so "CN" is not reported.
+     */
+    function isInObjectWhereBrandIsNeeded(node: TSESTree.Literal): boolean {
+      const parent = node.parent
+      if (parent.type !== AST_NODE_TYPES.Property) return false
+
+      const objectExpression = parent.parent
+      if (objectExpression.type !== AST_NODE_TYPES.ObjectExpression) return false
+
+      const isKey = parent.key === node
+      const isValue = parent.value === node
+      if (!isKey && !isValue) return false
+
+      const need = getObjectBrandNeed(objectExpression)
+      return isKey ? need.keys : need.values
+    }
+
+    /**
      * Main check for string literals: "Hello World", 'Hello World'
      */
     function checkStringLiteral(node: TSESTree.Literal): void {
@@ -1732,9 +1810,10 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
 
       const value = node.value
 
-      if (wouldBeSkippedByOtherChecks(node, value)) {
+      if (wouldBeSkippedWithoutBrands(node, value)) {
         // String is technical — but if it has a brand, the brand is unnecessary
-        if (options.reportUnnecessaryBrands && isLinguiBrandedType(node, typeChecker, parserServices)) {
+        // However, suppress report if a sibling value/key in the same object needs the brand
+        if (options.reportUnnecessaryBrands && wouldBeSkippedByBrands(node) && !isInObjectWhereBrandIsNeeded(node)) {
           context.report({
             node,
             messageId: "unnecessaryBrand",
@@ -1745,7 +1824,7 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       }
 
       // String would be reported — check if brand saves it
-      if (isLinguiBrandedType(node, typeChecker, parserServices)) {
+      if (wouldBeSkippedByBrands(node)) {
         return
       }
 
