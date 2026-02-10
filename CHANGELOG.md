@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.10.1](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.10.0...v1.10.1) (2026-02-10)
+
+
+### Bug Fixes
+
+* improve reportUnnecessaryBrands for Record types and object properties ([7a0a8b8](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/7a0a8b81048d867c0e1101ae590b3f85a4c669c4))
+
 ## [1.10.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.9.0...v1.10.0) (2026-02-10)
 
 
