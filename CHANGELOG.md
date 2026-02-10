@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.7](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.8.6...v1.8.7) (2026-02-10)
+
+
+### Bug Fixes
+
+* detect unlocalized template literals in no-unlocalized-strings ([f71f101](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/f71f1018793f8d118f215074662fee80d9140258))
+
 ## [1.8.6](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.8.5...v1.8.6) (2026-02-09)
 
 
