@@ -16,7 +16,7 @@ This rule uses TypeScript's type system to intelligently distinguish between use
 
 ## Rule Details
 
-This rule reports string literals and JSX text that appear to be user-visible UI text but are not wrapped in Lingui translation macros.
+This rule reports string literals, template literals, and JSX text that appear to be user-visible UI text but are not wrapped in Lingui translation macros.
 
 ### ❌ Invalid
 
@@ -28,6 +28,10 @@ const msg = "Something went wrong!"
 // JSX text
 <button>Save changes</button>
 <p>Please try again.</p>
+
+// Template literals with UI text
+const msg = `Tool ${toolId} not found`
+const question = `Are you sure you want to delete ${name}?`
 
 // Object properties with UI text
 { label: "Click here" }
@@ -46,6 +50,10 @@ msg({ message: "Click here" })
 <div className="my-class" />
 <input type="text" />
 console.log("Debug message")
+
+// Template literals with only variables or technical content
+const t = `${BRAND_NAME}`
+const url = `https://example.com/${path}`
 
 // Technical identifiers
 const x = "myIdentifier"

@@ -388,6 +388,26 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: "const t = `${BRAND_NAME}${OTHER}`", filename: "test.tsx" },
     { code: "const t = ` ${X} ${Y} `", filename: "test.tsx" },
 
+    // Template literals with technical strings (identifiers, URLs, paths)
+    { code: "const t = `user_${id}_profile`", filename: "test.tsx" },
+    { code: "const t = `https://example.com/${path}`", filename: "test.tsx" },
+    { code: "const t = `/api/v1/${resource}`", filename: "test.tsx" },
+
+    // Template literals inside console.log / new Error
+    { code: "console.log(`User ${name} not found`)", filename: "test.tsx" },
+    { code: "console.warn(`Missing value for ${key}`)", filename: "test.tsx" },
+    { code: "throw new Error(`Tool ${id} not found`)", filename: "test.tsx" },
+
+    // Template literals inside ignored functions
+    {
+      code: "myLogger.info(`User ${name} logged in`)",
+      filename: "test.tsx",
+      options: [{ ignoreFunctions: ["myLogger.*"], ignoreProperties: [], ignoreNames: [], ignorePattern: null }]
+    },
+
+    // Empty template literal
+    { code: "const t = ``", filename: "test.tsx" },
+
     // Tagged template expressions (styled-components, etc.)
     { code: 'styled.div`color: ${"red"};`', filename: "test.tsx" },
     { code: "styled.div`color: ${`red`};`", filename: "test.tsx" },
@@ -873,6 +893,41 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
           "First Name": 1,
         }
       `,
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Template literals with UI text (no interpolation)
+    {
+      code: "const msg = `Hello World`",
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Template literals with interpolation — reproduction case from issue #5
+    {
+      code: "const msg = `Tool ${toolId} not found`",
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Template literal question with interpolation
+    {
+      code: "const msg = `Are you sure you want to delete ${name}?`",
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Short template literal with interpolation
+    {
+      code: "const msg = `Hello ${name}`",
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // Template literal as object property value
+    {
+      code: "const obj = { error: `Tool ${id} not found` }",
       filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     }

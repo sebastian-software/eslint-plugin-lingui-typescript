@@ -1819,9 +1819,52 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       })
     }
 
+    /**
+     * Check for template literals: `Hello ${name}!`
+     */
+    function checkTemplateLiteral(node: TSESTree.TemplateLiteral): void {
+      // Reconstruct visible text: join quasis with "X" placeholder for expressions
+      // e.g., `Hello ${name}!` → "Hello X!"
+      const value = node.quasis
+        .map((quasi, index) => {
+          const text = quasi.value.cooked
+          return index < node.expressions.length ? text + "X" : text
+        })
+        .join("")
+
+      if (value.trim().length === 0) return
+
+      // Skip if only interpolation, no meaningful static text
+      // e.g., `${BRAND_NAME}`, ` ${X} ${Y} `
+      const staticText = node.quasis.map((q) => q.value.cooked.trim()).join("")
+      if (staticText.length === 0) return
+
+      if (ignoreRegex?.test(value) === true) return
+      if (!looksLikeUIString(value)) return
+      if (isInsideLinguiContext(node, typeChecker, parserServices)) return
+      if (isInSwitchCase(node)) return
+      if (isComputedMemberKey(node)) return
+      if (isInNonLinguiTaggedTemplate(node)) return
+      if (isIgnoredFunctionArgument(node, options.ignoreFunctions)) return
+      if (isConsoleMethodArgument(node, typeChecker, parserServices)) return
+      if (isErrorConstructorArgument(node, typeChecker, parserServices)) return
+      if (isIgnoredProperty(node, options.ignoreProperties)) return
+      if (isInsideStylingPropertyValue(node, options.ignoreProperties, typeChecker, parserServices)) return
+      if (isInsideStylingConstant(node)) return
+
+      context.report({
+        node,
+        messageId: "unlocalizedString",
+        data: {
+          text: value.length > 30 ? `${value.substring(0, 30)}...` : value
+        }
+      })
+    }
+
     return {
       Literal: checkStringLiteral,
-      JSXText: checkJSXText
+      JSXText: checkJSXText,
+      TemplateLiteral: checkTemplateLiteral
     }
   }
 })
