@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.8.7...v1.9.0) (2026-02-10)
+
+
+### Features
+
+* ignore strings in binary comparisons in no-unlocalized-strings ([e0286d7](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/e0286d7fcb270a7fd23eeeb0eb8892b3489472d0))
+
 ## [1.8.7](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.8.6...v1.8.7) (2026-02-10)
 
 
