@@ -415,6 +415,14 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     // Switch case strings
     { code: 'switch(x) { case "hello": break; case `world`: break; }', filename: "test.tsx" },
 
+    // Binary comparisons
+    { code: 'if (typeof x === "undefined") {}', filename: "test.tsx" },
+    { code: 'typeof handler !== "function"', filename: "test.tsx" },
+    { code: 'if (status === "active") {}', filename: "test.tsx" },
+    { code: 'if (mode !== "dark") {}', filename: "test.tsx" },
+    { code: 'value == "pending"', filename: "test.tsx" },
+    { code: 'if (name < "Hello World") {}', filename: "test.tsx" },
+
     // SVG attributes
     { code: '<svg viewBox="0 0 20 40"></svg>', filename: "test.tsx" },
     { code: '<path d="M10 10" />', filename: "test.tsx" },

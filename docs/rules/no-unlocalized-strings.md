@@ -348,6 +348,20 @@ The rule uses heuristics to determine if a string looks like UI text:
 - CSS selectors (`:hover`, `.class`, `#id`)
 - SVG path data (`M10 10`, `L20 30`)
 - Strings without any letters — numeric/symbolic only
+- Strings used in comparisons (`===`, `!==`, `==`, `!=`, `<`, `>`, `<=`, `>=`)
+
+### Comparison Strings
+
+Strings used in binary comparisons are automatically ignored — localized strings would never be compared directly:
+
+```tsx
+// All automatically ignored
+if (typeof x === "undefined") {}
+typeof handler !== "function"
+if (status === "active") {}
+if (mode !== "dark") {}
+value == "pending"
+```
 
 ### Numeric and Symbolic Strings
 

@@ -44,6 +44,7 @@ const status: Status = "loading"                        // String literal union
 <Calendar classNames={{ day: "bg-white" }} />           // Nested classNames objects
 const colorClasses = { active: "bg-green-100" }         // *Classes, *Colors, *Styles
 const price = "1,00€"                                   // No letters = not user-facing
+if (status === "active") {}                              // Binary comparison
 
 // Reported — these actually need translation
 const message = "Welcome to our app"
@@ -111,7 +112,7 @@ Or pick individual rules:
 }
 ```
 
-That's it. The plugin starts working immediately — DOM APIs, Intl methods, string literal unions, styling props, and numeric strings are all handled out of the box.
+That's it. The plugin starts working immediately — DOM APIs, Intl methods, string literal unions, styling props, comparisons, and numeric strings are all handled out of the box.
 
 ## Rules
 

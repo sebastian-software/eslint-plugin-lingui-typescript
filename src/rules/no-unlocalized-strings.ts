@@ -980,6 +980,22 @@ function isInSwitchCase(node: TSESTree.Node): boolean {
   return parent?.type === AST_NODE_TYPES.SwitchCase && parent.test === node
 }
 
+/** Checks if a string is used in a binary comparison: x === "value", x !== "value", etc. */
+function isBinaryComparison(node: TSESTree.Node): boolean {
+  const parent = node.parent
+  return (
+    parent?.type === AST_NODE_TYPES.BinaryExpression &&
+    (parent.operator === "===" ||
+      parent.operator === "==" ||
+      parent.operator === "!==" ||
+      parent.operator === "!=" ||
+      parent.operator === "<" ||
+      parent.operator === ">" ||
+      parent.operator === "<=" ||
+      parent.operator === ">=")
+  )
+}
+
 /** Checks if a string is a computed property key: obj["key"] */
 function isComputedMemberKey(node: TSESTree.Node): boolean {
   const parent = node.parent
@@ -1718,6 +1734,11 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
         return
       }
 
+      // Binary comparison: x === "value"
+      if (isBinaryComparison(node)) {
+        return
+      }
+
       // Computed property access: obj["key"]
       if (isComputedMemberKey(node)) {
         return
@@ -1843,6 +1864,7 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       if (!looksLikeUIString(value)) return
       if (isInsideLinguiContext(node, typeChecker, parserServices)) return
       if (isInSwitchCase(node)) return
+      if (isBinaryComparison(node)) return
       if (isComputedMemberKey(node)) return
       if (isInNonLinguiTaggedTemplate(node)) return
       if (isIgnoredFunctionArgument(node, options.ignoreFunctions)) return
