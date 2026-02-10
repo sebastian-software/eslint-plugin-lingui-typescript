@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.10.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.9.0...v1.10.0) (2026-02-10)
+
+
+### Features
+
+* add reportUnnecessaryBrands option to no-unlocalized-strings ([1d903d4](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/1d903d4257f2c1aa6619078423255e22f732bfe4))
+
 ## [1.9.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.8.7...v1.9.0) (2026-02-10)
 
 
