@@ -1074,7 +1074,22 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
           ignorePattern: null
         }
       ],
-      errors: [{ messageId: "unnecessaryBrand" }],
+      errors: [
+        {
+          messageId: "unnecessaryBrand",
+          suggestions: [
+            {
+              messageId: "removeTypeAssertion",
+              data: { assertion: "as UnlocalizedText" },
+              output: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        declare const status: string
+        if (status === ("Hello World")) {}
+      `
+            }
+          ]
+        }
+      ],
       filename: "test.tsx"
     },
 
@@ -1095,7 +1110,23 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
           ignorePattern: null
         }
       ],
-      errors: [{ messageId: "unnecessaryBrand" }],
+      errors: [
+        {
+          messageId: "unnecessaryBrand",
+          suggestions: [
+            {
+              messageId: "removeTypeAssertion",
+              data: { assertion: "as UnlocalizedText" },
+              output: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        type Mode = "Light Mode" | "Dark Mode"
+        declare function setMode(mode: Mode): void
+        setMode("Light Mode")
+      `
+            }
+          ]
+        }
+      ],
       filename: "test.tsx"
     },
 
@@ -1114,7 +1145,21 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
           ignorePattern: null
         }
       ],
-      errors: [{ messageId: "unnecessaryBrand" }],
+      errors: [
+        {
+          messageId: "unnecessaryBrand",
+          suggestions: [
+            {
+              messageId: "removeTypeAssertion",
+              data: { assertion: "as UnlocalizedLog" },
+              output: `
+        type UnlocalizedLog = string & { readonly __linguiIgnore?: "UnlocalizedLog" }
+        console.log("Hello World")
+      `
+            }
+          ]
+        }
+      ],
       filename: "test.tsx"
     },
 
@@ -1163,6 +1208,97 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
         }
       ],
       errors: [{ messageId: "unnecessaryBrand" }, { messageId: "unnecessaryBrand" }],
+      filename: "test.tsx"
+    },
+
+    // Unnecessary brand: variable assignment with as-cast — suggestion removes it
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        const x = "Hello World" as UnlocalizedText
+      `,
+      options: [
+        {
+          reportUnnecessaryBrands: true,
+          ignoreFunctions: [],
+          ignoreProperties: [],
+          ignoreNames: [],
+          ignorePattern: null
+        }
+      ],
+      errors: [
+        {
+          messageId: "unnecessaryBrand",
+          suggestions: [
+            {
+              messageId: "removeTypeAssertion",
+              data: { assertion: "as UnlocalizedText" },
+              output: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        const x = "Hello World"
+      `
+            }
+          ]
+        }
+      ],
+      filename: "test.tsx"
+    },
+
+    // Unnecessary brand: angle-bracket assertion — suggestion removes it
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        const x = <UnlocalizedText>"Hello World"
+      `,
+      options: [
+        {
+          reportUnnecessaryBrands: true,
+          ignoreFunctions: [],
+          ignoreProperties: [],
+          ignoreNames: [],
+          ignorePattern: null
+        }
+      ],
+      errors: [
+        {
+          messageId: "unnecessaryBrand",
+          suggestions: [
+            {
+              messageId: "removeTypeAssertion",
+              data: { assertion: "<UnlocalizedText>" },
+              output: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        const x = "Hello World"
+      `
+            }
+          ]
+        }
+      ],
+      filename: "test.ts"
+    },
+
+    // Unnecessary brand: contextual brand from function param — no suggestion (no as-cast)
+    {
+      code: `
+        type UnlocalizedLog = string & { readonly __linguiIgnore?: "UnlocalizedLog" }
+        declare function log(msg: UnlocalizedLog): void
+        log("SOME_CONSTANT")
+      `,
+      options: [
+        {
+          reportUnnecessaryBrands: true,
+          ignoreFunctions: [],
+          ignoreProperties: [],
+          ignoreNames: [],
+          ignorePattern: null
+        }
+      ],
+      errors: [
+        {
+          messageId: "unnecessaryBrand",
+          suggestions: []
+        }
+      ],
       filename: "test.tsx"
     }
   ]

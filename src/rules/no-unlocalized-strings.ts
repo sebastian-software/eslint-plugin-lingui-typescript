@@ -1,10 +1,10 @@
-import { AST_NODE_TYPES, ESLintUtils, type TSESTree } from "@typescript-eslint/utils"
+import { AST_NODE_TYPES, ESLintUtils, type TSESLint, type TSESTree } from "@typescript-eslint/utils"
 import ts from "typescript"
 
 import { LINGUI_IGNORE_ARGS_BRAND, LINGUI_IGNORE_BRAND } from "../types.js"
 import { createRule } from "../utils/create-rule.js"
 
-type MessageId = "unlocalizedString" | "unnecessaryBrand"
+type MessageId = "unlocalizedString" | "unnecessaryBrand" | "removeTypeAssertion"
 
 export interface Options {
   ignoreFunctions: string[]
@@ -1642,12 +1642,14 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
   name: "no-unlocalized-strings",
   meta: {
     type: "suggestion",
+    hasSuggestions: true,
     docs: {
       description: "Detect user-visible strings not wrapped in Lingui translation macros"
     },
     messages: {
       unlocalizedString: 'String "{{text}}" appears to be user-visible text. Wrap it with t`...` or <Trans>.',
-      unnecessaryBrand: "Unnecessary branded type — '{{text}}' would not be flagged without it"
+      unnecessaryBrand: "Unnecessary branded type — '{{text}}' would not be flagged without it",
+      removeTypeAssertion: "Remove '{{assertion}}' type assertion"
     },
     schema: [
       {
@@ -1801,6 +1803,47 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
     }
 
     /**
+     * Returns a suggestion descriptor to remove a type assertion around a literal,
+     * or null if the literal is not inside a type assertion.
+     */
+    function getTypeAssertionSuggestion(
+      node: TSESTree.Literal
+    ): { messageId: MessageId; data: { assertion: string }; fix: TSESLint.ReportFixFunction } | null {
+      const parent = node.parent
+
+      // as-expression: "Hello World" as UnlocalizedText
+      if (parent.type === AST_NODE_TYPES.TSAsExpression) {
+        // Guard: skip "as const"
+        const ta = parent.typeAnnotation
+        if (
+          ta.type === AST_NODE_TYPES.TSTypeReference &&
+          ta.typeName.type === AST_NODE_TYPES.Identifier &&
+          ta.typeName.name === "const"
+        ) {
+          return null
+        }
+        const assertionText = context.sourceCode.getText(ta)
+        return {
+          messageId: "removeTypeAssertion" as MessageId,
+          data: { assertion: `as ${assertionText}` },
+          fix: (fixer): TSESLint.RuleFix => fixer.replaceText(parent, context.sourceCode.getText(node))
+        }
+      }
+
+      // angle-bracket: <UnlocalizedText>"Hello World"
+      if (parent.type === AST_NODE_TYPES.TSTypeAssertion) {
+        const assertionText = context.sourceCode.getText(parent.typeAnnotation)
+        return {
+          messageId: "removeTypeAssertion" as MessageId,
+          data: { assertion: `<${assertionText}>` },
+          fix: (fixer): TSESLint.RuleFix => fixer.replaceText(parent, context.sourceCode.getText(node))
+        }
+      }
+
+      return null
+    }
+
+    /**
      * Main check for string literals: "Hello World", 'Hello World'
      */
     function checkStringLiteral(node: TSESTree.Literal): void {
@@ -1814,10 +1857,12 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
         // String is technical — but if it has a brand, the brand is unnecessary
         // However, suppress report if a sibling value/key in the same object needs the brand
         if (options.reportUnnecessaryBrands && wouldBeSkippedByBrands(node) && !isInObjectWhereBrandIsNeeded(node)) {
+          const suggestion = getTypeAssertionSuggestion(node)
           context.report({
             node,
             messageId: "unnecessaryBrand",
-            data: { text: value.length > 30 ? `${value.substring(0, 30)}...` : value }
+            data: { text: value.length > 30 ? `${value.substring(0, 30)}...` : value },
+            suggest: suggestion !== null ? [suggestion] : null
           })
         }
         return

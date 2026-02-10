@@ -357,7 +357,9 @@ declare function log(msg: UnlocalizedText): void
 log("Starting server on port 3000")
 ```
 
-**Note:** This option only checks string literals. It does not check template literals or JSX text (branded types don't apply there). No autofix is provided — removing branded types could cause TypeScript errors downstream, so review manually.
+When the unnecessary brand is an explicit type assertion (`as UnlocalizedText` or `<UnlocalizedText>`), the rule offers an ESLint **suggestion** to remove the assertion. Suggestions appear as IDE quick-actions that you apply manually — they are not auto-applied via `--fix` because removing a type assertion could cause TypeScript compilation errors in the surrounding context.
+
+**Note:** This option only checks string literals. It does not check template literals or JSX text (branded types don't apply there). For contextual brands (Record types, function parameters), no suggestion is offered because the brand lives on the type declaration, not on the literal.
 
 ## Heuristics
 
