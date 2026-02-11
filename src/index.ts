@@ -17,6 +17,7 @@ import { noNestedMacros } from "./rules/no-nested-macros.js"
 import { noSingleTagToTranslate } from "./rules/no-single-tag-to-translate.js"
 import { noSingleVariablesToTranslate } from "./rules/no-single-variables-to-translate.js"
 import { noUnlocalizedStrings } from "./rules/no-unlocalized-strings.js"
+import { preferTransInJsx } from "./rules/prefer-trans-in-jsx.js"
 import { textRestrictions } from "./rules/text-restrictions.js"
 import { tCallInFunction } from "./rules/t-call-in-function.js"
 
@@ -32,6 +33,7 @@ const plugin = {
     "no-single-tag-to-translate": noSingleTagToTranslate,
     "no-single-variables-to-translate": noSingleVariablesToTranslate,
     "no-unlocalized-strings": noUnlocalizedStrings,
+    "prefer-trans-in-jsx": preferTransInJsx,
     "text-restrictions": textRestrictions,
     "t-call-in-function": tCallInFunction
   },
@@ -51,7 +53,8 @@ plugin.configs = {
       "lingui-ts/no-single-tag-to-translate": "error",
       "lingui-ts/no-single-variables-to-translate": "error",
       "lingui-ts/no-unlocalized-strings": "error",
-      "lingui-ts/t-call-in-function": "error"
+      "lingui-ts/t-call-in-function": "error",
+      "lingui-ts/prefer-trans-in-jsx": "warn"
       // text-restrictions not in recommended (requires configuration)
     }
   }
