@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.14.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.13.0...v1.14.0) (2026-02-11)
+
+
+### Features
+
+* make UnlocalizedRecord generic for typed keys ([da84b8d](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/da84b8df3c10ac15806fa50859c9e6ba558dc1fa))
+
 ## [1.13.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.12.1...v1.13.0) (2026-02-11)
 
 
