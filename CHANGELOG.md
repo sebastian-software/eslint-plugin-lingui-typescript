@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.1](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.12.0...v1.12.1) (2026-02-11)
+
+
+### Bug Fixes
+
+* skip type-only imports when adding Trans import ([112b492](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/112b492494dea9821934e496255b752a7ba4a176))
+
 ## [1.12.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.11.0...v1.12.0) (2026-02-11)
 
 
