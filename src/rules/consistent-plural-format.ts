@@ -1,4 +1,4 @@
-import { AST_NODE_TYPES, type TSESTree } from "@typescript-eslint/utils"
+import { AST_NODE_TYPES, type TSESLint, type TSESTree } from "@typescript-eslint/utils"
 
 import { createRule } from "../utils/create-rule.js"
 
@@ -141,6 +141,7 @@ export const consistentPluralFormat = createRule<[Options], MessageId>({
   name: "consistent-plural-format",
   meta: {
     type: "problem",
+    fixable: "code",
     docs: {
       description: "Enforce consistent plural format style (# hash or ${var} template)"
     },
@@ -168,6 +169,97 @@ export const consistentPluralFormat = createRule<[Options], MessageId>({
     }
   ],
   create(context, [options]) {
+    const sourceCode = context.sourceCode
+
+    /**
+     * Fix: convert template format (${var}) to hash format (#).
+     */
+    function fixToHash(
+      fixer: TSESLint.RuleFixer,
+      node: TSESTree.Node,
+      valueVar: string | null
+    ): TSESLint.RuleFix | TSESLint.RuleFix[] | null {
+      if (valueVar === null || node.type !== AST_NODE_TYPES.TemplateLiteral) {
+        return null
+      }
+
+      const allExpressionsAreVar = node.expressions.every(
+        (expr) => expr.type === AST_NODE_TYPES.Identifier && expr.name === valueVar
+      )
+
+      if (allExpressionsAreVar) {
+        // All expressions are the count variable — produce a plain string with #
+        let content = ""
+        for (const [i, quasi] of node.quasis.entries()) {
+          content += quasi.value.cooked
+          if (i < node.expressions.length) {
+            content += "#"
+          }
+        }
+
+        const escaped = content.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+        const replacement = `"${escaped}"`
+
+        // In JSX, replace the entire {`...`} container with "..."
+        const { parent } = node
+        if (parent.type === AST_NODE_TYPES.JSXExpressionContainer) {
+          return fixer.replaceText(parent, replacement)
+        }
+
+        return fixer.replaceText(node, replacement)
+      }
+
+      // Some expressions are not the count variable — only replace ${varName} with #
+      const fixes: TSESLint.RuleFix[] = []
+      for (const expr of node.expressions) {
+        if (expr.type === AST_NODE_TYPES.Identifier && expr.name === valueVar) {
+          fixes.push(fixer.replaceTextRange([expr.range[0] - 2, expr.range[1] + 1], "#"))
+        }
+      }
+      return fixes.length > 0 ? fixes : null
+    }
+
+    /**
+     * Fix: convert hash format (#) to template format (${var}).
+     */
+    function fixToTemplate(
+      fixer: TSESLint.RuleFixer,
+      node: TSESTree.Node,
+      valueVar: string | null
+    ): TSESLint.RuleFix | null {
+      if (valueVar === null) {
+        return null
+      }
+
+      if (node.type === AST_NODE_TYPES.Literal && typeof node.value === "string") {
+        const content = node.value.replace(/#/g, `\${${valueVar}}`)
+        const replacement = `\`${content}\``
+
+        // In JSX: one="# item" → one={`${count} item`}
+        const { parent } = node
+        if (parent.type === AST_NODE_TYPES.JSXAttribute) {
+          return fixer.replaceText(node, `{${replacement}}`)
+        }
+
+        return fixer.replaceText(node, replacement)
+      }
+
+      if (node.type === AST_NODE_TYPES.TemplateLiteral) {
+        // Rebuild template literal, replacing # in static text with ${varName}
+        let newText = "`"
+        for (const [i, quasi] of node.quasis.entries()) {
+          newText += quasi.value.raw.replace(/#/g, `\${${valueVar}}`)
+          if (i < node.expressions.length) {
+            newText += `\${${sourceCode.getText(node.expressions[i])}}`
+          }
+        }
+        newText += "`"
+        return fixer.replaceText(node, newText)
+      }
+
+      return null
+    }
+
     function checkPluralNode(node: TSESTree.CallExpression | TSESTree.JSXElement): void {
       const info = getPluralInfo(node)
       if (info === undefined) {
@@ -181,21 +273,25 @@ export const consistentPluralFormat = createRule<[Options], MessageId>({
         const hasTemplate = usesTemplateFormat(opt.value, valueVar)
 
         if (options.style === "hash") {
-          // Hash required: error if using template format
           if (hasTemplate && !hasHash) {
             context.report({
               node: opt.value,
               messageId: "hashRequired",
-              data: { key: opt.key }
+              data: { key: opt.key },
+              fix(fixer) {
+                return fixToHash(fixer, opt.value, valueVar)
+              }
             })
           }
         } else {
-          // Template required: error if using hash format
           if (hasHash && !hasTemplate) {
             context.report({
               node: opt.value,
               messageId: "templateRequired",
-              data: { key: opt.key }
+              data: { key: opt.key },
+              fix(fixer) {
+                return fixToTemplate(fixer, opt.value, valueVar)
+              }
             })
           }
         }

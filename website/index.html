@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>eslint-plugin-lingui-typescript — Type-aware i18n linting</title>
-  <meta name="description" content="8 ESLint rules for Lingui that read TypeScript types instead of guessing. Your whitelist goes away.">
+  <meta name="description" content="9 ESLint rules for Lingui that read TypeScript types instead of guessing. Your whitelist goes away.">
   <meta name="keywords" content="eslint, lingui, i18n, internationalization, typescript, localization">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
 
   <!-- Open Graph -->
   <meta property="og:title" content="eslint-plugin-lingui-typescript">
-  <meta property="og:description" content="8 ESLint rules for Lingui that read TypeScript types instead of guessing. Your whitelist goes away.">
+  <meta property="og:description" content="9 ESLint rules for Lingui that read TypeScript types instead of guessing. Your whitelist goes away.">
   <meta property="og:type" content="website">
 
   <!-- Tailwind CSS -->
@@ -214,7 +214,7 @@
             i18n linting that<br><span class="gradient-text">reads your types</span>
           </h1>
           <p class="text-xl text-slate-600 mb-8 leading-relaxed">
-            <strong class="text-slate-900">8 ESLint rules</strong> for Lingui.
+            <strong class="text-slate-900">9 ESLint rules</strong> for Lingui.
             TypeScript's type system separates technical strings from user text —
             no whitelist needed.
           </p>
@@ -366,6 +366,10 @@ fetch(url, { mode: <span class="string">"cors"</span> })
               <span class="text-brand-600 mt-0.5 font-bold">✓</span>
               <span class="text-slate-700"><code class="text-brand-600 bg-brand-50 px-1 rounded">UnlocalizedEvent</code>, <code class="text-brand-600 bg-brand-50 px-1 rounded">UnlocalizedKey</code> — specific use cases</span>
             </div>
+            <div class="flex items-start gap-3">
+              <span class="text-brand-600 mt-0.5 font-bold">✓</span>
+              <span class="text-slate-700"><code class="text-brand-600 bg-brand-50 px-1 rounded">UnlocalizedRecord&lt;K&gt;</code> — key-value maps and lookup tables</span>
+            </div>
           </div>
         </div>
         <div class="code-block rounded-2xl p-6 shadow-xl overflow-hidden">
@@ -457,7 +461,7 @@ logger.<span class="function">error</span>(<span class="string">"Connection fail
   <section class="py-20 section-gradient-2 decorative-dots">
     <div class="max-w-6xl mx-auto px-6">
       <div class="text-center mb-16">
-        <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">All 8 rules</h2>
+        <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">All 9 rules</h2>
         <p class="text-slate-600 max-w-2xl mx-auto">
           From catching unlocalized strings to enforcing consistent plurals and clean macro usage.
         </p>
@@ -466,7 +470,7 @@ logger.<span class="function">error</span>(<span class="string">"Connection fail
         <a href="https://github.com/sebastian-software/eslint-plugin-lingui-typescript/blob/main/docs/rules/no-unlocalized-strings.md" class="feature-card rounded-xl p-5 border border-slate-200 hover:border-brand-300 transition-all group">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="font-mono text-brand-600 group-hover:text-brand-700 transition-colors font-medium">no-unlocalized-strings</h3>
+              <h3 class="font-mono text-brand-600 group-hover:text-brand-700 transition-colors font-medium">no-unlocalized-strings <span class="text-xs bg-brand-100 text-brand-700 px-1.5 py-0.5 rounded font-sans">fixable</span></h3>
               <p class="text-slate-500 text-sm mt-1">Detect user-visible strings not wrapped in Lingui macros</p>
             </div>
             <span class="text-slate-400 group-hover:text-brand-600 transition-colors">→</span>
@@ -520,8 +524,17 @@ logger.<span class="function">error</span>(<span class="string">"Connection fail
         <a href="https://github.com/sebastian-software/eslint-plugin-lingui-typescript/blob/main/docs/rules/consistent-plural-format.md" class="feature-card rounded-xl p-5 border border-slate-200 hover:border-brand-300 transition-all group">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="font-mono text-brand-600 group-hover:text-brand-700 transition-colors font-medium">consistent-plural-format</h3>
+              <h3 class="font-mono text-brand-600 group-hover:text-brand-700 transition-colors font-medium">consistent-plural-format <span class="text-xs bg-brand-100 text-brand-700 px-1.5 py-0.5 rounded font-sans">fixable</span></h3>
               <p class="text-slate-500 text-sm mt-1">Enforce consistent plural value format</p>
+            </div>
+            <span class="text-slate-400 group-hover:text-brand-600 transition-colors">→</span>
+          </div>
+        </a>
+        <a href="https://github.com/sebastian-software/eslint-plugin-lingui-typescript/blob/main/docs/rules/prefer-trans-in-jsx.md" class="feature-card rounded-xl p-5 border border-slate-200 hover:border-brand-300 transition-all group">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-mono text-brand-600 group-hover:text-brand-700 transition-colors font-medium">prefer-trans-in-jsx <span class="text-xs bg-brand-100 text-brand-700 px-1.5 py-0.5 rounded font-sans">fixable</span></h3>
+              <p class="text-slate-500 text-sm mt-1">Prefer &lt;Trans&gt; over {t`...`} in JSX</p>
             </div>
             <span class="text-slate-400 group-hover:text-brand-600 transition-colors">→</span>
           </div>

@@ -67,6 +67,7 @@ ruleTester.run("consistent-plural-format", consistentPluralFormat, {
     // plural() with template when hash expected
     {
       code: "plural(numBooks, { one: `${numBooks} book`, other: `${numBooks} books` })",
+      output: 'plural(numBooks, { one: "# book", other: "# books" })',
       errors: [
         { messageId: "hashRequired", data: { key: "one" } },
         { messageId: "hashRequired", data: { key: "other" } }
@@ -75,6 +76,7 @@ ruleTester.run("consistent-plural-format", consistentPluralFormat, {
     // Mixed: some hash, some template
     {
       code: 'plural(count, { zero: `${count} items`, one: "# item", other: `${count} items` })',
+      output: 'plural(count, { zero: "# items", one: "# item", other: "# items" })',
       errors: [
         { messageId: "hashRequired", data: { key: "zero" } },
         { messageId: "hashRequired", data: { key: "other" } }
@@ -84,6 +86,7 @@ ruleTester.run("consistent-plural-format", consistentPluralFormat, {
     // <Plural> with template when hash expected
     {
       code: "<Plural value={count} one={`${count} item`} other={`${count} items`} />",
+      output: '<Plural value={count} one="# item" other="# items" />',
       errors: [
         { messageId: "hashRequired", data: { key: "one" } },
         { messageId: "hashRequired", data: { key: "other" } }
@@ -94,6 +97,7 @@ ruleTester.run("consistent-plural-format", consistentPluralFormat, {
     // plural() with hash when template expected
     {
       code: 'plural(numBooks, { one: "# book", other: "# books" })',
+      output: "plural(numBooks, { one: `${numBooks} book`, other: `${numBooks} books` })",
       options: [{ style: "template" }],
       errors: [
         { messageId: "templateRequired", data: { key: "one" } },
@@ -103,6 +107,7 @@ ruleTester.run("consistent-plural-format", consistentPluralFormat, {
     // Mixed: some template, some hash
     {
       code: 'plural(count, { zero: "# items", one: `${count} item`, other: "# items" })',
+      output: "plural(count, { zero: `${count} items`, one: `${count} item`, other: `${count} items` })",
       options: [{ style: "template" }],
       errors: [
         { messageId: "templateRequired", data: { key: "zero" } },
@@ -113,6 +118,7 @@ ruleTester.run("consistent-plural-format", consistentPluralFormat, {
     // <Plural> with hash when template expected
     {
       code: '<Plural value={count} one="# item" other="# items" />',
+      output: "<Plural value={count} one={`${count} item`} other={`${count} items`} />",
       options: [{ style: "template" }],
       errors: [
         { messageId: "templateRequired", data: { key: "one" } },

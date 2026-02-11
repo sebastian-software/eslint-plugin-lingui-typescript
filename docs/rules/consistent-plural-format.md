@@ -71,6 +71,15 @@ plural(count, {
 })
 ```
 
+## Auto-Fix
+
+This rule provides auto-fixes via `--fix`:
+
+- **Hash style**: Converts `` `${count} item` `` to `"# item"` (including JSX attributes)
+- **Template style**: Converts `"# item"` to `` `${count} item` `` (including JSX attributes)
+
+The fix only applies when the count variable is known (passed as first argument to `plural()` or as the `value` prop on `<Plural>`).
+
 ## Options
 
 ### `style`

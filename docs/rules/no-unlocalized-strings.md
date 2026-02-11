@@ -437,6 +437,7 @@ import type {
   UnlocalizedClassName,
   UnlocalizedEvent,
   UnlocalizedKey,
+  UnlocalizedRecord,
 } from "eslint-plugin-lingui-typescript/types"
 ```
 
@@ -451,6 +452,7 @@ import type {
 | `UnlocalizedClassName` | CSS class name strings |
 | `UnlocalizedEvent` | Analytics/tracking event names |
 | `UnlocalizedKey` | Storage keys, query keys, identifiers |
+| `UnlocalizedRecord<K>` | Key-value maps (`Record<K, UnlocalizedText>`) |
 
 ### Example: Custom Logger (Recommended)
 

@@ -116,16 +116,17 @@ That's it. DOM APIs, Intl methods, string literal unions, styling props, compari
 
 ## Rules
 
-| Rule | Description | Recommended |
-|------|-------------|:-----------:|
-| [no-unlocalized-strings](docs/rules/no-unlocalized-strings.md) | Catches user-visible strings not wrapped in Lingui macros. Uses TypeScript types to skip technical strings automatically. | ✅ |
-| [no-single-variables-to-translate](docs/rules/no-single-variables-to-translate.md) | Prevents messages with only variables and no text — translators need context. | ✅ |
-| [no-single-tag-to-translate](docs/rules/no-single-tag-to-translate.md) | Prevents `<Trans>` wrapping a single JSX element without surrounding text. | ✅ |
-| [no-nested-macros](docs/rules/no-nested-macros.md) | Prevents nesting Lingui macros inside each other — nested macros produce broken catalogs. | ✅ |
-| [no-expression-in-message](docs/rules/no-expression-in-message.md) | Keeps expressions simple inside messages. Complex logic goes into named variables. | ✅ |
-| [t-call-in-function](docs/rules/t-call-in-function.md) | Keeps `t` macro calls inside functions where i18n is initialized. | ✅ |
-| [consistent-plural-format](docs/rules/consistent-plural-format.md) | Enforces consistent plural format — either `#` hash or `${var}` template literals. | ✅ |
-| [text-restrictions](docs/rules/text-restrictions.md) | Enforces project-specific text patterns and restrictions. Requires configuration. | — |
+| Rule | Description | Recommended | Fixable |
+|------|-------------|:-----------:|:-------:|
+| [no-unlocalized-strings](docs/rules/no-unlocalized-strings.md) | Catches user-visible strings not wrapped in Lingui macros. Uses TypeScript types to skip technical strings automatically. | ✅ | ✅ |
+| [no-single-variables-to-translate](docs/rules/no-single-variables-to-translate.md) | Prevents messages with only variables and no text — translators need context. | ✅ | — |
+| [no-single-tag-to-translate](docs/rules/no-single-tag-to-translate.md) | Prevents `<Trans>` wrapping a single JSX element without surrounding text. | ✅ | — |
+| [no-nested-macros](docs/rules/no-nested-macros.md) | Prevents nesting Lingui macros inside each other — nested macros produce broken catalogs. | ✅ | — |
+| [no-expression-in-message](docs/rules/no-expression-in-message.md) | Keeps expressions simple inside messages. Complex logic goes into named variables. | ✅ | — |
+| [t-call-in-function](docs/rules/t-call-in-function.md) | Keeps `t` macro calls inside functions where i18n is initialized. | ✅ | — |
+| [consistent-plural-format](docs/rules/consistent-plural-format.md) | Enforces consistent plural format — either `#` hash or `${var}` template literals. | ✅ | ✅ |
+| [prefer-trans-in-jsx](docs/rules/prefer-trans-in-jsx.md) | Prefers `<Trans>` over `` {t`...`} `` in JSX for consistency. | ⚠️ | ✅ |
+| [text-restrictions](docs/rules/text-restrictions.md) | Enforces project-specific text patterns and restrictions. Requires configuration. | — | — |
 
 ## Branded types for edge cases
 
@@ -154,6 +155,7 @@ logger.error("Connection failed:", error)    // Not flagged
 | `UnlocalizedClassName` | CSS class names |
 | `UnlocalizedEvent` | Analytics/tracking event names |
 | `UnlocalizedKey` | Storage keys, query keys |
+| `UnlocalizedRecord<K>` | Key-value maps (`Record<K, UnlocalizedText>`) |
 
 As the plugin gets smarter, some brands become unnecessary. Enable `reportUnnecessaryBrands` to find the ones you can remove:
 

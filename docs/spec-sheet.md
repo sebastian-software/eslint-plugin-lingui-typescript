@@ -79,14 +79,15 @@ export default [
 
 The plugin MUST provide at least the following rules (names can be exactly as below):
 
-1. `lingui/no-complex-expressions-in-message`
-2. `lingui/no-nested-macros`
-3. `lingui/no-single-variable-message`
-4. `lingui/no-single-tag-message`
-5. `lingui/valid-t-call-location`
-6. `lingui/no-unlocalized-strings`
-7. `lingui/text-restrictions`
-8. `lingui/consistent-plural-format`
+1. `lingui-ts/no-expression-in-message` (originally `no-complex-expressions-in-message`)
+2. `lingui-ts/no-nested-macros`
+3. `lingui-ts/no-single-variables-to-translate` (originally `no-single-variable-message`)
+4. `lingui-ts/no-single-tag-to-translate` (originally `no-single-tag-message`)
+5. `lingui-ts/t-call-in-function` (originally `valid-t-call-location`)
+6. `lingui-ts/no-unlocalized-strings`
+7. `lingui-ts/text-restrictions`
+8. `lingui-ts/consistent-plural-format`
+9. `lingui-ts/prefer-trans-in-jsx` (added post-spec)
 
 Each rule MUST:
 
