@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.11.0...v1.12.0) (2026-02-11)
+
+
+### Features
+
+* add auto-fix to wrap JSX text with &lt;Trans&gt; ([94f7cb8](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/94f7cb8f37aeb1f7d20871197736cff16963e790))
+* add prefer-trans-in-jsx rule with auto-fix ([9f76a6f](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/9f76a6fcd6e3c3bd94fac75e67268e6e7b066822))
+
 ## [1.11.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.10.1...v1.11.0) (2026-02-10)
 
 
