@@ -74,6 +74,22 @@ ruleTester.run("prefer-trans-in-jsx", preferTransInJsx, {
       errors: [{ messageId: "preferTrans" }]
     },
 
+    // Case 1: Type-only import of Trans — not a value import, so new import is added
+    {
+      code: 'import type { Trans } from "@lingui/react/macro"\n<button>{t`Save changes`}</button>',
+      output:
+        'import { Trans } from "@lingui/react/macro"\nimport type { Trans } from "@lingui/react/macro"\n<button><Trans>Save changes</Trans></button>',
+      errors: [{ messageId: "preferTrans" }]
+    },
+
+    // Case 1: Type-only import statement — don't append to it, add new import
+    {
+      code: 'import type { useLingui } from "@lingui/react/macro"\n<button>{t`Save changes`}</button>',
+      output:
+        'import { Trans } from "@lingui/react/macro"\nimport type { useLingui } from "@lingui/react/macro"\n<button><Trans>Save changes</Trans></button>',
+      errors: [{ messageId: "preferTrans" }]
+    },
+
     // Case 1: Multiple expressions
     {
       code: "<p>{t`${a} and ${b}`}</p>",

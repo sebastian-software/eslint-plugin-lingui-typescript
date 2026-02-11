@@ -36,27 +36,31 @@ function ensureTransImport(
 ): TSESLint.RuleFix | null {
   const body = context.sourceCode.ast.body
 
-  // Check if Trans is already imported from any Lingui package
+  // Check if Trans is already imported as a value from any Lingui package
   for (const stmt of body) {
     if (stmt.type !== AST_NODE_TYPES.ImportDeclaration) continue
     const source = stmt.source.value
     if (typeof source !== "string" || !source.includes("@lingui/")) continue
 
+    // Skip type-only imports: import type { Trans } from "..."
+    if (stmt.importKind === "type") continue
+
     for (const spec of stmt.specifiers) {
       if (
         spec.type === AST_NODE_TYPES.ImportSpecifier &&
         spec.imported.type === AST_NODE_TYPES.Identifier &&
-        spec.imported.name === "Trans"
+        spec.imported.name === "Trans" &&
+        spec.importKind !== "type"
       ) {
         return null
       }
     }
   }
 
-  // Check if there's an existing import from @lingui/react/macro to append to
+  // Check if there's an existing value import from @lingui/react/macro to append to
   for (const stmt of body) {
     if (stmt.type !== AST_NODE_TYPES.ImportDeclaration) continue
-    if (stmt.source.value === "@lingui/react/macro" && stmt.specifiers.length > 0) {
+    if (stmt.source.value === "@lingui/react/macro" && stmt.importKind !== "type" && stmt.specifiers.length > 0) {
       const lastSpecifier = stmt.specifiers[stmt.specifiers.length - 1]
       if (lastSpecifier !== undefined) {
         return fixer.insertTextAfter(lastSpecifier, ", Trans")
