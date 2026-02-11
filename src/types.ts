@@ -261,3 +261,34 @@ export type UnlocalizedEvent = string & { readonly __linguiIgnore?: "Unlocalized
  * ```
  */
 export type UnlocalizedKey = string & { readonly __linguiIgnore?: "UnlocalizedKey" }
+
+// =============================================================================
+// Record/Map types
+// =============================================================================
+
+/**
+ * Record type for key-value maps where all values are unlocalized strings.
+ *
+ * Use this for dictionaries, lookup tables, configuration maps, or component
+ * props that map string keys to technical string values.
+ *
+ * @example
+ * ```ts
+ * import type { UnlocalizedRecord } from "eslint-plugin-lingui-typescript/types"
+ *
+ * // SVG prop maps
+ * const svgProps: UnlocalizedRecord = { fill: "red", stroke: "blue" }
+ *
+ * // Color lookup tables
+ * const statusColors: UnlocalizedRecord = {
+ *   active: "#22c55e",
+ *   inactive: "#ef4444",
+ * }
+ *
+ * // Component props
+ * interface IconProps {
+ *   attrs: UnlocalizedRecord
+ * }
+ * ```
+ */
+export type UnlocalizedRecord = Record<string, UnlocalizedText>
