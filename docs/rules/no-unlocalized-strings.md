@@ -14,6 +14,12 @@ Unlocalized strings can lead to:
 
 This rule uses TypeScript's type system to intelligently distinguish between user-visible text and technical strings — no manual whitelisting needed for most cases.
 
+## Auto-Fix
+
+JSX text violations are auto-fixable via `--fix`. The fix wraps the text with `<Trans>` and adds the import from `@lingui/react/macro` if not already present.
+
+Only simple text children are fixed automatically. Mixed content (text combined with expressions or other elements, e.g. `<div>Hello {name}!</div>`) requires manual wrapping. String literals, template literals, and JSX attributes are not auto-fixed.
+
 ## Rule Details
 
 This rule reports string literals, template literals, and JSX text that appear to be user-visible UI text but are not wrapped in Lingui translation macros.

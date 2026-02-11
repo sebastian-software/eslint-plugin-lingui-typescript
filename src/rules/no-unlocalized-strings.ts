@@ -1642,6 +1642,7 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
   name: "no-unlocalized-strings",
   meta: {
     type: "suggestion",
+    fixable: "code",
     hasSuggestions: true,
     docs: {
       description: "Detect user-visible strings not wrapped in Lingui translation macros"
@@ -1884,6 +1885,81 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
     }
 
     /**
+     * Returns a RuleFix that ensures `Trans` is imported from `@lingui/react/macro`,
+     * or null if the import already exists.
+     */
+    function ensureTransImport(fixer: TSESLint.RuleFixer): TSESLint.RuleFix | null {
+      const body = context.sourceCode.ast.body
+
+      // Check if Trans is already imported from any Lingui package
+      for (const stmt of body) {
+        if (stmt.type !== AST_NODE_TYPES.ImportDeclaration) continue
+        const source = stmt.source.value
+        if (typeof source !== "string" || !source.includes("@lingui/")) continue
+
+        for (const spec of stmt.specifiers) {
+          if (
+            spec.type === AST_NODE_TYPES.ImportSpecifier &&
+            spec.imported.type === AST_NODE_TYPES.Identifier &&
+            spec.imported.name === "Trans"
+          ) {
+            return null
+          }
+        }
+      }
+
+      // Check if there's an existing import from @lingui/react/macro to append to
+      for (const stmt of body) {
+        if (stmt.type !== AST_NODE_TYPES.ImportDeclaration) continue
+        if (stmt.source.value === "@lingui/react/macro" && stmt.specifiers.length > 0) {
+          const lastSpecifier = stmt.specifiers[stmt.specifiers.length - 1]
+          if (lastSpecifier !== undefined) {
+            return fixer.insertTextAfter(lastSpecifier, ", Trans")
+          }
+        }
+      }
+
+      // Insert a new import before the first statement
+      const firstStatement = body[0]
+      if (firstStatement !== undefined) {
+        return fixer.insertTextBefore(firstStatement, 'import { Trans } from "@lingui/react/macro"\n')
+      }
+
+      return null
+    }
+
+    /**
+     * Returns a fix function that wraps JSXText with <Trans>, or null if not fixable.
+     * Only provides a fix when the JSXText is the sole non-whitespace child.
+     */
+    function getJSXTextFix(node: TSESTree.JSXText): ((fixer: TSESLint.RuleFixer) => TSESLint.RuleFix[]) | null {
+      const parent = node.parent
+      if (parent.type !== AST_NODE_TYPES.JSXElement) return null
+
+      const isSoleTextChild = parent.children.every(
+        (child) => child === node || (child.type === AST_NODE_TYPES.JSXText && child.value.trim() === "")
+      )
+      if (!isSoleTextChild) return null
+
+      return (fixer) => {
+        const fixes: TSESLint.RuleFix[] = []
+
+        const raw = context.sourceCode.getText(node)
+        const leadingMatch = /^\s*/.exec(raw)
+        const trailingMatch = /\s*$/.exec(raw)
+        const leadingWS = leadingMatch?.[0] ?? ""
+        const trailingWS = trailingMatch?.[0] ?? ""
+        const trimmed = raw.slice(leadingWS.length, raw.length - (trailingWS.length || 0) || undefined)
+        fixes.push(fixer.replaceText(node, `${leadingWS}<Trans>${trimmed}</Trans>${trailingWS}`))
+
+        const importFix = ensureTransImport(fixer)
+        if (importFix !== null) fixes.push(importFix)
+
+        return fixes
+      }
+    }
+
+    /**
      * Check for JSX text content: <div>Hello World</div>
      */
     function checkJSXText(node: TSESTree.JSXText): void {
@@ -1910,7 +1986,8 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
         messageId: "unlocalizedString",
         data: {
           text: value.length > 30 ? `${value.substring(0, 30)}...` : value
-        }
+        },
+        fix: getJSXTextFix(node)
       })
     }
 

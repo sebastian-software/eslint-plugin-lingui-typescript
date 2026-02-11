@@ -807,16 +807,50 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     {
       code: "<button>Save changes</button>",
       filename: "test.tsx",
+      output: 'import { Trans } from "@lingui/react/macro"\n<button><Trans>Save changes</Trans></button>',
       errors: [{ messageId: "unlocalizedString" }]
     },
     {
       code: "<div>Something went wrong!</div>",
       filename: "test.tsx",
+      output: 'import { Trans } from "@lingui/react/macro"\n<div><Trans>Something went wrong!</Trans></div>',
       errors: [{ messageId: "unlocalizedString" }]
     },
     {
       code: "<p>Please try again.</p>",
       filename: "test.tsx",
+      output: 'import { Trans } from "@lingui/react/macro"\n<p><Trans>Please try again.</Trans></p>',
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // JSX text: Trans already imported — only wraps, no duplicate import
+    {
+      code: 'import { Trans } from "@lingui/react/macro"\n<button>Save changes</button>',
+      filename: "test.tsx",
+      output: 'import { Trans } from "@lingui/react/macro"\n<button><Trans>Save changes</Trans></button>',
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // JSX text: Existing @lingui/react/macro import without Trans — adds Trans to existing import
+    {
+      code: 'import { t } from "@lingui/react/macro"\n<button>Save changes</button>',
+      filename: "test.tsx",
+      output: 'import { t, Trans } from "@lingui/react/macro"\n<button><Trans>Save changes</Trans></button>',
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // JSX text: Mixed content (no fix) — text + expression sibling
+    {
+      code: "<div>Hello World {name} again!</div>",
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }, { messageId: "unlocalizedString" }]
+    },
+
+    // JSX text: Multiline — preserves whitespace around <Trans>
+    {
+      code: "<button>\n  Save changes\n</button>",
+      filename: "test.tsx",
+      output: 'import { Trans } from "@lingui/react/macro"\n<button>\n  <Trans>Save changes</Trans>\n</button>',
       errors: [{ messageId: "unlocalizedString" }]
     },
 
@@ -895,6 +929,7 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     {
       code: "<button>保存</button>",
       filename: "test.tsx",
+      output: 'import { Trans } from "@lingui/react/macro"\n<button><Trans>保存</Trans></button>',
       errors: [{ messageId: "unlocalizedString" }]
     },
 
