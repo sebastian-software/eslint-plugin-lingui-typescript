@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.12.1...v1.13.0) (2026-02-11)
+
+
+### Features
+
+* add UnlocalizedRecord convenience type for key-value maps ([6df407d](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/6df407d482d2f380f029956210bdc03d6a99759d))
+
 ## [1.12.1](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.12.0...v1.12.1) (2026-02-11)
 
 
