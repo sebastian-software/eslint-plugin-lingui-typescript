@@ -276,13 +276,15 @@ export type UnlocalizedKey = string & { readonly __linguiIgnore?: "UnlocalizedKe
  * ```ts
  * import type { UnlocalizedRecord } from "eslint-plugin-lingui-typescript/types"
  *
- * // SVG prop maps
+ * // Simple key-value map
  * const svgProps: UnlocalizedRecord = { fill: "red", stroke: "blue" }
  *
- * // Color lookup tables
- * const statusColors: UnlocalizedRecord = {
- *   active: "#22c55e",
- *   inactive: "#ef4444",
+ * // With typed keys
+ * type SvgProp = "fill" | "stroke" | "opacity"
+ * const defaults: UnlocalizedRecord<SvgProp> = {
+ *   fill: "currentColor",
+ *   stroke: "none",
+ *   opacity: "1",
  * }
  *
  * // Component props
@@ -291,4 +293,4 @@ export type UnlocalizedKey = string & { readonly __linguiIgnore?: "UnlocalizedKe
  * }
  * ```
  */
-export type UnlocalizedRecord = Record<string, UnlocalizedText>
+export type UnlocalizedRecord<K extends string = string> = Record<K, UnlocalizedText>
