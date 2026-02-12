@@ -126,11 +126,11 @@ Add to your `.oxlintrc.json`:
   "jsPlugins": ["eslint-plugin-lingui-typescript"],
   "rules": {
     "lingui-typescript/no-nested-macros": "error",
-    "lingui-typescript/t-call-in-function": "error",
     "lingui-typescript/no-single-variables-to-translate": "error",
     "lingui-typescript/no-single-tag-to-translate": "error",
-    "lingui-typescript/no-expression-in-message": "error",
-    "lingui-typescript/consistent-plural-format": "error",
+    "lingui-typescript/t-call-in-function": "warn",
+    "lingui-typescript/no-expression-in-message": "warn",
+    "lingui-typescript/consistent-plural-format": "warn",
     "lingui-typescript/prefer-trans-in-jsx": "warn",
     "lingui-typescript/text-restrictions": ["error", { "rules": [] }]
   }
@@ -149,14 +149,14 @@ oxlint . && eslint .
 
 | Rule | Description | Recommended | Fixable | OXLint |
 |------|-------------|:-----------:|:-------:|:------:|
-| [no-unlocalized-strings](docs/rules/no-unlocalized-strings.md) | Catches user-visible strings not wrapped in Lingui macros. Uses TypeScript types to skip technical strings automatically. | ✅ | ✅ | *1 |
-| [no-single-variables-to-translate](docs/rules/no-single-variables-to-translate.md) | Prevents messages with only variables and no text — translators need context. | ✅ | — | ✅ |
-| [no-single-tag-to-translate](docs/rules/no-single-tag-to-translate.md) | Prevents `<Trans>` wrapping a single JSX element without surrounding text. | ✅ | — | ✅ |
-| [no-nested-macros](docs/rules/no-nested-macros.md) | Prevents nesting Lingui macros inside each other — nested macros produce broken catalogs. | ✅ | — | ✅ |
-| [no-expression-in-message](docs/rules/no-expression-in-message.md) | Keeps expressions simple inside messages. Complex logic goes into named variables. | ✅ | — | ✅ |
-| [t-call-in-function](docs/rules/t-call-in-function.md) | Keeps `t` macro calls inside functions where i18n is initialized. | ✅ | — | ✅ |
-| [consistent-plural-format](docs/rules/consistent-plural-format.md) | Enforces consistent plural format — either `#` hash or `${var}` template literals. | ✅ | ✅ | ✅ |
-| [prefer-trans-in-jsx](docs/rules/prefer-trans-in-jsx.md) | Prefers `<Trans>` over `` {t`...`} `` in JSX for consistency. | ⚠️ | ✅ | ✅ |
+| [no-unlocalized-strings](docs/rules/no-unlocalized-strings.md) | Catches user-visible strings not wrapped in Lingui macros. Uses TypeScript types to skip technical strings automatically. | error | ✅ | *1 |
+| [no-single-variables-to-translate](docs/rules/no-single-variables-to-translate.md) | Prevents messages with only variables and no text — translators need context. | error | — | ✅ |
+| [no-single-tag-to-translate](docs/rules/no-single-tag-to-translate.md) | Prevents `<Trans>` wrapping a single JSX element without surrounding text. | error | — | ✅ |
+| [no-nested-macros](docs/rules/no-nested-macros.md) | Prevents nesting Lingui macros inside each other — nested macros produce broken catalogs. | error | — | ✅ |
+| [no-expression-in-message](docs/rules/no-expression-in-message.md) | Keeps expressions simple inside messages. Complex logic goes into named variables. | warn | — | ✅ |
+| [t-call-in-function](docs/rules/t-call-in-function.md) | Keeps `t` macro calls inside functions where i18n is initialized. | warn | — | ✅ |
+| [consistent-plural-format](docs/rules/consistent-plural-format.md) | Enforces consistent plural format — either `#` hash or `${var}` template literals. | warn | ✅ | ✅ |
+| [prefer-trans-in-jsx](docs/rules/prefer-trans-in-jsx.md) | Prefers `<Trans>` over `` {t`...`} `` in JSX for consistency. | warn | ✅ | ✅ |
 | [text-restrictions](docs/rules/text-restrictions.md) | Enforces project-specific text patterns and restrictions. Requires configuration. | — | — | ✅ |
 
 *1 Requires TypeScript's type checker to distinguish UI text from technical strings. OXLint's [type-aware linting](https://oxc.rs/blog/2025-12-08-type-aware-alpha) is in alpha — once stable, this rule will be supported too.

@@ -47,13 +47,13 @@ plugin.configs = {
       "lingui-ts": plugin
     },
     rules: {
-      "lingui-ts/consistent-plural-format": "error",
-      "lingui-ts/no-expression-in-message": "error",
+      "lingui-ts/consistent-plural-format": "warn",
+      "lingui-ts/no-expression-in-message": "warn",
       "lingui-ts/no-nested-macros": "error",
       "lingui-ts/no-single-tag-to-translate": "error",
       "lingui-ts/no-single-variables-to-translate": "error",
       "lingui-ts/no-unlocalized-strings": "error",
-      "lingui-ts/t-call-in-function": "error",
+      "lingui-ts/t-call-in-function": "warn",
       "lingui-ts/prefer-trans-in-jsx": "warn"
       // text-restrictions not in recommended (requires configuration)
     }
