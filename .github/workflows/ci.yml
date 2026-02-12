@@ -66,3 +66,26 @@ jobs:
           name: dist
           path: dist/
           retention-days: 7
+
+  oxlint-compat:
+    name: OXLint Compatibility
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+        name: Build Plugin
+
+      - run: npm install -g oxlint
+        name: Install OXLint
+
+      - run: tests/oxlint/smoke-test.sh
+        name: OXLint Smoke Test

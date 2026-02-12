@@ -1,5 +1,7 @@
 # no-single-tag-to-translate
 
+> **OXLint compatible** — This rule works with [OXLint](https://oxc.rs/) via `jsPlugins`.
+
 Disallow Lingui messages that consist only of a single JSX element without surrounding text.
 
 ## Why?

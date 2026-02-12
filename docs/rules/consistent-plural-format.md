@@ -1,5 +1,7 @@
 # consistent-plural-format
 
+> **OXLint compatible** — This rule works with [OXLint](https://oxc.rs/) via `jsPlugins`.
+
 Enforce consistent plural format style (`#` hash or `${var}` template).
 
 ## Why?

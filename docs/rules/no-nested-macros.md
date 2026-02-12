@@ -1,5 +1,7 @@
 # no-nested-macros
 
+> **OXLint compatible** — This rule works with [OXLint](https://oxc.rs/) via `jsPlugins`.
+
 Disallow nesting of Lingui macros inside other Lingui macros.
 
 ## Why?

@@ -3,6 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/eslint-plugin-lingui-typescript.svg)](https://www.npmjs.com/package/eslint-plugin-lingui-typescript)
 [![npm downloads](https://img.shields.io/npm/dm/eslint-plugin-lingui-typescript.svg)](https://www.npmjs.com/package/eslint-plugin-lingui-typescript)
 [![CI](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/actions/workflows/ci.yml/badge.svg)](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/actions/workflows/ci.yml)
+[![OXLint compatible](https://img.shields.io/badge/OXLint-compatible-4eff7e?logo=oxc)](https://oxc.rs/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ESLint rules for [Lingui](https://lingui.dev/) that read TypeScript types instead of guessing. Your whitelist goes away.
@@ -114,19 +115,47 @@ Or pick individual rules:
 
 That's it. DOM APIs, Intl methods, string literal unions, styling props, comparisons, numeric strings — all handled from the first run.
 
+## OXLint support
+
+This plugin works with [OXLint](https://oxc.rs/) via its [JavaScript plugin system](https://oxc.rs/docs/guide/usage/linter/js-plugins.html). Six of nine rules run natively in OXLint — no code changes, no wrapper, no adapter.
+
+Add to your `.oxlintrc.json`:
+
+```json
+{
+  "jsPlugins": ["eslint-plugin-lingui-typescript"],
+  "rules": {
+    "lingui-typescript/no-nested-macros": "error",
+    "lingui-typescript/t-call-in-function": "error",
+    "lingui-typescript/no-single-variables-to-translate": "error",
+    "lingui-typescript/no-single-tag-to-translate": "error",
+    "lingui-typescript/no-expression-in-message": "error",
+    "lingui-typescript/consistent-plural-format": "error"
+  }
+}
+```
+
+The remaining rules (`no-unlocalized-strings`, `prefer-trans-in-jsx`, `text-restrictions`) require TypeScript type information or special configuration and currently need ESLint. As OXLint's [type-aware linting](https://oxc.rs/blog/2025-12-08-type-aware-alpha) matures, more rules will follow.
+
+**Dual setup** — run OXLint for speed, ESLint for full coverage:
+
+```bash
+oxlint . && eslint .
+```
+
 ## Rules
 
-| Rule | Description | Recommended | Fixable |
-|------|-------------|:-----------:|:-------:|
-| [no-unlocalized-strings](docs/rules/no-unlocalized-strings.md) | Catches user-visible strings not wrapped in Lingui macros. Uses TypeScript types to skip technical strings automatically. | ✅ | ✅ |
-| [no-single-variables-to-translate](docs/rules/no-single-variables-to-translate.md) | Prevents messages with only variables and no text — translators need context. | ✅ | — |
-| [no-single-tag-to-translate](docs/rules/no-single-tag-to-translate.md) | Prevents `<Trans>` wrapping a single JSX element without surrounding text. | ✅ | — |
-| [no-nested-macros](docs/rules/no-nested-macros.md) | Prevents nesting Lingui macros inside each other — nested macros produce broken catalogs. | ✅ | — |
-| [no-expression-in-message](docs/rules/no-expression-in-message.md) | Keeps expressions simple inside messages. Complex logic goes into named variables. | ✅ | — |
-| [t-call-in-function](docs/rules/t-call-in-function.md) | Keeps `t` macro calls inside functions where i18n is initialized. | ✅ | — |
-| [consistent-plural-format](docs/rules/consistent-plural-format.md) | Enforces consistent plural format — either `#` hash or `${var}` template literals. | ✅ | ✅ |
-| [prefer-trans-in-jsx](docs/rules/prefer-trans-in-jsx.md) | Prefers `<Trans>` over `` {t`...`} `` in JSX for consistency. | ⚠️ | ✅ |
-| [text-restrictions](docs/rules/text-restrictions.md) | Enforces project-specific text patterns and restrictions. Requires configuration. | — | — |
+| Rule | Description | Recommended | Fixable | OXLint |
+|------|-------------|:-----------:|:-------:|:------:|
+| [no-unlocalized-strings](docs/rules/no-unlocalized-strings.md) | Catches user-visible strings not wrapped in Lingui macros. Uses TypeScript types to skip technical strings automatically. | ✅ | ✅ | — |
+| [no-single-variables-to-translate](docs/rules/no-single-variables-to-translate.md) | Prevents messages with only variables and no text — translators need context. | ✅ | — | ✅ |
+| [no-single-tag-to-translate](docs/rules/no-single-tag-to-translate.md) | Prevents `<Trans>` wrapping a single JSX element without surrounding text. | ✅ | — | ✅ |
+| [no-nested-macros](docs/rules/no-nested-macros.md) | Prevents nesting Lingui macros inside each other — nested macros produce broken catalogs. | ✅ | — | ✅ |
+| [no-expression-in-message](docs/rules/no-expression-in-message.md) | Keeps expressions simple inside messages. Complex logic goes into named variables. | ✅ | — | ✅ |
+| [t-call-in-function](docs/rules/t-call-in-function.md) | Keeps `t` macro calls inside functions where i18n is initialized. | ✅ | — | ✅ |
+| [consistent-plural-format](docs/rules/consistent-plural-format.md) | Enforces consistent plural format — either `#` hash or `${var}` template literals. | ✅ | ✅ | ✅ |
+| [prefer-trans-in-jsx](docs/rules/prefer-trans-in-jsx.md) | Prefers `<Trans>` over `` {t`...`} `` in JSX for consistency. | ⚠️ | ✅ | — |
+| [text-restrictions](docs/rules/text-restrictions.md) | Enforces project-specific text patterns and restrictions. Requires configuration. | — | — | — |
 
 ## Branded types for edge cases
 
@@ -219,6 +248,7 @@ Contributions welcome. See the [Contributing Guide](CONTRIBUTING.md) and [Code o
 - [Lingui](https://lingui.dev/) — The i18n library this plugin is built for
 - [eslint-plugin-lingui](https://github.com/lingui/eslint-plugin-lingui) — The official Lingui ESLint plugin
 - [typescript-eslint](https://typescript-eslint.io/) — Makes type-aware linting possible
+- [OXLint](https://oxc.rs/) — High-performance linter with JS plugin support
 
 ## License
 

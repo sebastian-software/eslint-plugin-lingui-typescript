@@ -35,6 +35,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:oxlint": "tests/oxlint/smoke-test.sh",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build",
     "prepare": "husky",

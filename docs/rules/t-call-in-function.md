@@ -1,5 +1,7 @@
 # t-call-in-function
 
+> **OXLint compatible** — This rule works with [OXLint](https://oxc.rs/) via `jsPlugins`.
+
 Enforce that `t` macro calls are inside functions, not at module top-level.
 
 ## Why?

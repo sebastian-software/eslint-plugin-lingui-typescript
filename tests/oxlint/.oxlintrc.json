@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
+  "jsPlugins": ["../../dist/index.js"],
+  "rules": {
+    "lingui-typescript/no-nested-macros": "error",
+    "lingui-typescript/t-call-in-function": "error",
+    "lingui-typescript/no-single-variables-to-translate": "error",
+    "lingui-typescript/no-single-tag-to-translate": "error",
+    "lingui-typescript/no-expression-in-message": "error",
+    "lingui-typescript/consistent-plural-format": "error"
+  }
+}

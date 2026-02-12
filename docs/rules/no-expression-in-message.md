@@ -1,5 +1,7 @@
 # no-expression-in-message
 
+> **OXLint compatible** — This rule works with [OXLint](https://oxc.rs/) via `jsPlugins`.
+
 Disallow complex expressions in Lingui messages — only simple identifiers are allowed.
 
 ## Why?
