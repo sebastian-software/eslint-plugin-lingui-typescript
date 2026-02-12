@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.15.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.14.0...v1.15.0) (2026-02-12)
+
+
+### Features
+
+* add auto-fix for consistent-plural-format and update docs ([674417b](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/674417b588a33f557fa33739fdd977ae717ba14e))
+* add OXLint compatibility smoke test and documentation ([8990b35](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/8990b35d99ec136e573f7cee4afde1a9734257e5))
+
+
+### Bug Fixes
+
+* 8/8 rules work with OXLint, not just 6 ([4421604](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/44216043204b335a70912dfe219f94c69a848a78))
+
 ## [1.14.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.13.0...v1.14.0) (2026-02-11)
 
 
