@@ -1,5 +1,7 @@
 # text-restrictions
 
+> **OXLint compatible** — This rule works with [OXLint](https://oxc.rs/) via `jsPlugins`.
+
 Enforce project-specific restrictions on Lingui message text content.
 
 ## Why?

@@ -7,6 +7,13 @@
     "lingui-typescript/no-single-variables-to-translate": "error",
     "lingui-typescript/no-single-tag-to-translate": "error",
     "lingui-typescript/no-expression-in-message": "error",
-    "lingui-typescript/consistent-plural-format": "error"
+    "lingui-typescript/consistent-plural-format": "error",
+    "lingui-typescript/prefer-trans-in-jsx": "warn",
+    "lingui-typescript/text-restrictions": [
+      "error",
+      {
+        "rules": [{ "patterns": ["TODO"], "message": "Do not use TODO in translations" }]
+      }
+    ]
   }
 }

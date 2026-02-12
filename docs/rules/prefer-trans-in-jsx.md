@@ -1,5 +1,7 @@
 # prefer-trans-in-jsx
 
+> **OXLint compatible** — This rule works with [OXLint](https://oxc.rs/) via `jsPlugins`.
+
 Prefer `<Trans>` over `` {t`...`} `` in JSX.
 
 ## Why?

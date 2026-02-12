@@ -117,7 +117,7 @@ That's it. DOM APIs, Intl methods, string literal unions, styling props, compari
 
 ## OXLint support
 
-This plugin works with [OXLint](https://oxc.rs/) via its [JavaScript plugin system](https://oxc.rs/docs/guide/usage/linter/js-plugins.html). Six of nine rules run natively in OXLint — no code changes, no wrapper, no adapter.
+This plugin works with [OXLint](https://oxc.rs/) via its [JavaScript plugin system](https://oxc.rs/docs/guide/usage/linter/js-plugins.html). Eight of nine rules run natively in OXLint — no code changes, no wrapper, no adapter.
 
 Add to your `.oxlintrc.json`:
 
@@ -130,12 +130,14 @@ Add to your `.oxlintrc.json`:
     "lingui-typescript/no-single-variables-to-translate": "error",
     "lingui-typescript/no-single-tag-to-translate": "error",
     "lingui-typescript/no-expression-in-message": "error",
-    "lingui-typescript/consistent-plural-format": "error"
+    "lingui-typescript/consistent-plural-format": "error",
+    "lingui-typescript/prefer-trans-in-jsx": "warn",
+    "lingui-typescript/text-restrictions": ["error", { "rules": [] }]
   }
 }
 ```
 
-The remaining rules (`no-unlocalized-strings`, `prefer-trans-in-jsx`, `text-restrictions`) require TypeScript type information or special configuration and currently need ESLint. As OXLint's [type-aware linting](https://oxc.rs/blog/2025-12-08-type-aware-alpha) matures, more rules will follow.
+The only rule not supported in OXLint is `no-unlocalized-strings` — it uses TypeScript's type checker at runtime to distinguish UI text from technical strings. As OXLint's [type-aware linting](https://oxc.rs/blog/2025-12-08-type-aware-alpha) matures, this rule will follow.
 
 **Dual setup** — run OXLint for speed, ESLint for full coverage:
 
@@ -147,15 +149,17 @@ oxlint . && eslint .
 
 | Rule | Description | Recommended | Fixable | OXLint |
 |------|-------------|:-----------:|:-------:|:------:|
-| [no-unlocalized-strings](docs/rules/no-unlocalized-strings.md) | Catches user-visible strings not wrapped in Lingui macros. Uses TypeScript types to skip technical strings automatically. | ✅ | ✅ | — |
+| [no-unlocalized-strings](docs/rules/no-unlocalized-strings.md) | Catches user-visible strings not wrapped in Lingui macros. Uses TypeScript types to skip technical strings automatically. | ✅ | ✅ | *1 |
 | [no-single-variables-to-translate](docs/rules/no-single-variables-to-translate.md) | Prevents messages with only variables and no text — translators need context. | ✅ | — | ✅ |
 | [no-single-tag-to-translate](docs/rules/no-single-tag-to-translate.md) | Prevents `<Trans>` wrapping a single JSX element without surrounding text. | ✅ | — | ✅ |
 | [no-nested-macros](docs/rules/no-nested-macros.md) | Prevents nesting Lingui macros inside each other — nested macros produce broken catalogs. | ✅ | — | ✅ |
 | [no-expression-in-message](docs/rules/no-expression-in-message.md) | Keeps expressions simple inside messages. Complex logic goes into named variables. | ✅ | — | ✅ |
 | [t-call-in-function](docs/rules/t-call-in-function.md) | Keeps `t` macro calls inside functions where i18n is initialized. | ✅ | — | ✅ |
 | [consistent-plural-format](docs/rules/consistent-plural-format.md) | Enforces consistent plural format — either `#` hash or `${var}` template literals. | ✅ | ✅ | ✅ |
-| [prefer-trans-in-jsx](docs/rules/prefer-trans-in-jsx.md) | Prefers `<Trans>` over `` {t`...`} `` in JSX for consistency. | ⚠️ | ✅ | — |
-| [text-restrictions](docs/rules/text-restrictions.md) | Enforces project-specific text patterns and restrictions. Requires configuration. | — | — | — |
+| [prefer-trans-in-jsx](docs/rules/prefer-trans-in-jsx.md) | Prefers `<Trans>` over `` {t`...`} `` in JSX for consistency. | ⚠️ | ✅ | ✅ |
+| [text-restrictions](docs/rules/text-restrictions.md) | Enforces project-specific text patterns and restrictions. Requires configuration. | — | — | ✅ |
+
+*1 Requires TypeScript's type checker to distinguish UI text from technical strings. OXLint's [type-aware linting](https://oxc.rs/blog/2025-12-08-type-aware-alpha) is in alpha — once stable, this rule will be supported too.
 
 ## Branded types for edge cases
 

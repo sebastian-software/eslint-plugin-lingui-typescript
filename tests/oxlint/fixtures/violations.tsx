@@ -2,7 +2,7 @@
  * OXLint Compatibility Smoke Test Fixtures
  *
  * Each section contains code that SHOULD trigger a specific rule violation.
- * Rules that require TypeScript type-checking are excluded.
+ * Only no-unlocalized-strings is excluded (requires TypeScript type-checking).
  */
 
 // === lingui-typescript/no-nested-macros ===
@@ -38,3 +38,13 @@ const inconsistent = plural(numBooks, {
   one: `${numBooks} book`,
   other: `${numBooks} books`
 })
+
+// === lingui-typescript/prefer-trans-in-jsx ===
+// Should use <Trans> instead of t`...` in JSX
+function PreferTrans() {
+  return <div>{t`Hello World`}</div>
+}
+
+// === lingui-typescript/text-restrictions ===
+// Configured to forbid "TODO" in messages
+const restricted = t`TODO fix this later`

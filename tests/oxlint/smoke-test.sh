@@ -32,7 +32,7 @@ if [ ! -f "$PROJECT_ROOT/dist/index.js" ]; then
   echo ""
 fi
 
-# Define rules to test (non-type-aware rules only)
+# Define rules to test (all rules except no-unlocalized-strings which requires type-checking)
 RULES=(
   "lingui-typescript/no-nested-macros"
   "lingui-typescript/t-call-in-function"
@@ -40,6 +40,8 @@ RULES=(
   "lingui-typescript/no-single-tag-to-translate"
   "lingui-typescript/no-expression-in-message"
   "lingui-typescript/consistent-plural-format"
+  "lingui-typescript/prefer-trans-in-jsx"
+  "lingui-typescript/text-restrictions"
 )
 
 # Run oxlint and capture output (oxlint exits non-zero when it finds violations)
