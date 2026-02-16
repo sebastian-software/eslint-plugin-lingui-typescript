@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.15.2](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.15.1...v1.15.2) (2026-02-16)
+
+
+### Bug Fixes
+
+* ignore ISO 8601 date/time values in no-unlocalized-strings ([5c599ca](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/5c599cad1a827a9e10a72f051062d5b69e98b097))
+
 ## [1.15.1](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.15.0...v1.15.1) (2026-02-16)
 
 
