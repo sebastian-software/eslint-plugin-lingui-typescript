@@ -264,6 +264,13 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: "const fmt = 'MMMM d, yyyy'", filename: "test.tsx" },
     // Note: Single-letter formats like "h:mm a" are not detected to avoid false positives
 
+    // ISO 8601 date/time values
+    { code: 'const d = "2024-04-20"', filename: "test.tsx" },
+    { code: 'const d = "2024-04-20T14:30:00Z"', filename: "test.tsx" },
+    { code: 'const d = "2024-04-20T14:30:00.000Z"', filename: "test.tsx" },
+    { code: 'const d = "2024-04-20T14:30:00+02:00"', filename: "test.tsx" },
+    { code: 'const d = "2024-01-01T00:00:00"', filename: "test.tsx" },
+
     // CSS color functions
     { code: 'const color = "hsl(198 93% 70%)"', filename: "test.tsx" },
     { code: 'const bg = "hsl(196 81% 16%)"', filename: "test.tsx" },

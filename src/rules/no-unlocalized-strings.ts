@@ -353,6 +353,12 @@ function looksLikeUIString(value: string): boolean {
     return false
   }
 
+  // ISO 8601 date/time values: "2024-04-20", "2024-04-20T14:30:00Z",
+  // "2024-04-20T14:30:00.000Z", "2024-04-20T14:30:00+02:00"
+  if (/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?)?$/.test(trimmed)) {
+    return false
+  }
+
   // Date/time format strings (e.g., "MMMM d, yyyy", "HH:mm:ss", "yyyy-MM-dd")
   // Detected by: short string with repeated format tokens and no long natural words
   if (looksLikeDateFormatString(trimmed)) {
