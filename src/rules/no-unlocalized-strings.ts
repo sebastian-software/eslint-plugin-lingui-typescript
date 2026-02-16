@@ -314,7 +314,8 @@ function looksLikeUIString(value: string): boolean {
   }
 
   // Starts with protocol or path - URL or file path
-  if (/^(\/|https?:|mailto:|tel:|#)/.test(trimmed)) {
+  // Covers http(s)://, mailto:, tel:, data:, and custom protocols like mapbox://
+  if (/^(\/|[a-z][\w+.-]*:|#)/.test(trimmed)) {
     return false
   }
 
@@ -331,6 +332,24 @@ function looksLikeUIString(value: string): boolean {
   // SVG path data: commands like M, L, C, etc. followed by coordinates
   // Examples: "M10 10", "M0 0 L100 100", "M10,10 L20,20"
   if (/^[MLHVCSQTAZmlhvcsqtaz][\d\s,.-]+/.test(trimmed)) {
+    return false
+  }
+
+  // CSS value functions:
+  // - Colors: rgb(), hsl(), lab(), lch(), oklab(), oklch(), color(), color-mix(), light-dark(), hwb()
+  // - Math: calc(), clamp()
+  // - Gradients: linear-gradient(), radial-gradient(), conic-gradient(), repeating-*-gradient()
+  // - Other: var(), env()
+  if (
+    /^(rgba?|hsla?|lab|lch|oklab|oklch|color(-mix)?|light-dark|hwb|calc|clamp|(repeating-)?(linear|radial|conic)-gradient|var|env)\(/.test(
+      trimmed
+    )
+  ) {
+    return false
+  }
+
+  // Hex color codes: #fff, #1a2b3c, #1a2b3c80
+  if (/^#[0-9a-fA-F]{3,8}$/.test(trimmed)) {
     return false
   }
 

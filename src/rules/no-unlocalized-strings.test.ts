@@ -264,10 +264,54 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: "const fmt = 'MMMM d, yyyy'", filename: "test.tsx" },
     // Note: Single-letter formats like "h:mm a" are not detected to avoid false positives
 
+    // CSS color functions
+    { code: 'const color = "hsl(198 93% 70%)"', filename: "test.tsx" },
+    { code: 'const bg = "hsl(196 81% 16%)"', filename: "test.tsx" },
+    { code: 'const c = "hsl(var(--muted-foreground) / 0.5)"', filename: "test.tsx" },
+    { code: 'const rgba = "rgba(16, 185, 129, 0.2)"', filename: "test.tsx" },
+    { code: 'const rgb = "rgb(255, 0, 0)"', filename: "test.tsx" },
+    { code: 'const hsla = "hsla(120, 100%, 50%, 0.3)"', filename: "test.tsx" },
+    { code: 'const ok = "oklch(0.7 0.15 200)"', filename: "test.tsx" },
+    { code: 'const ok = "oklab(0.7 -0.1 0.1)"', filename: "test.tsx" },
+    { code: 'const l = "lab(50% 20 -30)"', filename: "test.tsx" },
+    { code: 'const l = "lch(50% 30 200)"', filename: "test.tsx" },
+    { code: 'const h = "hwb(120 10% 20%)"', filename: "test.tsx" },
+    { code: 'const c = "color(display-p3 1 0.5 0)"', filename: "test.tsx" },
+    { code: 'const cm = "color-mix(in oklch, red 50%, blue)"', filename: "test.tsx" },
+    { code: 'const ld = "light-dark(white, black)"', filename: "test.tsx" },
+
+    // CSS math functions
+    { code: 'const w = "calc(100% - 20px)"', filename: "test.tsx" },
+    { code: 'const fs = "clamp(1rem, 2vw + 0.5rem, 3rem)"', filename: "test.tsx" },
+    { code: 'const p = "calc(var(--spacing) * 2)"', filename: "test.tsx" },
+
+    // CSS gradient functions
+    { code: 'const bg = "linear-gradient(to right, red, blue)"', filename: "test.tsx" },
+    { code: 'const bg = "radial-gradient(circle, white, black)"', filename: "test.tsx" },
+    { code: 'const bg = "conic-gradient(red, yellow, green)"', filename: "test.tsx" },
+    { code: 'const bg = "repeating-linear-gradient(45deg, red, blue 20px)"', filename: "test.tsx" },
+
+    // CSS var() and env()
+    { code: 'const v = "var(--primary-color)"', filename: "test.tsx" },
+    { code: 'const e = "env(safe-area-inset-top)"', filename: "test.tsx" },
+
+    // Hex color codes
+    { code: 'const hex = "#fff"', filename: "test.tsx" },
+    { code: 'const hex = "#1a2b3c"', filename: "test.tsx" },
+    { code: 'const hex = "#1a2b3c80"', filename: "test.tsx" },
+    { code: 'const hex = "#FF0000"', filename: "test.tsx" },
+
     // URLs and paths
     { code: 'const url = "https://example.com"', filename: "test.tsx" },
     { code: 'const path = "/api/users"', filename: "test.tsx" },
     { code: 'const mailto = "mailto:test@example.com"', filename: "test.tsx" },
+
+    // Protocol URLs (custom protocols)
+    { code: 'const style = "mapbox://styles/mapbox/light-v11"', filename: "test.tsx" },
+    { code: 'const source = "mapbox://mapbox.country-boundaries"', filename: "test.tsx" },
+    { code: 'const img = "data:image/png;base64,abc123"', filename: "test.tsx" },
+    { code: 'const ws = "ws://localhost:8080"', filename: "test.tsx" },
+    { code: 'const ftp = "ftp://files.example.com/doc"', filename: "test.tsx" },
 
     // Single characters
     { code: 'const sep = "-"', filename: "test.tsx" },
