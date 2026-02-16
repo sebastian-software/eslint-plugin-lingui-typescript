@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.15.1](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.15.0...v1.15.1) (2026-02-16)
+
+
+### Bug Fixes
+
+* reduce false positives for CSS values and protocol URLs ([245da05](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/245da05583e5be9062c7146504535232b820bae4)), closes [#16](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/issues/16)
+
 ## [1.15.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.14.0...v1.15.0) (2026-02-12)
 
 
