@@ -101,6 +101,8 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: '<div id="my-id" />', filename: "test.tsx" },
     { code: '<div data-testid="test-button" />', filename: "test.tsx" },
     { code: '<a href="/path/to/page" />', filename: "test.tsx" },
+    { code: '<img sizes="(max-width: 768px) 100vw, 50vw" />', filename: "test.tsx" },
+    { code: '<source sizes="(min-width: 1024px) 33vw, 100vw" />', filename: "test.tsx" },
 
     // Object properties with ignored keys
     { code: '({ type: "button" })', filename: "test.tsx" },

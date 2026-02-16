@@ -58,7 +58,10 @@ const DEFAULT_IGNORE_PROPERTIES = [
   "markerStart",
   "markerMid",
   "markerEnd",
-  "strokeDasharray"
+  "strokeDasharray",
+  // HTML media condition attributes (e.g., "(max-width: 768px) 100vw, 50vw")
+  "sizes",
+  "imageSizes"
 ]
 
 /**
