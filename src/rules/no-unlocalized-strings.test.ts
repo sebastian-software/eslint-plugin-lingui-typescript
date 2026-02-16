@@ -463,6 +463,14 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: "const t = `${BRAND_NAME}${OTHER}`", filename: "test.tsx" },
     { code: "const t = ` ${X} ${Y} `", filename: "test.tsx" },
 
+    // Template literals with separators/punctuation between interpolations only
+    { code: "const key = `${certId}:${locationId}`", filename: "test.tsx" },
+    { code: "const id = `${a}-${b}`", filename: "test.tsx" },
+    { code: "const path = `${org}/${repo}`", filename: "test.tsx" },
+    { code: "const combo = `${a} ${b}`", filename: "test.tsx" },
+    { code: "const combo = `${a}, ${b}`", filename: "test.tsx" },
+    { code: "const range = `${from} - ${to}`", filename: "test.tsx" },
+
     // Template literals with technical strings (identifiers, URLs, paths)
     { code: "const t = `user_${id}_profile`", filename: "test.tsx" },
     { code: "const t = `https://example.com/${path}`", filename: "test.tsx" },

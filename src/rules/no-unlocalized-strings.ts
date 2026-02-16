@@ -2040,6 +2040,12 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       const staticText = node.quasis.map((q) => q.value.cooked.trim()).join("")
       if (staticText.length === 0) return
 
+      // Skip if static parts have fewer than 2 letters - just separators/punctuation
+      // between interpolations, not real UI text.
+      // e.g., `${certId}:${locationId}`, `${a} - ${b}`, `${x}/${y}`
+      const letterCount = (staticText.match(/\p{L}/gu) ?? []).length
+      if (letterCount < 2) return
+
       if (ignoreRegex?.test(value) === true) return
       if (!looksLikeUIString(value)) return
       if (isInsideLinguiContext(node, typeChecker, parserServices)) return
