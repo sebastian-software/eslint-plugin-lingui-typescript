@@ -41,11 +41,16 @@ const status: Status = "loading"                        // String literal union
 
 // Styling props and utility patterns — recognized out of the box
 <Box containerClassName="flex items-center" />          // *ClassName, *Color, *Style
+<Link rel="noopener noreferrer" />                      // Link rel attribute
 <div className={clsx("px-4", "py-2")} />               // className utilities (clsx, cn)
 <Calendar classNames={{ day: "bg-white" }} />           // Nested classNames objects
 const colorClasses = { active: "bg-green-100" }         // *Classes, *Colors, *Styles
+const successUrl = "Checkout redirect destination"      // *Url, *Slug, *Email names
 const price = "1,00€"                                   // No letters = not user-facing
+const letterSpacing = "-0.02em"                         // CSS numeric unit value
 if (status === "active") {}                             // Binary comparison
+if (error.message.includes("User not found")) {}        // String search on string receiver
+const code = error.message.replace("User not found", "E_USER_NOT_FOUND") // replace(searchValue)
 
 // These actually need translation — and get reported
 const message = "Welcome to our app"
@@ -113,7 +118,7 @@ Or pick individual rules:
 }
 ```
 
-That's it. DOM APIs, Intl methods, string literal unions, styling props, comparisons, numeric strings — all handled from the first run.
+That's it. DOM APIs, Intl methods, string literal unions, technical property/variable suffixes, comparisons, numeric strings, and string-search checks — all handled from the first run.
 
 ## OXLint support
 
@@ -213,7 +218,7 @@ Drop-in alternative to [eslint-plugin-lingui](https://github.com/lingui/eslint-p
 | **Styling props** | Manual whitelist | Auto-detected |
 | **Styling constants** | Manual whitelist | Auto-detected |
 | **Numeric strings** | Manual whitelist | Auto-detected |
-| **Custom ignores** | `ignoreFunctions` only | Branded types (`unlocalized()`) |
+| **Custom ignores** | `ignoreFunctions` only | `ignoreFunctions`, `ignoreProperties`, `ignoreNames`, branded types (`unlocalized()`) |
 | **Macro verification** | Name-based | Package-origin verification |
 | **ESLint** | v8 legacy config | v9 flat config |
 

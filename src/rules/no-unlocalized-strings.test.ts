@@ -604,6 +604,21 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       `,
       filename: "test.tsx"
     },
+    {
+      code: `
+        declare const error: { message: string }
+        const normalized = error.message.replace("User not found", "E_USER_NOT_FOUND")
+      `,
+      filename: "test.tsx"
+    },
+    {
+      code: `
+        declare const error: { message: string }
+        declare const id: string
+        const normalized = error.message.replace(\`User \${id} not found\`, "E_USER_NOT_FOUND")
+      `,
+      filename: "test.tsx"
+    },
 
     // SVG attributes
     { code: '<svg viewBox="0 0 20 40"></svg>', filename: "test.tsx" },
@@ -1041,6 +1056,12 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     // array.includes should still be checked (receiver is not string)
     {
       code: 'const values = ["ok"]; values.includes("Hello World")',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+    // replace(): only search argument is ignored, replacement string is still checked
+    {
+      code: 'declare const title: string\nconst normalized = title.replace("Mr. ", "Welcome user")',
       filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     },

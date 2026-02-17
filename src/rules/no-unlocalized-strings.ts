@@ -663,11 +663,21 @@ function isErrorConstructorArgument(
   return false
 }
 
-/** String search methods where hard-coded fragments are typically technical, not UI copy. */
-const STRING_SEARCH_METHODS = new Set(["includes", "indexOf"])
+/**
+ * String search methods where hard-coded fragments are typically technical, not UI copy.
+ *
+ * Value meanings:
+ * - null: ignore string arguments in all argument positions
+ * - Set: ignore only these 0-based argument positions
+ */
+const STRING_SEARCH_METHOD_ARGS: ReadonlyMap<string, ReadonlySet<number> | null> = new Map([
+  ["includes", null],
+  ["indexOf", null],
+  ["replace", new Set([0])]
+])
 
 /**
- * Checks if a string is an argument to a string search method (e.g. includes/indexOf)
+ * Checks if a string is an argument to a string search method (e.g. includes/indexOf/replace)
  * where searching for fixed text fragments is typically technical behavior.
  *
  * Only ignores when TypeScript confirms the receiver is string-like, so calls like
@@ -692,7 +702,19 @@ function isStringSearchMethodArgument(
     return false
   }
 
-  if (!STRING_SEARCH_METHODS.has(callee.property.name)) {
+  const argConfig = STRING_SEARCH_METHOD_ARGS.get(callee.property.name)
+  if (argConfig === undefined) {
+    return false
+  }
+
+  if (argConfig !== null) {
+    const argIndex = parent.arguments.indexOf(node as TSESTree.CallExpressionArgument)
+    if (argIndex === -1 || !argConfig.has(argIndex)) {
+      return false
+    }
+  }
+
+  if (!parent.arguments.includes(node as TSESTree.CallExpressionArgument)) {
     return false
   }
 

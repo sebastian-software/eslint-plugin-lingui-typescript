@@ -151,10 +151,25 @@ Default:
 
 ```ts
 [
-  "className",    // CSS classes - arbitrary strings, always technical
-  "classNames",   // CSS classes object (e.g., for component libraries)
-  "key",          // React key prop
-  "data-testid"   // DOM Testing Library standard
+  "className",         // CSS classes - arbitrary strings, always technical
+  "classNames",        // CSS classes object (e.g., for component libraries)
+  "key",               // React key prop
+  "data-testid",       // DOM Testing Library standard
+  "transform",         // SVG transform values
+  "gradientTransform", // SVG gradient transforms
+  "patternTransform",  // SVG pattern transforms
+  "preserveAspectRatio",
+  "clipPath",
+  "filter",
+  "mask",
+  "markerStart",
+  "markerMid",
+  "markerEnd",
+  "strokeDasharray",
+  "transition",        // CSS transition shorthand values
+  "rel",               // Link relationship values
+  "sizes",             // HTML media condition values
+  "imageSizes"
 ]
 ```
 
@@ -168,9 +183,9 @@ Default:
 
 **Note**: Properties like `type`, `role`, `href`, `id` are NOT in the default list because TypeScript automatically detects them as technical when they have string literal union types.
 
-#### Auto-Detected Styling Properties
+#### Auto-Detected Technical Property Suffixes
 
-In addition to the explicit list, the rule automatically ignores camelCase properties ending with common styling suffixes:
+In addition to the explicit list, the rule automatically ignores camelCase properties ending with common technical suffixes:
 
 | Suffix | Examples |
 |--------|----------|
@@ -208,13 +223,13 @@ In addition to the explicit list, the rule automatically ignores camelCase prope
 />
 ```
 
-This covers common patterns in component libraries like Chakra UI, Material UI, react-day-picker, and custom component props.
+This covers common patterns in component libraries and app-level technical fields (URLs, slugs, emails), not just styling props.
 
 **Note**: Strings inside callback functions (like `onClick`) are NOT ignored, even when `className` is present on the same element.
 
-#### Auto-Detected Styling Variables
+#### Auto-Detected Technical Variable Suffixes
 
-Variable names (both UPPER_CASE and camelCase) with styling-related suffixes are automatically ignored:
+Variable names (both UPPER_CASE and camelCase) with technical suffixes are automatically ignored:
 
 **camelCase variables** (for object mappings):
 
@@ -242,7 +257,7 @@ userEmail = "Primary account owner contact address"
 ```
 
 ```tsx
-// camelCase variables with styling suffixes
+// camelCase variables with technical suffixes
 const colorClasses = {
   Solar: "bg-orange-100 text-orange-800",
   Wind: "bg-blue-100 text-blue-800",
@@ -254,7 +269,7 @@ const buttonStyles = {
 }
 ```
 
-**Styling helper functions** (singular suffixes for return values):
+**Technical helper functions** (singular suffixes for return values):
 
 | Suffix | Examples |
 |--------|----------|
@@ -265,7 +280,7 @@ const buttonStyles = {
 | `Url`, `Slug`, `Email` | `getSuccessUrl`, `getPlanSlug`, `getUserEmail` |
 
 ```tsx
-// Helper functions with styling names - all return values ignored
+// Helper functions with technical suffixes - all return values ignored
 function getStatusColor(status: string) {
   switch (status) {
     case "active": return "bg-green-100 text-green-800";
@@ -278,7 +293,7 @@ function getStatusColor(status: string) {
 <Badge className={getStatusColor(goal.status)}>
 ```
 
-**Return type verification**: The rule uses TypeScript to verify that these functions actually return `string` (or `string | null | undefined`). Functions that return objects, arrays, or other types are NOT auto-ignored, even if they have a styling name:
+**Return type verification**: The rule uses TypeScript to verify that these functions actually return `string` (or `string | null | undefined`). Functions that return objects, arrays, or other types are NOT auto-ignored, even if they have a technical suffix:
 
 ```tsx
 // ❌ FLAGGED - returns object, not string
@@ -314,6 +329,9 @@ function getStatusColor(status: string): string | null {
 | `_IMAGE`, `_IMAGES` | `HERO_IMAGES`, `CARD_IMAGE` |
 | `_SIZE`, `_SIZES` | `AVATAR_SIZES`, `FONT_SIZE` |
 | `_ID`, `_IDS` | `ELEMENT_IDS`, `SECTION_ID` |
+| `_URL`, `_URLS` | `CHECKOUT_URL`, `CALLBACK_URLS` |
+| `_SLUG`, `_SLUGS` | `PLAN_SLUG`, `PLAN_SLUGS` |
+| `_EMAIL`, `_EMAILS` | `SUPPORT_EMAIL`, `ADMIN_EMAILS` |
 
 ```tsx
 // All string values inside these constants are automatically ignored
@@ -332,7 +350,8 @@ This is useful for Tailwind CSS class mappings and similar styling configuration
 
 ### `ignoreNames`
 
-Array of variable names to ignore.
+Array of exact variable names to ignore.
+Applied to variable initializers and direct assignments.
 
 Default: `["__DEV__", "NODE_ENV"]`
 
@@ -416,6 +435,7 @@ The rule uses heuristics to determine if a string looks like UI text:
 - CSS numeric values with units (`-0.02em`, `1rem`, `12px 16px`, `1rem/1.5`)
 - Strings used in comparisons (`===`, `!==`, `==`, `!=`, `<`, `>`, `<=`, `>=`)
 - Strings passed to string search methods (`includes`, `indexOf`) on string receivers
+- First argument of `replace(...)` on string receivers
 
 ### Comparison Strings
 
@@ -433,6 +453,7 @@ value == "pending"
 ### String Search Methods
 
 Strings passed to `includes(...)` or `indexOf(...)` on string values are automatically ignored.
+For `replace(...)`, only the first argument (`searchValue`) is ignored. Replacement text is still checked.
 These are typically technical text-fragment checks, not user-facing copy:
 
 ```tsx
@@ -440,6 +461,7 @@ These are typically technical text-fragment checks, not user-facing copy:
 if (error.message.includes("User not found")) {}
 if (errorText.indexOf("Timed out") >= 0) {}
 if (error.message.includes(`User ${id} not found`)) {}
+const normalized = error.message.replace("User not found", "E_USER_NOT_FOUND")
 ```
 
 ### Numeric and Symbolic Strings
