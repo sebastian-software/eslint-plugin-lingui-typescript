@@ -516,6 +516,30 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: 'value == "pending"', filename: "test.tsx" },
     { code: 'if (name < "Hello World") {}', filename: "test.tsx" },
 
+    // String search methods on string receivers
+    {
+      code: `
+        declare const error: { message: string }
+        if (error.message.includes("User not found")) {}
+      `,
+      filename: "test.tsx"
+    },
+    {
+      code: `
+        declare const errorText: string
+        if (errorText.indexOf("Timed out") >= 0) {}
+      `,
+      filename: "test.tsx"
+    },
+    {
+      code: `
+        declare const error: { message: string }
+        declare const id: string
+        if (error.message.includes(\`User \${id} not found\`)) {}
+      `,
+      filename: "test.tsx"
+    },
+
     // SVG attributes
     { code: '<svg viewBox="0 0 20 40"></svg>', filename: "test.tsx" },
     { code: '<path d="M10 10" />', filename: "test.tsx" },
@@ -935,6 +959,13 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     // Function return value
     {
       code: 'function getLabel() { return "Click me" }',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+
+    // array.includes should still be checked (receiver is not string)
+    {
+      code: 'const values = ["ok"]; values.includes("Hello World")',
       filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     },

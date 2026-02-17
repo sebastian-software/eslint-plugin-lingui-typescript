@@ -389,6 +389,7 @@ The rule uses heuristics to determine if a string looks like UI text:
 - SVG path data (`M10 10`, `L20 30`)
 - Strings without any letters — numeric/symbolic only
 - Strings used in comparisons (`===`, `!==`, `==`, `!=`, `<`, `>`, `<=`, `>=`)
+- Strings passed to string search methods (`includes`, `indexOf`) on string receivers
 
 ### Comparison Strings
 
@@ -401,6 +402,18 @@ typeof handler !== "function"
 if (status === "active") {}
 if (mode !== "dark") {}
 value == "pending"
+```
+
+### String Search Methods
+
+Strings passed to `includes(...)` or `indexOf(...)` on string values are automatically ignored.
+These are typically technical text-fragment checks, not user-facing copy:
+
+```tsx
+// All automatically ignored
+if (error.message.includes("User not found")) {}
+if (errorText.indexOf("Timed out") >= 0) {}
+if (error.message.includes(`User ${id} not found`)) {}
 ```
 
 ### Numeric and Symbolic Strings

@@ -571,6 +571,48 @@ function isErrorConstructorArgument(
   return false
 }
 
+/** String search methods where hard-coded fragments are typically technical, not UI copy. */
+const STRING_SEARCH_METHODS = new Set(["includes", "indexOf"])
+
+/**
+ * Checks if a string is an argument to a string search method (e.g. includes/indexOf)
+ * where searching for fixed text fragments is typically technical behavior.
+ *
+ * Only ignores when TypeScript confirms the receiver is string-like, so calls like
+ * array.includes("...") are still checked.
+ */
+function isStringSearchMethodArgument(
+  node: TSESTree.Node,
+  typeChecker: ts.TypeChecker,
+  parserServices: ReturnType<typeof ESLintUtils.getParserServices>
+): boolean {
+  const parent = node.parent
+  if (parent?.type !== AST_NODE_TYPES.CallExpression) {
+    return false
+  }
+
+  const callee = parent.callee
+  if (callee.type !== AST_NODE_TYPES.MemberExpression) {
+    return false
+  }
+
+  if (callee.computed || callee.property.type !== AST_NODE_TYPES.Identifier) {
+    return false
+  }
+
+  if (!STRING_SEARCH_METHODS.has(callee.property.name)) {
+    return false
+  }
+
+  try {
+    const objectTsNode = parserServices.esTreeNodeToTSNodeMap.get(callee.object)
+    const objectType = typeChecker.getTypeAtLocation(objectTsNode)
+    return isStringishType(objectType, typeChecker)
+  } catch {
+    return false
+  }
+}
+
 /** Valid camelCase: lowercase start, then (Uppercase + lowercase+) sequences */
 const CAMEL_CASE_PATTERN = /^[a-z]+([A-Z][a-z]+)+$/
 
@@ -1746,6 +1788,7 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       if (isImportExportSource(node)) return true
       if (isAsConstAssertion(node)) return true
       if (isIgnoredFunctionArgument(node, options.ignoreFunctions)) return true
+      if (isStringSearchMethodArgument(node, typeChecker, parserServices)) return true
       if (isConsoleMethodArgument(node, typeChecker, parserServices)) return true
       if (isErrorConstructorArgument(node, typeChecker, parserServices)) return true
       if (isIgnoredProperty(node, options.ignoreProperties)) return true
@@ -2057,6 +2100,7 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       if (isComputedMemberKey(node)) return
       if (isInNonLinguiTaggedTemplate(node)) return
       if (isIgnoredFunctionArgument(node, options.ignoreFunctions)) return
+      if (isStringSearchMethodArgument(node, typeChecker, parserServices)) return
       if (isConsoleMethodArgument(node, typeChecker, parserServices)) return
       if (isErrorConstructorArgument(node, typeChecker, parserServices)) return
       if (isIgnoredProperty(node, options.ignoreProperties)) return
