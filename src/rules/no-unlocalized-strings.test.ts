@@ -423,6 +423,7 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       ]
     },
     { code: 'const bgColor = "Premium card background color"', filename: "test.tsx" },
+    { code: 'const outerPaddingClassName = "Rounded outer card wrapper class"', filename: "test.tsx" },
     { code: 'const userEmail = "Primary account owner contact address"', filename: "test.tsx" },
     { code: "const planSlug = `Growth ${tier} plan`", filename: "test.tsx" },
     { code: 'let successUrl = ""; successUrl = "Checkout redirect destination"', filename: "test.tsx" },

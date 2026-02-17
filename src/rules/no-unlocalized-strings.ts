@@ -761,7 +761,7 @@ const UPPER_CASE_STYLING_PATTERN =
 
 /** camelCase variable names with styling-related suffixes (plural forms for objects) */
 const CAMEL_CASE_STYLING_VAR_PATTERN =
-  /^[a-z][a-zA-Z]*(Classes|ClassNames?|Colors|Styles|Icons|Images|Sizes|Ids|Urls|Slugs|Emails)$/
+  /^[a-z][a-zA-Z]*(Classes|ClassNames|Colors|Styles|Icons|Images|Sizes|Ids|Urls|Slugs|Emails)$/
 
 /** camelCase function names with styling-related suffixes (singular forms for return values) */
 const STYLING_FUNCTION_NAME_PATTERN = /^[a-z][a-zA-Z]*(Class(Name)?|Color|Style|Icon|Image|Size|Id|Url|Slug|Email)$/
@@ -782,7 +782,7 @@ const STYLING_FUNCTION_NAME_PATTERN = /^[a-z][a-zA-Z]*(Class(Name)?|Color|Style|
  * - "_EMAIL", "_EMAILS"
  *
  * Also matches camelCase variables ending with:
- * - "Classes", "ClassName", "ClassNames"
+ * - "Classes", "ClassNames"
  * - "Colors", "Styles", "Icons", "Images", "Sizes", "Ids", "Urls", "Slugs", "Emails"
  *
  * Examples: STATUS_COLORS, BUTTON_CLASSES, colorClasses, buttonStyles
