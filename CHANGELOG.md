@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.15.3...v1.16.0) (2026-02-17)
+
+
+### Features
+
+* **no-unlocalized-strings:** expand technical property heuristics ([d1ca76c](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/d1ca76c7f373eb6776e3b14c2b16fdfc1f076b7a))
+* **rule:** ignore replace search argument on string receivers ([bae4399](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/bae43992b179a55595dd16241c22c83b8d2496c5))
+
+
+### Bug Fixes
+
+* ignore sizes and imageSizes properties in no-unlocalized-strings ([e92ae4f](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/e92ae4ff0f853d00b79d97592dc654569993b975))
+* **no-unlocalized-strings:** honor ignoreNames and extend technical suffixes ([963971f](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/963971fccacd00f466beee05161618c26e156979))
+* **no-unlocalized-strings:** ignore css unit values ([4e28ff4](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/4e28ff42086a870f6b81a953de1f9d4059c63249))
+* **no-unlocalized-strings:** ignore string-search fragments ([d1e2a75](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/d1e2a75ca0c54197582093e4d84bb39443c1e090))
+
 ## [1.15.3](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.15.2...v1.15.3) (2026-02-16)
 
 
