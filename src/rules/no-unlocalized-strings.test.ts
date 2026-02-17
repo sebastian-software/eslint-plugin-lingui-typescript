@@ -164,6 +164,7 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: '<Text textColor="red-500" />', filename: "test.tsx" },
     { code: '<Button borderColor="gray.200" />', filename: "test.tsx" },
     { code: '({ accentColor: "blue" })', filename: "test.tsx" },
+    { code: '({ bgColor: "Premium card background color" })', filename: "test.tsx" },
     // Style properties
     { code: '<View containerStyle="flex-1" />', filename: "test.tsx" },
     { code: '({ buttonStyle: "primary" })', filename: "test.tsx" },
@@ -176,6 +177,10 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     // Id properties
     { code: '<Section containerId="main-section" />', filename: "test.tsx" },
     { code: '({ elementId: "header" })', filename: "test.tsx" },
+    // Url / Slug / Email properties
+    { code: '({ successUrl: "Redirect destination after checkout completion" })', filename: "test.tsx" },
+    { code: '({ planSlug: "Public monthly pricing plan identifier" })', filename: "test.tsx" },
+    { code: '({ userEmail: "Primary account owner contact address" })', filename: "test.tsx" },
     // Image properties
     { code: '<Card backgroundImage="url(/bg.png)" />', filename: "test.tsx" },
     { code: '({ avatarImage: "user-default.svg" })', filename: "test.tsx" },
@@ -200,6 +205,12 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       code: 'const buttonStyles = { primary: "px-4 py-2 bg-blue-500", secondary: "px-4 py-2 bg-gray-200" }',
       filename: "test.tsx"
     },
+    {
+      code: 'const checkoutUrls = { success: "Checkout redirect destination", cancel: "Cancel redirect destination" }',
+      filename: "test.tsx"
+    },
+    { code: 'const planSlugs = { pro: "Professional monthly plan name" }', filename: "test.tsx" },
+    { code: 'const adminEmails = { owner: "Primary account owner contact" }', filename: "test.tsx" },
     { code: 'const statusColors = { active: "#00ff00", inactive: "#cccccc" }', filename: "test.tsx" },
     { code: 'const iconSizes = { sm: "w-4 h-4", lg: "w-8 h-8" }', filename: "test.tsx" },
     // Styling variable with cn() function call
@@ -227,6 +238,16 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       code: `const getButtonClass = (variant: string) => {
         return variant === "primary" ? "bg-blue-500 text-white" : "bg-gray-200";
       }`,
+      filename: "test.tsx"
+    },
+    {
+      code: `function getSuccessUrl(kind: string) {
+        return kind === "ok" ? "Checkout redirect destination" : "Fallback redirect destination";
+      }`,
+      filename: "test.tsx"
+    },
+    {
+      code: `const getUserEmail = () => "Primary account owner contact address"`,
       filename: "test.tsx"
     },
     {
@@ -364,6 +385,37 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
           ignoreProperties: [],
           ignoreNames: [],
           ignorePattern: "^test_",
+          reportUnnecessaryBrands: false
+        }
+      ]
+    },
+    {
+      code: `
+        const successUrl = "Checkout redirect destination"
+        const planSlug = \`Growth \${tier} plan\`
+        let userEmail = ""
+        userEmail = "Primary account owner"
+      `,
+      filename: "test.tsx",
+      options: [
+        {
+          ignoreFunctions: [],
+          ignoreProperties: [],
+          ignoreNames: ["successUrl", "planSlug", "companyId", "userEmail"],
+          ignorePattern: null,
+          reportUnnecessaryBrands: false
+        }
+      ]
+    },
+    {
+      code: 'const planSlug = { fallback: "Public pricing plan" }',
+      filename: "test.tsx",
+      options: [
+        {
+          ignoreFunctions: [],
+          ignoreProperties: [],
+          ignoreNames: ["planSlug"],
+          ignorePattern: null,
           reportUnnecessaryBrands: false
         }
       ]
@@ -961,6 +1013,11 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       `,
       filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }, { messageId: "unlocalizedString" }]
+    },
+    {
+      code: 'const successUrl = "Checkout redirect destination"',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
     },
 
     // Function return value

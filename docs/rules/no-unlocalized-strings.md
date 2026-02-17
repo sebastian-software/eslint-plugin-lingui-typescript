@@ -182,6 +182,9 @@ In addition to the explicit list, the rule automatically ignores camelCase prope
 | `Image` | `backgroundImage`, `avatarImage` |
 | `Size` | `fontSize`, `iconSize` |
 | `Id` | `containerId`, `elementId` |
+| `Url` | `successUrl`, `callbackUrl` |
+| `Slug` | `planSlug`, `categorySlug` |
+| `Email` | `userEmail`, `supportEmail` |
 
 ```tsx
 // All automatically ignored - no configuration needed
@@ -224,6 +227,9 @@ Variable names (both UPPER_CASE and camelCase) with styling-related suffixes are
 | `Images` | `heroImages`, `avatarImages` |
 | `Sizes` | `iconSizes`, `fontSizes` |
 | `Ids` | `elementIds`, `sectionIds` |
+| `Urls` | `checkoutUrls`, `callbackUrls` |
+| `Slugs` | `planSlugs`, `categorySlugs` |
+| `Emails` | `adminEmails`, `supportEmails` |
 
 ```tsx
 // camelCase variables with styling suffixes
@@ -246,6 +252,7 @@ const buttonStyles = {
 | `Color` | `getStatusColor`, `computeBackgroundColor` |
 | `Style` | `getContainerStyle` |
 | `Icon`, `Image`, `Size`, `Id` | `getAvatarIcon`, `computeFontSize` |
+| `Url`, `Slug`, `Email` | `getSuccessUrl`, `getPlanSlug`, `getUserEmail` |
 
 ```tsx
 // Helper functions with styling names - all return values ignored
@@ -318,6 +325,14 @@ This is useful for Tailwind CSS class mappings and similar styling configuration
 Array of variable names to ignore.
 
 Default: `["__DEV__", "NODE_ENV"]`
+
+```ts
+{
+  "lingui-ts/no-unlocalized-strings": ["error", {
+    "ignoreNames": ["successUrl", "planSlug", "companyId", "userEmail"]
+  }]
+}
+```
 
 ### `ignorePattern`
 

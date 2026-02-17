@@ -705,7 +705,7 @@ function isStringSearchMethodArgument(
 const CAMEL_CASE_PATTERN = /^[a-z]+([A-Z][a-z]+)+$/
 
 /** Technical suffixes with at least one lowercase char before (ensures prefix exists) */
-const STYLING_SUFFIX_PATTERN = /[a-z](ClassName|Class|Color|Style|Icon|Image|Size|Id)$/
+const STYLING_SUFFIX_PATTERN = /[a-z](ClassName|Class|Color|Style|Icon|Image|Size|Id|Url|Slug|Email)$/
 
 /**
  * Checks if a property name is a styling/technical property.
@@ -718,6 +718,9 @@ const STYLING_SUFFIX_PATTERN = /[a-z](ClassName|Class|Color|Style|Icon|Image|Siz
  * - "Image": backgroundImage, avatarImage
  * - "Size": fontSize, iconSize
  * - "Id": containerId, elementId
+ * - "Url": successUrl, callbackUrl
+ * - "Slug": planSlug, categorySlug
+ * - "Email": userEmail, supportEmail
  *
  * This covers common patterns for component libraries that accept
  * styling/technical props which contain technical values, not user text.
@@ -728,13 +731,14 @@ function isStylingProperty(propertyName: string): boolean {
 
 /** UPPER_CASE constant names with styling-related suffixes (singular and plural) */
 const UPPER_CASE_STYLING_PATTERN =
-  /^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*_(CLASSNAMES?|CLASSES?|CLASS|COLORS?|STYLES?|ICONS?|IMAGES?|SIZES?|IDS?)$/
+  /^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*_(CLASSNAMES?|CLASSES?|CLASS|COLORS?|STYLES?|ICONS?|IMAGES?|SIZES?|IDS?|URLS?|SLUGS?|EMAILS?)$/
 
 /** camelCase variable names with styling-related suffixes (plural forms for objects) */
-const CAMEL_CASE_STYLING_VAR_PATTERN = /^[a-z][a-zA-Z]*(Classes|ClassNames?|Colors|Styles|Icons|Images|Sizes|Ids)$/
+const CAMEL_CASE_STYLING_VAR_PATTERN =
+  /^[a-z][a-zA-Z]*(Classes|ClassNames?|Colors|Styles|Icons|Images|Sizes|Ids|Urls|Slugs|Emails)$/
 
 /** camelCase function names with styling-related suffixes (singular forms for return values) */
-const STYLING_FUNCTION_NAME_PATTERN = /^[a-z][a-zA-Z]*(Class(Name)?|Color|Style|Icon|Image|Size|Id)$/
+const STYLING_FUNCTION_NAME_PATTERN = /^[a-z][a-zA-Z]*(Class(Name)?|Color|Style|Icon|Image|Size|Id|Url|Slug|Email)$/
 
 /**
  * Checks if a variable name is a styling/technical constant or variable.
@@ -747,10 +751,13 @@ const STYLING_FUNCTION_NAME_PATTERN = /^[a-z][a-zA-Z]*(Class(Name)?|Color|Style|
  * - "_IMAGE", "_IMAGES"
  * - "_SIZE", "_SIZES"
  * - "_ID", "_IDS"
+ * - "_URL", "_URLS"
+ * - "_SLUG", "_SLUGS"
+ * - "_EMAIL", "_EMAILS"
  *
  * Also matches camelCase variables ending with:
  * - "Classes", "ClassName", "ClassNames"
- * - "Colors", "Styles", "Icons", "Images", "Sizes", "Ids"
+ * - "Colors", "Styles", "Icons", "Images", "Sizes", "Ids", "Urls", "Slugs", "Emails"
  *
  * Examples: STATUS_COLORS, BUTTON_CLASSES, colorClasses, buttonStyles
  */
@@ -765,7 +772,7 @@ function isStylingConstant(variableName: string): boolean {
  * - "Class", "ClassName": getButtonClass, computeClassName
  * - "Color": getStatusColor, computeBackgroundColor
  * - "Style": getContainerStyle
- * - "Icon", "Image", "Size", "Id"
+ * - "Icon", "Image", "Size", "Id", "Url", "Slug", "Email"
  *
  * Examples: getStatusColor, getButtonClass, computeClassName
  */
@@ -1058,6 +1065,57 @@ function isInsideStylingConstant(node: TSESTree.Node): boolean {
     }
 
     current = current.parent ?? undefined
+  }
+
+  return false
+}
+
+function hasTSESTreeNodeShape(value: unknown): boolean {
+  return typeof value === "object" && value !== null && "type" in value
+}
+
+/**
+ * Checks if a node is inside the initializer/right-hand side of an ignored variable name.
+ *
+ * Supports:
+ * - Variable declarations: const NAME = "..."
+ * - Assignments: NAME = "..."
+ *
+ * Stops at function boundaries to avoid ignoring string literals inside function bodies.
+ */
+function isInsideIgnoredName(node: TSESTree.Node, ignoreNames: string[]): boolean {
+  let current: TSESTree.Node = node
+
+  for (;;) {
+    const parentUnknown: unknown = current.parent
+    if (!hasTSESTreeNodeShape(parentUnknown)) return false
+    const parentNode = parentUnknown as TSESTree.Node
+
+    if (
+      parentNode.type === AST_NODE_TYPES.VariableDeclarator &&
+      parentNode.init === current &&
+      parentNode.id.type === AST_NODE_TYPES.Identifier
+    ) {
+      return ignoreNames.includes(parentNode.id.name)
+    }
+
+    if (
+      parentNode.type === AST_NODE_TYPES.AssignmentExpression &&
+      parentNode.right === current &&
+      parentNode.left.type === AST_NODE_TYPES.Identifier
+    ) {
+      return ignoreNames.includes(parentNode.left.name)
+    }
+
+    if (
+      current.type === AST_NODE_TYPES.FunctionDeclaration ||
+      current.type === AST_NODE_TYPES.FunctionExpression ||
+      current.type === AST_NODE_TYPES.ArrowFunctionExpression
+    ) {
+      return false
+    }
+
+    current = parentNode
   }
 
   return false
@@ -1875,6 +1933,7 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       if (isInNonLinguiTaggedTemplate(node)) return true
       if (isImportExportSource(node)) return true
       if (isAsConstAssertion(node)) return true
+      if (isInsideIgnoredName(node, options.ignoreNames)) return true
       if (isIgnoredFunctionArgument(node, options.ignoreFunctions)) return true
       if (isStringSearchMethodArgument(node, typeChecker, parserServices)) return true
       if (isConsoleMethodArgument(node, typeChecker, parserServices)) return true
@@ -2187,6 +2246,7 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       if (isBinaryComparison(node)) return
       if (isComputedMemberKey(node)) return
       if (isInNonLinguiTaggedTemplate(node)) return
+      if (isInsideIgnoredName(node, options.ignoreNames)) return
       if (isIgnoredFunctionArgument(node, options.ignoreFunctions)) return
       if (isStringSearchMethodArgument(node, typeChecker, parserServices)) return
       if (isConsoleMethodArgument(node, typeChecker, parserServices)) return
