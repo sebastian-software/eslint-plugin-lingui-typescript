@@ -59,6 +59,10 @@ const DEFAULT_IGNORE_PROPERTIES = [
   "markerMid",
   "markerEnd",
   "strokeDasharray",
+  // CSS transition shorthand values
+  "transition",
+  // Link relationship attribute values
+  "rel",
   // HTML media condition attributes (e.g., "(max-width: 768px) 100vw, 50vw")
   "sizes",
   "imageSizes"
@@ -780,6 +784,10 @@ function isStylingFunction(functionName: string): boolean {
   return STYLING_FUNCTION_NAME_PATTERN.test(functionName)
 }
 
+function isTechnicalSingleName(name: string): boolean {
+  return STYLING_FUNCTION_NAME_PATTERN.test(name)
+}
+
 /**
  * Gets the name of a function declaration/expression if available.
  */
@@ -1033,10 +1041,19 @@ function isInsideStylingConstant(node: TSESTree.Node): boolean {
     if (
       current.type === AST_NODE_TYPES.VariableDeclarator &&
       current.id.type === AST_NODE_TYPES.Identifier &&
-      isStylingConstant(current.id.name)
+      (isStylingConstant(current.id.name) || isTechnicalSingleName(current.id.name))
     ) {
       // Check if the init is what we expect
       const init = current.init
+
+      // Singular technical names like bgColor/successUrl should ignore
+      // direct value expressions, but not object/array literals.
+      if (isTechnicalSingleName(current.id.name) && !isStylingConstant(current.id.name)) {
+        if (init?.type === AST_NODE_TYPES.ObjectExpression || init?.type === AST_NODE_TYPES.ArrayExpression) {
+          return false
+        }
+        return true
+      }
 
       // Case 1: Direct object - const x = { key: "value" }
       if (init?.type === AST_NODE_TYPES.ObjectExpression) {
@@ -1053,6 +1070,22 @@ function isInsideStylingConstant(node: TSESTree.Node): boolean {
       }
 
       return false
+    }
+
+    // Assignment to a technical single variable name:
+    // successUrl = "...", bgColor = "..."
+    if (
+      current.type === AST_NODE_TYPES.AssignmentExpression &&
+      current.left.type === AST_NODE_TYPES.Identifier &&
+      isTechnicalSingleName(current.left.name)
+    ) {
+      if (
+        current.right.type === AST_NODE_TYPES.ObjectExpression ||
+        current.right.type === AST_NODE_TYPES.ArrayExpression
+      ) {
+        return false
+      }
+      return true
     }
 
     // Stop at function boundaries (don't cross into function bodies)

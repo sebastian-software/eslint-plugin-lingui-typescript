@@ -101,8 +101,10 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: '<div id="my-id" />', filename: "test.tsx" },
     { code: '<div data-testid="test-button" />', filename: "test.tsx" },
     { code: '<a href="/path/to/page" />', filename: "test.tsx" },
+    { code: '<Link rel="noopener noreferrer" />', filename: "test.tsx" },
     { code: '<img sizes="(max-width: 768px) 100vw, 50vw" />', filename: "test.tsx" },
     { code: '<source sizes="(min-width: 1024px) 33vw, 100vw" />', filename: "test.tsx" },
+    { code: '({ transition: "opacity 200ms ease-in-out" })', filename: "test.tsx" },
 
     // Object properties with ignored keys
     { code: '({ type: "button" })', filename: "test.tsx" },
@@ -420,6 +422,10 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
         }
       ]
     },
+    { code: 'const bgColor = "Premium card background color"', filename: "test.tsx" },
+    { code: 'const userEmail = "Primary account owner contact address"', filename: "test.tsx" },
+    { code: "const planSlug = `Growth ${tier} plan`", filename: "test.tsx" },
+    { code: 'let successUrl = ""; successUrl = "Checkout redirect destination"', filename: "test.tsx" },
 
     // Non-UI looking text
     { code: 'const x = "myFunction"', filename: "test.tsx" },
@@ -1015,7 +1021,12 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       errors: [{ messageId: "unlocalizedString" }, { messageId: "unlocalizedString" }]
     },
     {
-      code: 'const successUrl = "Checkout redirect destination"',
+      code: 'const callbackTarget = "Checkout redirect destination"',
+      filename: "test.tsx",
+      errors: [{ messageId: "unlocalizedString" }]
+    },
+    {
+      code: 'const userEmail = { label: "Hello World" }',
       filename: "test.tsx",
       errors: [{ messageId: "unlocalizedString" }]
     },

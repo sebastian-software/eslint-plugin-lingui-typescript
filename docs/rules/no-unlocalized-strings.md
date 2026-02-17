@@ -231,6 +231,16 @@ Variable names (both UPPER_CASE and camelCase) with styling-related suffixes are
 | `Slugs` | `planSlugs`, `categorySlugs` |
 | `Emails` | `adminEmails`, `supportEmails` |
 
+**Single-value local variables** (direct values and assignments):
+
+```tsx
+const bgColor = "Premium card background color"
+const successUrl = "Checkout redirect destination"
+const planSlug = `Growth ${tier} plan`
+let userEmail = ""
+userEmail = "Primary account owner contact address"
+```
+
 ```tsx
 // camelCase variables with styling suffixes
 const colorClasses = {
