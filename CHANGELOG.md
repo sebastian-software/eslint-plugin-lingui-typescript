@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.1](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.16.0...v1.16.1) (2026-02-17)
+
+
+### Bug Fixes
+
+* **rule:** apply ClassName handling via suffix path ([f2126c8](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/f2126c8d1700536d392e9728ff81347b08833a0a))
+
 ## [1.16.0](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.15.3...v1.16.0) (2026-02-17)
 
 
