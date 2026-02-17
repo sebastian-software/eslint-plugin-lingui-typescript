@@ -282,6 +282,89 @@ function looksLikeDateFormatString(value: string): boolean {
 }
 
 /**
+ * Checks if a string looks like a CSS numeric value with optional units.
+ *
+ * Examples:
+ * - "-0.02em"
+ * - "1rem"
+ * - "100vh"
+ * - "12px 16px"
+ * - "1rem/1.5"
+ */
+function looksLikeCssNumericValue(value: string): boolean {
+  const cssUnits = [
+    // Flex
+    "fr",
+    // Length
+    "px",
+    "em",
+    "rem",
+    "ex",
+    "ch",
+    "ic",
+    "lh",
+    "rlh",
+    "vw",
+    "vh",
+    "vi",
+    "vb",
+    "vmin",
+    "vmax",
+    "svw",
+    "svh",
+    "svi",
+    "svb",
+    "svmin",
+    "svmax",
+    "lvw",
+    "lvh",
+    "lvi",
+    "lvb",
+    "lvmin",
+    "lvmax",
+    "dvw",
+    "dvh",
+    "dvi",
+    "dvb",
+    "dvmin",
+    "dvmax",
+    "cqw",
+    "cqh",
+    "cqi",
+    "cqb",
+    "cqmin",
+    "cqmax",
+    "cm",
+    "mm",
+    "Q",
+    "in",
+    "pt",
+    "pc",
+    // Angle
+    "deg",
+    "grad",
+    "rad",
+    "turn",
+    // Time
+    "s",
+    "ms",
+    // Frequency
+    "Hz",
+    "kHz",
+    // Resolution
+    "dpi",
+    "dpcm",
+    "dppx"
+  ]
+  const escapedUnits = cssUnits
+    .map((unit) => unit.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .sort((a, b) => b.length - a.length)
+    .join("|")
+  const numericToken = `[-+]?(?:\\d*\\.\\d+|\\d+\\.\\d*|\\d+)(?:${escapedUnits})?`
+  return new RegExp(`^${numericToken}(?:\\s+${numericToken})*(?:\\/${numericToken})?$`, "i").test(value)
+}
+
+/**
  * Determines if a string looks like user-visible UI text.
  *
  * Returns TRUE (needs localization) for:
@@ -365,6 +448,11 @@ function looksLikeUIString(value: string): boolean {
   // Date/time format strings (e.g., "MMMM d, yyyy", "HH:mm:ss", "yyyy-MM-dd")
   // Detected by: short string with repeated format tokens and no long natural words
   if (looksLikeDateFormatString(trimmed)) {
+    return false
+  }
+
+  // CSS numeric values with units: "-0.02em", "1rem", "12px 16px", "1rem/1.5"
+  if (looksLikeCssNumericValue(trimmed)) {
     return false
   }
 

@@ -339,6 +339,13 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: 'const x = "2024-01-15"', filename: "test.tsx" },
     { code: 'const x = "→ ← ↑ ↓"', filename: "test.tsx" },
 
+    // CSS numeric values with units
+    { code: 'const ls = "-0.02em"', filename: "test.tsx" },
+    { code: 'const spacing = "1rem"', filename: "test.tsx" },
+    { code: 'const dims = "12px 16px"', filename: "test.tsx" },
+    { code: 'const height = "100vh"', filename: "test.tsx" },
+    { code: 'const leading = "1rem/1.5"', filename: "test.tsx" },
+
     // Empty strings
     { code: 'const x = ""', filename: "test.tsx" },
     { code: 'const x = "   "', filename: "test.tsx" },

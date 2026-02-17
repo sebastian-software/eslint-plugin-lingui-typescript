@@ -388,6 +388,7 @@ The rule uses heuristics to determine if a string looks like UI text:
 - CSS selectors (`:hover`, `.class`, `#id`)
 - SVG path data (`M10 10`, `L20 30`)
 - Strings without any letters — numeric/symbolic only
+- CSS numeric values with units (`-0.02em`, `1rem`, `12px 16px`, `1rem/1.5`)
 - Strings used in comparisons (`===`, `!==`, `==`, `!=`, `<`, `>`, `<=`, `>=`)
 - Strings passed to string search methods (`includes`, `indexOf`) on string receivers
 
