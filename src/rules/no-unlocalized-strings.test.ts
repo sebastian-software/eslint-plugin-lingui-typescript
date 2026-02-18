@@ -225,6 +225,22 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     },
     { code: 'const buttonClassName = cn("px-4 py-2", condition && "bg-blue-500")', filename: "test.tsx" },
 
+    // Styling variable with string init and += concatenation
+    {
+      code: `
+        let buttonClassNames = "rounded-md px-3 py-1.5 text-sm transition-colors ";
+        if (isSelected && !isDisabled) {
+          buttonClassNames += "bg-primary text-primary-foreground";
+        } else if (isDisabled) {
+          buttonClassNames += "cursor-not-allowed bg-muted/50 text-muted-foreground/50 line-through";
+        } else {
+          buttonClassNames += "bg-muted hover:bg-muted/80";
+        }
+      `,
+      filename: "test.tsx"
+    },
+    { code: 'let cellClassNames = "p-2"; cellClassNames += " border-b"', filename: "test.tsx" },
+
     // Styling helper functions (function name indicates return value is styling)
     {
       code: `function getStatusColor(status: string) {

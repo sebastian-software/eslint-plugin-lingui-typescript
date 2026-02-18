@@ -1091,15 +1091,21 @@ function isInsideStylingConstant(node: TSESTree.Node): boolean {
         return lastCallExpression === init
       }
 
+      // Case 3: Direct string value - let buttonClassNames = "rounded-md ..."
+      // Also covers string concatenation built up with += later.
+      if (init?.type === AST_NODE_TYPES.Literal || init?.type === AST_NODE_TYPES.TemplateLiteral) {
+        return true
+      }
+
       return false
     }
 
-    // Assignment to a technical single variable name:
-    // successUrl = "...", bgColor = "..."
+    // Assignment to a styling/technical variable name:
+    // successUrl = "...", bgColor = "...", buttonClassNames += "..."
     if (
       current.type === AST_NODE_TYPES.AssignmentExpression &&
       current.left.type === AST_NODE_TYPES.Identifier &&
-      isTechnicalSingleName(current.left.name)
+      (isTechnicalSingleName(current.left.name) || isStylingConstant(current.left.name))
     ) {
       if (
         current.right.type === AST_NODE_TYPES.ObjectExpression ||
