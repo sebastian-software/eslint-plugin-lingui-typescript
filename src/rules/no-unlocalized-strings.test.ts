@@ -600,6 +600,25 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     { code: "const t = `https://example.com/${path}`", filename: "test.tsx" },
     { code: "const t = `/api/v1/${resource}`", filename: "test.tsx" },
 
+    // Template literals with branded types (UnlocalizedFunction, branded params)
+    {
+      code: `
+        type UnlocalizedFunction<T> = T & { readonly __linguiIgnoreArgs?: true }
+        interface Logger { warn(...args: unknown[]): void }
+        declare const logger: UnlocalizedFunction<Logger>
+        logger.warn(\`hello world\`)
+      `,
+      filename: "test.tsx"
+    },
+    {
+      code: `
+        type UnlocalizedLog = string & { readonly __linguiIgnore?: "UnlocalizedLog" }
+        function log(msg: UnlocalizedLog) {}
+        log(\`Application started successfully\`)
+      `,
+      filename: "test.tsx"
+    },
+
     // Template literals inside console.log / new Error
     { code: "console.log(`User ${name} not found`)", filename: "test.tsx" },
     { code: "console.warn(`Missing value for ${key}`)", filename: "test.tsx" },

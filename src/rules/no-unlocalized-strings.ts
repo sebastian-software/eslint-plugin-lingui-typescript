@@ -1599,7 +1599,7 @@ function getParameterTypeForArgument(
  * ```
  */
 function isLinguiBrandedType(
-  node: TSESTree.Literal,
+  node: TSESTree.Node,
   typeChecker: ts.TypeChecker,
   parserServices: ReturnType<typeof ESLintUtils.getParserServices>
 ): boolean {
@@ -1610,7 +1610,7 @@ function isLinguiBrandedType(
     }
 
     const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node)
-    const contextualType = typeChecker.getContextualType(tsNode)
+    const contextualType = typeChecker.getContextualType(tsNode as ts.Expression)
 
     // Check contextual type (works for string-based branded types)
     if (contextualType !== undefined && hasLinguiIgnoreBrand(contextualType, typeChecker)) {
@@ -2112,6 +2112,7 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       if (isInsideStylingPropertyValue(node, options.ignoreProperties, typeChecker, parserServices)) return
       if (isInsideStylingConstant(node)) return
       if (isStylePropertyAssignment(node)) return
+      if (isLinguiBrandedType(node, typeChecker, parserServices)) return
 
       context.report({
         node,
