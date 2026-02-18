@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.8](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.16.7...v1.16.8) (2026-02-18)
+
+
+### Bug Fixes
+
+* **rule:** accept any expression type for styling variable inits ([77d894f](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/77d894fb1ed48063c36bd645eba805f3925d49ad))
+
 ## [1.16.7](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.16.6...v1.16.7) (2026-02-18)
 
 
