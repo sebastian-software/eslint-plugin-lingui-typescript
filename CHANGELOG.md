@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.6](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.16.5...v1.16.6) (2026-02-18)
+
+
+### Bug Fixes
+
+* **rule:** resolve method name from chained calls in getCalleeName ([c88abe2](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/c88abe2b28b39acd1526bb3bfbc34954b038b7eb))
+
 ## [1.16.5](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.16.4...v1.16.5) (2026-02-18)
 
 
