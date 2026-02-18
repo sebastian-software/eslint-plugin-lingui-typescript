@@ -43,7 +43,13 @@ ruleTester.run("prefer-trans-in-jsx", preferTransInJsx, {
 
     // t inside other non-renderable expressions in JSX
     "<p>{prefix + t`text`}</p>",
-    "<p>{`${t`text`}`}</p>"
+    "<p>{`${t`text`}`}</p>",
+
+    // t inside SVG text-only elements — <Trans> would produce invalid DOM
+    "<svg><title>{t`Icon label`}</title></svg>",
+    "<svg><desc>{t`Icon description`}</desc></svg>",
+    "<svg><title>{show && t`Label`}</title></svg>",
+    "<svg><g><title>{t`Nested title`}</title></g></svg>"
   ],
   invalid: [
     // Case 1: Direct — simple text, import added

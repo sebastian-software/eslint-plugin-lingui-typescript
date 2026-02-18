@@ -5,6 +5,33 @@ import { createRule } from "../utils/create-rule.js"
 type MessageId = "preferTrans"
 
 /**
+ * Tag names of JSX elements that only accept text content — inserting a
+ * `<Trans>` component inside these would produce invalid DOM / SVG.
+ */
+const TEXT_ONLY_JSX_PARENTS = new Set(["title", "desc"])
+
+/**
+ * Checks whether the given node is nested inside a JSX element whose tag name
+ * only allows text content (e.g. SVG `<title>`, `<desc>`).  In these elements
+ * a `<Trans>` component would be rendered as a DOM element which is not
+ * permitted and causes hydration / rendering issues.
+ */
+function isInsideTextOnlyJSXElement(node: TSESTree.Node): boolean {
+  let current: TSESTree.Node | undefined = node.parent
+  while (current) {
+    if (
+      current.type === AST_NODE_TYPES.JSXElement &&
+      current.openingElement.name.type === AST_NODE_TYPES.JSXIdentifier &&
+      TEXT_ONLY_JSX_PARENTS.has(current.openingElement.name.name)
+    ) {
+      return true
+    }
+    current = current.parent
+  }
+  return false
+}
+
+/**
  * Checks if a t`...` node is in a "renderable" position inside JSX — i.e. the
  * path from the node to the JSXExpressionContainer only passes through
  * ConditionalExpression and LogicalExpression nodes. This ensures we only flag
@@ -118,6 +145,11 @@ export const preferTransInJsx = createRule<[], MessageId>({
         }
 
         const parent = node.parent
+
+        // Never suggest <Trans> inside text-only elements like SVG <title> or <desc>
+        if (isInsideTextOnlyJSXElement(node)) {
+          return
+        }
 
         // Case 1: Direct — t`...` is the expression inside a JSXExpressionContainer
         // Only when the container is a child of a JSX element (not a JSX attribute value)
