@@ -523,6 +523,12 @@ function getCalleeName(callee: TSESTree.Expression): string | null {
       parts.unshift(current.name)
       return parts.join(".")
     }
+
+    // Chained call: supabase.from("table").select("...") → "select"
+    // When the chain hits a CallExpression, return the collected method name(s).
+    if (parts.length > 0) {
+      return parts.join(".")
+    }
   }
 
   return null

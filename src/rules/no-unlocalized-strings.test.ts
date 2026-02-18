@@ -95,6 +95,46 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       ]
     },
 
+    // Chained method call: supabase.from("table").select("...") → method name "select"
+    {
+      code: `
+        declare const supabase: any
+        supabase.from("my_table").select("id, name, location_id")
+      `,
+      filename: "test.tsx",
+      options: [
+        {
+          ignoreFunctions: ["select"],
+          ignoreProperties: [],
+          ignoreNames: [],
+          ignorePattern: null,
+          reportUnnecessaryBrands: false
+        }
+      ]
+    },
+
+    // Chained method call with template literal
+    {
+      code: `
+        declare const supabase: any
+        supabase.from("my_table").select(\`
+          id,
+          location_id,
+          company_locations!inner(id, name)
+        \`)
+      `,
+      filename: "test.tsx",
+      options: [
+        {
+          ignoreFunctions: ["select"],
+          ignoreProperties: [],
+          ignoreNames: [],
+          ignorePattern: null,
+          reportUnnecessaryBrands: false
+        }
+      ]
+    },
+
     // Ignored properties (className, type, etc.)
     { code: '<div className="my-class" />', filename: "test.tsx" },
     { code: '<input type="text" />', filename: "test.tsx" },
