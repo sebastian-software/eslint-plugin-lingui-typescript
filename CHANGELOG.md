@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.9](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.16.8...v1.16.9) (2026-02-18)
+
+
+### Bug Fixes
+
+* **rule:** check array siblings for unnecessary brand reporting ([47719ce](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/47719cef1152b7d32a83850ffa20b18baec6a726))
+* **rule:** tighten identifier heuristic to require code-like characteristics ([6f01bfc](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/6f01bfc2900ccef01dce5001e5fb58bb56ed4197))
+
 ## [1.16.8](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.16.7...v1.16.8) (2026-02-18)
 
 
