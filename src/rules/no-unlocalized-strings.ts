@@ -1430,248 +1430,14 @@ function hasLinguiIgnoreBrand(type: ts.Type, typeChecker: ts.TypeChecker): boole
   return typeString.includes(LINGUI_IGNORE_BRAND)
 }
 
-function resolveSymbol(symbol: ts.Symbol, typeChecker: ts.TypeChecker): ts.Symbol {
-  return (symbol.flags & ts.SymbolFlags.Alias) !== 0 ? typeChecker.getAliasedSymbol(symbol) : symbol
-}
-
-function getEntityNameText(entityName: ts.EntityName): string {
-  if (ts.isIdentifier(entityName)) {
-    return entityName.text
-  }
-  return `${getEntityNameText(entityName.left)}.${entityName.right.text}`
-}
-
-function getRecordKeyTypeFromTypeNode(
-  typeNode: ts.TypeNode,
-  typeChecker: ts.TypeChecker,
-  visitedSymbols: Set<ts.Symbol>
-): ts.Type | undefined {
-  if (ts.isParenthesizedTypeNode(typeNode)) {
-    return getRecordKeyTypeFromTypeNode(typeNode.type, typeChecker, visitedSymbols)
-  }
-
-  if (ts.isUnionTypeNode(typeNode) || ts.isIntersectionTypeNode(typeNode)) {
-    for (const childType of typeNode.types) {
-      const keyType = getRecordKeyTypeFromTypeNode(childType, typeChecker, visitedSymbols)
-      if (keyType !== undefined) {
-        return keyType
-      }
-    }
-    return undefined
-  }
-
-  if (ts.isMappedTypeNode(typeNode)) {
-    const constraint = typeNode.typeParameter.constraint
-    if (constraint !== undefined) {
-      return typeChecker.getTypeFromTypeNode(constraint)
-    }
-    return undefined
-  }
-
-  if (!ts.isTypeReferenceNode(typeNode)) {
-    return undefined
-  }
-
-  if (getEntityNameText(typeNode.typeName) === "Record") {
-    const keyTypeArg = typeNode.typeArguments?.[0]
-    if (keyTypeArg !== undefined) {
-      return typeChecker.getTypeFromTypeNode(keyTypeArg)
-    }
-    return undefined
-  }
-
-  const symbol = typeChecker.getSymbolAtLocation(typeNode.typeName)
-  if (symbol === undefined) {
-    return undefined
-  }
-  const resolved = resolveSymbol(symbol, typeChecker)
-  if (visitedSymbols.has(resolved)) {
-    return undefined
-  }
-  visitedSymbols.add(resolved)
-
-  const declarations = resolved.getDeclarations() ?? []
-  for (const declaration of declarations) {
-    if (ts.isTypeAliasDeclaration(declaration)) {
-      const keyType = getRecordKeyTypeFromTypeNode(declaration.type, typeChecker, visitedSymbols)
-      if (keyType !== undefined) {
-        return keyType
-      }
-    }
-
-    if (ts.isInterfaceDeclaration(declaration)) {
-      for (const member of declaration.members) {
-        if (ts.isIndexSignatureDeclaration(member)) {
-          const keyParamType = member.parameters[0]?.type
-          if (keyParamType !== undefined) {
-            return typeChecker.getTypeFromTypeNode(keyParamType)
-          }
-        }
-      }
-
-      for (const heritageClause of declaration.heritageClauses ?? []) {
-        for (const clauseType of heritageClause.types) {
-          const keyType = getRecordKeyTypeFromTypeNode(clauseType, typeChecker, visitedSymbols)
-          if (keyType !== undefined) {
-            return keyType
-          }
-        }
-      }
-    }
-  }
-
-  return undefined
-}
-
-function getRecordKeyType(
-  type: ts.Type,
-  typeChecker: ts.TypeChecker,
-  visitedSymbols: Set<ts.Symbol> = new Set<ts.Symbol>()
-): ts.Type | undefined {
-  if (type.aliasSymbol !== undefined && type.aliasSymbol.escapedName.toString() === "Record") {
-    const keyType = type.aliasTypeArguments?.[0]
-    if (keyType !== undefined) {
-      return keyType
-    }
-  }
-
-  if (type.isUnion() || type.isIntersection()) {
-    for (const childType of type.types) {
-      const keyType = getRecordKeyType(childType, typeChecker, visitedSymbols)
-      if (keyType !== undefined) {
-        return keyType
-      }
-    }
-  }
-
-  const symbol = type.aliasSymbol ?? type.getSymbol()
-  if (symbol === undefined) {
-    return undefined
-  }
-
-  const resolved = resolveSymbol(symbol, typeChecker)
-  if (visitedSymbols.has(resolved)) {
-    return undefined
-  }
-  visitedSymbols.add(resolved)
-
-  const declarations = resolved.getDeclarations() ?? []
-  for (const declaration of declarations) {
-    if (ts.isTypeAliasDeclaration(declaration)) {
-      const keyType = getRecordKeyTypeFromTypeNode(declaration.type, typeChecker, visitedSymbols)
-      if (keyType !== undefined) {
-        return keyType
-      }
-    }
-
-    if (ts.isInterfaceDeclaration(declaration)) {
-      for (const member of declaration.members) {
-        if (ts.isIndexSignatureDeclaration(member)) {
-          const keyParamType = member.parameters[0]?.type
-          if (keyParamType !== undefined) {
-            return typeChecker.getTypeFromTypeNode(keyParamType)
-          }
-        }
-      }
-    }
-  }
-
-  return undefined
-}
-
-function containsStringLikeKeyType(type: ts.Type, typeChecker: ts.TypeChecker): boolean {
-  if (type.isUnion() || type.isIntersection()) {
-    return type.types.some((t) => containsStringLikeKeyType(t, typeChecker))
-  }
-
-  const flags = type.getFlags()
-  if (
-    (flags & ts.TypeFlags.String) !== 0 ||
-    (flags & ts.TypeFlags.StringLiteral) !== 0 ||
-    (flags & ts.TypeFlags.TemplateLiteral) !== 0
-  ) {
-    return true
-  }
-
-  if ((flags & ts.TypeFlags.TypeParameter) !== 0) {
-    const constraint = typeChecker.getBaseConstraintOfType(type)
-    if (constraint !== undefined) {
-      return containsStringLikeKeyType(constraint, typeChecker)
-    }
-  }
-
-  return false
-}
-
-function hasUnrestrictedStringKeyType(type: ts.Type, typeChecker: ts.TypeChecker, excludeBrand = false): boolean {
-  if (type.isUnion()) {
-    return type.types.some((t) => hasUnrestrictedStringKeyType(t, typeChecker, excludeBrand))
-  }
-
-  if (type.isIntersection()) {
-    // Branded intersections like string & { __linguiIgnore?: ... } are intentionally constrained.
-    if (!excludeBrand && hasLinguiIgnoreBrand(type, typeChecker)) {
-      return false
-    }
-    return type.types.some((t) => hasUnrestrictedStringKeyType(t, typeChecker, excludeBrand))
-  }
-
-  const flags = type.getFlags()
-  if ((flags & ts.TypeFlags.String) !== 0 || (flags & ts.TypeFlags.Any) !== 0 || (flags & ts.TypeFlags.Unknown) !== 0) {
-    return true
-  }
-
-  if ((flags & ts.TypeFlags.TypeParameter) !== 0) {
-    const constraint = typeChecker.getBaseConstraintOfType(type)
-    if (constraint !== undefined) {
-      return hasUnrestrictedStringKeyType(constraint, typeChecker)
-    }
-    return true
-  }
-
-  return false
-}
-
-function isTechnicalObjectKeyType(type: ts.Type, typeChecker: ts.TypeChecker, excludeBrand = false): boolean {
-  if (!excludeBrand && hasLinguiIgnoreBrand(type, typeChecker)) {
-    return true
-  }
-
-  if (!containsStringLikeKeyType(type, typeChecker)) {
-    return false
-  }
-
-  return !hasUnrestrictedStringKeyType(type, typeChecker, excludeBrand)
-}
-
-function isTechnicalObjectKeyLiteral(
-  node: TSESTree.Literal,
-  typeChecker: ts.TypeChecker,
-  parserServices: ReturnType<typeof ESLintUtils.getParserServices>,
-  excludeBrand = false
-): boolean {
+/**
+ * Checks if a string literal is used as an object property key (non-computed).
+ * Object keys are structural/technical identifiers used for data lookup, not
+ * user-visible text, so they should always be ignored regardless of the key type.
+ */
+function isObjectKeyLiteral(node: TSESTree.Literal): boolean {
   const parent = node.parent
-  if (parent.type !== AST_NODE_TYPES.Property || parent.key !== node || parent.computed) {
-    return false
-  }
-
-  const objectExpression = parent.parent
-  if (objectExpression.type !== AST_NODE_TYPES.ObjectExpression) {
-    return false
-  }
-
-  try {
-    const objectTsNode = parserServices.esTreeNodeToTSNodeMap.get(objectExpression)
-    const contextualType = typeChecker.getContextualType(objectTsNode)
-    if (contextualType === undefined) {
-      return false
-    }
-
-    const keyType = getRecordKeyType(contextualType, typeChecker)
-    return keyType !== undefined && isTechnicalObjectKeyType(keyType, typeChecker, excludeBrand)
-  } catch {
-    return false
-  }
+  return parent.type === AST_NODE_TYPES.Property && parent.key === node && !parent.computed
 }
 
 /**
@@ -2015,7 +1781,7 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
      */
     function wouldBeSkippedWithoutBrands(node: TSESTree.Literal, value: string): boolean {
       if (ignoreRegex?.test(value) === true) return true
-      if (isTechnicalObjectKeyLiteral(node, typeChecker, parserServices, true)) return true
+      if (isObjectKeyLiteral(node)) return true
       if (!looksLikeUIString(value)) return true
       if (isInsideLinguiContext(node, typeChecker, parserServices)) return true
       if (isReactDirective(node)) return true
@@ -2045,7 +1811,6 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
      * branded value types (UnlocalizedText, UnlocalizedFunction, etc.).
      */
     function wouldBeSkippedByBrands(node: TSESTree.Literal): boolean {
-      if (isTechnicalObjectKeyLiteral(node, typeChecker, parserServices)) return true
       if (isLinguiBrandedType(node, typeChecker, parserServices)) return true
       return false
     }
@@ -2054,50 +1819,37 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
      * Cache for object-level brand necessity. Computed once per ObjectExpression,
      * then reused for all properties in that object. Turns O(N²) into O(N).
      */
-    const objectBrandNeedCache = new WeakMap<TSESTree.ObjectExpression, { keys: boolean; values: boolean }>()
+    const objectBrandNeedCache = new WeakMap<TSESTree.ObjectExpression, boolean>()
 
-    function getObjectBrandNeed(objectExpression: TSESTree.ObjectExpression): { keys: boolean; values: boolean } {
+    function getObjectBrandNeed(objectExpression: TSESTree.ObjectExpression): boolean {
       let cached = objectBrandNeedCache.get(objectExpression)
       if (cached !== undefined) return cached
 
-      let anyKeyNeeds = false
       let anyValueNeeds = false
 
       for (const prop of objectExpression.properties) {
         if (prop.type !== AST_NODE_TYPES.Property) continue
 
-        if (!anyKeyNeeds) {
-          const key = prop.key
-          if (key.type === AST_NODE_TYPES.Literal && typeof key.value === "string") {
-            if (!wouldBeSkippedWithoutBrands(key, key.value)) {
-              anyKeyNeeds = true
-            }
+        const val = prop.value
+        if (val.type === AST_NODE_TYPES.Literal && typeof val.value === "string") {
+          if (!wouldBeSkippedWithoutBrands(val as TSESTree.Literal, val.value)) {
+            anyValueNeeds = true
+            break
           }
         }
-
-        if (!anyValueNeeds) {
-          const val = prop.value
-          if (val.type === AST_NODE_TYPES.Literal && typeof val.value === "string") {
-            if (!wouldBeSkippedWithoutBrands(val as TSESTree.Literal, val.value)) {
-              anyValueNeeds = true
-            }
-          }
-        }
-
-        if (anyKeyNeeds && anyValueNeeds) break
       }
 
-      cached = { keys: anyKeyNeeds, values: anyValueNeeds }
+      cached = anyValueNeeds
       objectBrandNeedCache.set(objectExpression, cached)
       return cached
     }
 
     /**
-     * For object properties, checks if any entry in the same position (all keys
-     * or all values) actually needs the brand. If so, the brand on the type is
-     * necessary and individual entries should not be reported as unnecessary.
+     * For object property values, checks if any sibling value in the same object
+     * actually needs the brand. If so, the brand on the type is necessary and
+     * individual entries should not be reported as unnecessary.
      *
-     * Example: Record<UnlocalizedText, UnlocalizedText> = { greeting: "Hello World", code: "CN" }
+     * Example: Record<string, UnlocalizedText> = { greeting: "Hello World", code: "CN" }
      * "CN" is technical (ALL_CAPS), but "Hello World" needs the brand — so "CN" is not reported.
      */
     function isInObjectWhereBrandIsNeeded(node: TSESTree.Literal): boolean {
@@ -2107,12 +1859,10 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       const objectExpression = parent.parent
       if (objectExpression.type !== AST_NODE_TYPES.ObjectExpression) return false
 
-      const isKey = parent.key === node
-      const isValue = parent.value === node
-      if (!isKey && !isValue) return false
+      // Only relevant for values, not keys (keys are always ignored)
+      if (parent.value !== node) return false
 
-      const need = getObjectBrandNeed(objectExpression)
-      return isKey ? need.keys : need.values
+      return getObjectBrandNeed(objectExpression)
     }
 
     /**
@@ -2168,8 +1918,14 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
 
       if (wouldBeSkippedWithoutBrands(node, value)) {
         // String is technical — but if it has a brand, the brand is unnecessary
-        // However, suppress report if a sibling value/key in the same object needs the brand
-        if (options.reportUnnecessaryBrands && wouldBeSkippedByBrands(node) && !isInObjectWhereBrandIsNeeded(node)) {
+        // Object keys are always structural, so never report brand on them as unnecessary
+        // Also suppress if a sibling value in the same object needs the brand
+        if (
+          options.reportUnnecessaryBrands &&
+          !isObjectKeyLiteral(node) &&
+          wouldBeSkippedByBrands(node) &&
+          !isInObjectWhereBrandIsNeeded(node)
+        ) {
           const suggestion = getTypeAssertionSuggestion(node)
           context.report({
             node,

@@ -1004,9 +1004,19 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       filename: "test.tsx"
     },
 
-    // Record<UnlocalizedText, UnlocalizedText> with UI-like keys and ALL_CAPS values
-    // Keys like "czech republic" need the brand (looksLikeUIString returns true for them)
-    // Values like "CZ" don't need it (ALL_CAPS heuristic skips them)
+    // Object keys are always ignored — Record<string, ...> with country name keys
+    {
+      code: `
+        interface CountryData { iso: string; lat: number; lng: number }
+        const COUNTRY_DATA: Record<string, CountryData> = {
+          "United States": { iso: "US", lat: 37.09, lng: -95.71 },
+          "South Korea": { iso: "KR", lat: 35.91, lng: 127.77 },
+        }
+      `,
+      filename: "test.tsx"
+    },
+
+    // Record<UnlocalizedText, UnlocalizedText> — keys always ignored, values branded
     // With option OFF: nothing reported
     {
       code: `
@@ -1346,19 +1356,6 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       errors: [{ messageId: "unlocalizedString" }]
     },
 
-    // Non-branded Record keys should still be reported
-    {
-      code: `
-        type Row = Record<string, number>
-
-        const row: Row = {
-          "First Name": 1,
-        }
-      `,
-      filename: "test.tsx",
-      errors: [{ messageId: "unlocalizedString" }]
-    },
-
     // Template literals with UI text (no interpolation)
     {
       code: "const msg = `Hello World`",
@@ -1523,9 +1520,8 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     },
 
     // Unnecessary brand: Record with UI-like keys and ALL_CAPS values — option ON
-    // Keys ("czech republic", "south korea") are NOT reported as unnecessaryBrand
-    // because keys are detected via isTechnicalObjectKeyLiteral, not isLinguiBrandedType.
-    // Values ("CZ", "KR") ARE reported because ALL_CAPS heuristic skips them.
+    // Keys are always ignored (structural). Values ("CZ", "KR") ARE reported
+    // because ALL_CAPS heuristic skips them and the brand is unnecessary.
     {
       code: `
         type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
