@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.2](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.16.1...v1.16.2) (2026-02-18)
+
+
+### Bug Fixes
+
+* **rule:** skip prefer-trans-in-jsx inside SVG text-only elements ([21fac23](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/21fac23c6fa34ce82b278168b0776b5d9c0d913a))
+
 ## [1.16.1](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.16.0...v1.16.1) (2026-02-17)
 
 
