@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.7](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.16.6...v1.16.7) (2026-02-18)
+
+
+### Bug Fixes
+
+* **rule:** apply branded type checks to template literals ([f0391f2](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/f0391f2f5544e57a886e122ccb453711304b280c))
+
 ## [1.16.6](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.16.5...v1.16.6) (2026-02-18)
 
 
