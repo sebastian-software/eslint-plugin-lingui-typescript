@@ -409,8 +409,9 @@ function looksLikeUIString(value: string): boolean {
     return false
   }
 
-  // Looks like identifier: camelCase, kebab-case, snake_case (no spaces)
-  if (/^[a-z][a-z0-9-_]*$/i.test(trimmed) && !trimmed.includes(" ")) {
+  // Looks like a code identifier: must contain separators (-_.) or case transitions
+  // (camelCase/PascalCase). Plain single words like "Afghanistan" or "Error" don't match.
+  if (/^[a-zA-Z][a-zA-Z0-9._-]*$/.test(trimmed) && !trimmed.includes(" ") && /[-_.]|[a-z][A-Z]/.test(trimmed)) {
     return false
   }
 
