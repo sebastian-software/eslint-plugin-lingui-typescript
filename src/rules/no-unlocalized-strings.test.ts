@@ -281,6 +281,21 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
     },
     { code: 'let cellClassNames = "p-2"; cellClassNames += " border-b"', filename: "test.tsx" },
 
+    // Styling variable with ternary init
+    {
+      code: `
+        const baseClassNames =
+          variant === "pill"
+            ? "shrink-0 rounded-full px-2 py-0.5 font-medium text-xs"
+            : "rounded px-1.5 py-0.5 font-medium text-xs"
+      `,
+      filename: "test.tsx"
+    },
+    {
+      code: 'const buttonClassNames = condition && "bg-primary text-white"',
+      filename: "test.tsx"
+    },
+
     // Styling helper functions (function name indicates return value is styling)
     {
       code: `function getStatusColor(status: string) {

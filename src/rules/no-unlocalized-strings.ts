@@ -1115,27 +1115,20 @@ function isInsideStylingConstant(node: TSESTree.Node): boolean {
         return true
       }
 
-      // Case 1: Direct object - const x = { key: "value" }
+      // For objects/arrays, restrict to prevent false positives on nested strings:
+      // e.g. const STATUS_COLORS = { active: fn("Hello") } — fn() arg should still be checked
       if (init?.type === AST_NODE_TYPES.ObjectExpression) {
-        // Only allow if:
-        // - We didn't pass through a CallExpression (fn() inside property)
-        // - We didn't pass through nested objects (depth must be 1)
         return lastCallExpression === undefined && objectDepth === 1
       }
 
-      // Case 2: Direct function call - const x = cn("value", {...})
-      if (init?.type === AST_NODE_TYPES.CallExpression) {
-        // Only allow if the CallExpression we passed through IS the init
-        return lastCallExpression === init
+      if (init?.type === AST_NODE_TYPES.ArrayExpression) {
+        return false
       }
 
-      // Case 3: Direct string value - let buttonClassNames = "rounded-md ..."
-      // Also covers string concatenation built up with += later.
-      if (init?.type === AST_NODE_TYPES.Literal || init?.type === AST_NODE_TYPES.TemplateLiteral) {
-        return true
-      }
-
-      return false
+      // For all other init types (strings, template literals, ternaries,
+      // logical expressions, function calls, etc.) the variable name
+      // already signals intent — trust it.
+      return true
     }
 
     // Assignment to a styling/technical variable name:
