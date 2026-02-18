@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.5](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.16.4...v1.16.5) (2026-02-18)
+
+
+### Bug Fixes
+
+* **rule:** always ignore string literal object keys ([4d43240](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/4d4324036329360e9b8b5f9baa5aa1cb479d4198))
+
 ## [1.16.4](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.16.3...v1.16.4) (2026-02-18)
 
 
