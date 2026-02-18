@@ -837,6 +837,29 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       filename: "test.tsx"
     },
 
+    // Branded rest parameter — all arguments are branded
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        function log(...args: UnlocalizedText[]) {}
+        log("First message", "Second message")
+      `,
+      filename: "test.tsx"
+    },
+
+    // Branded rest parameter on method
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        interface Logger {
+          log(...args: UnlocalizedText[]): void
+        }
+        declare const logger: Logger
+        logger.log("First message", "Second message")
+      `,
+      filename: "test.tsx"
+    },
+
     // unlocalized() helper function
     {
       code: `
