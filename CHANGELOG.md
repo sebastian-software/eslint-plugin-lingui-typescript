@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.4](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.16.3...v1.16.4) (2026-02-18)
+
+
+### Bug Fixes
+
+* **rule:** handle template literals with type assertions and style assignments ([0d5b354](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/0d5b35468e0624a359e74256d436a87b0af13cdf))
+
 ## [1.16.3](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.16.2...v1.16.3) (2026-02-18)
 
 
