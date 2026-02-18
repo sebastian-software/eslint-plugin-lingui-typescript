@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.3](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.16.2...v1.16.3) (2026-02-18)
+
+
+### Bug Fixes
+
+* **rule:** recognize styling variables with string init and += assignment ([acaa990](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/commit/acaa99086a99bde2b353a55e67d36fb0768568fd))
+
 ## [1.16.2](https://github.com/sebastian-software/eslint-plugin-lingui-typescript/compare/v1.16.1...v1.16.2) (2026-02-18)
 
 
