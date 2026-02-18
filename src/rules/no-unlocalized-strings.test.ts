@@ -1137,6 +1137,29 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       filename: "test.tsx"
     },
 
+    // Array of objects — brand justified by sibling objects
+    // "OK" is ALL_CAPS (would be skipped) but "Save changes" in another element needs the brand
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        interface Item { label: UnlocalizedText }
+        const items: Item[] = [
+          { label: "Save changes" },
+          { label: "OK" },
+        ]
+      `,
+      options: [
+        {
+          reportUnnecessaryBrands: true,
+          ignoreFunctions: [],
+          ignoreProperties: [],
+          ignoreNames: [],
+          ignorePattern: null
+        }
+      ],
+      filename: "test.tsx"
+    },
+
     // Branded type needed — value would be flagged without brand
     {
       code: `

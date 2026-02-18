@@ -1845,12 +1845,66 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
     }
 
     /**
-     * For object property values, checks if any sibling value in the same object
-     * actually needs the brand. If so, the brand on the type is necessary and
-     * individual entries should not be reported as unnecessary.
+     * Cache for array-level brand necessity per property name. Computed once
+     * per ArrayExpression + property name, then reused for all elements.
+     */
+    const arrayPropertyBrandNeedCache = new WeakMap<TSESTree.ArrayExpression, Map<string, boolean>>()
+
+    /**
+     * Checks if any object in the array has a value for the given property name
+     * that would be flagged without the brand. This handles cases like:
      *
-     * Example: Record<string, UnlocalizedText> = { greeting: "Hello World", code: "CN" }
-     * "CN" is technical (ALL_CAPS), but "Hello World" needs the brand — so "CN" is not reported.
+     *   const countries: Country[] = [
+     *     { code: "AF", name: "Afghanistan" },       // single word
+     *     { code: "AG", name: "Antigua and Barbuda" }, // needs brand
+     *   ]
+     *
+     * The brand on Country.name is justified because at least one entry needs it.
+     */
+    function getArrayPropertyBrandNeed(arrayExpression: TSESTree.ArrayExpression, propertyName: string): boolean {
+      let propCache = arrayPropertyBrandNeedCache.get(arrayExpression)
+      if (propCache === undefined) {
+        propCache = new Map<string, boolean>()
+        arrayPropertyBrandNeedCache.set(arrayExpression, propCache)
+      }
+
+      const cached = propCache.get(propertyName)
+      if (cached !== undefined) return cached
+
+      let anyNeeds = false
+      for (const element of arrayExpression.elements) {
+        if (element === null || element.type !== AST_NODE_TYPES.ObjectExpression) continue
+        for (const prop of element.properties) {
+          if (prop.type !== AST_NODE_TYPES.Property) continue
+          const key =
+            prop.key.type === AST_NODE_TYPES.Identifier
+              ? prop.key.name
+              : prop.key.type === AST_NODE_TYPES.Literal
+                ? String(prop.key.value)
+                : null
+          if (key !== propertyName) continue
+          const val = prop.value
+          if (val.type === AST_NODE_TYPES.Literal && typeof val.value === "string") {
+            if (!wouldBeSkippedWithoutBrands(val as TSESTree.Literal, val.value)) {
+              anyNeeds = true
+              break
+            }
+          }
+        }
+        if (anyNeeds) break
+      }
+
+      propCache.set(propertyName, anyNeeds)
+      return anyNeeds
+    }
+
+    /**
+     * For object property values, checks if the brand is justified by looking at:
+     * 1. Sibling values in the same object (e.g. Record with mixed values)
+     * 2. The same property across sibling objects in an array (e.g. Country[])
+     *
+     * If any related value needs the brand, the type-level brand is justified
+     * and individual entries should not be reported as unnecessary.
      */
     function isInObjectWhereBrandIsNeeded(node: TSESTree.Literal): boolean {
       const parent = node.parent
@@ -1862,7 +1916,24 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       // Only relevant for values, not keys (keys are always ignored)
       if (parent.value !== node) return false
 
-      return getObjectBrandNeed(objectExpression)
+      // Check sibling values in the same object
+      if (getObjectBrandNeed(objectExpression)) return true
+
+      // Check the same property across sibling objects in an array
+      const arrayParent = objectExpression.parent
+      if (arrayParent.type === AST_NODE_TYPES.ArrayExpression) {
+        const propName =
+          parent.key.type === AST_NODE_TYPES.Identifier
+            ? parent.key.name
+            : parent.key.type === AST_NODE_TYPES.Literal
+              ? String(parent.key.value)
+              : null
+        if (propName !== null) {
+          return getArrayPropertyBrandNeed(arrayParent, propName)
+        }
+      }
+
+      return false
     }
 
     /**
