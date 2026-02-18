@@ -860,6 +860,52 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       filename: "test.tsx"
     },
 
+    // Branded union rest parameter via factory function (Logger pattern)
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        type LogMessageArg = UnlocalizedText | number | boolean | object | null | undefined
+        function createLogger(prefix = "[App]") {
+          return {
+            debug: (...args: LogMessageArg[]) => { console.debug(prefix, ...args) },
+            info: (...args: LogMessageArg[]) => { console.info(prefix, ...args) },
+          }
+        }
+        const logger = createLogger()
+        logger.info("Server started successfully")
+        logger.debug("Processing request", 42, true)
+      `,
+      filename: "test.tsx"
+    },
+
+    // Branded union rest parameter via factory with scope() returning same type
+    {
+      code: `
+        type UnlocalizedText = string & { readonly __linguiIgnore?: "UnlocalizedText" }
+        type LogMessageArg = UnlocalizedText | number | boolean | object | null | undefined
+        function createLogger(prefix = "[App]"): {
+          scope(tag: string): ReturnType<typeof createLogger>
+          debug(...args: LogMessageArg[]): void
+          info(...args: LogMessageArg[]): void
+          warn(...args: LogMessageArg[]): void
+          error(...args: LogMessageArg[]): void
+        } {
+          return {
+            scope(tag: string) { return createLogger(prefix + " [" + tag + "]") },
+            debug: (...args: LogMessageArg[]) => { console.debug(prefix, ...args) },
+            info: (...args: LogMessageArg[]) => { console.info(prefix, ...args) },
+            warn: (...args: LogMessageArg[]) => { console.warn(prefix, ...args) },
+            error: (...args: LogMessageArg[]) => { console.error(prefix, ...args) },
+          }
+        }
+        const logger = createLogger()
+        logger.info("Server started successfully")
+        const scoped = logger.scope("DB")
+        scoped.warn("Connection pool exhausted")
+      `,
+      filename: "test.tsx"
+    },
+
     // unlocalized() helper function
     {
       code: `
