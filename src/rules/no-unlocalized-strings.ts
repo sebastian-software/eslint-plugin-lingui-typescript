@@ -932,7 +932,39 @@ function getPropertyName(node: TSESTree.Node): string | null {
     }
   }
 
+  // Member expression assignment: obj.className = "..."
+  if (
+    parent?.type === AST_NODE_TYPES.AssignmentExpression &&
+    parent.right === node &&
+    parent.left.type === AST_NODE_TYPES.MemberExpression &&
+    !parent.left.computed &&
+    parent.left.property.type === AST_NODE_TYPES.Identifier
+  ) {
+    return parent.left.property.name
+  }
+
   return null
+}
+
+/**
+ * Checks if a node is assigned to a `.style` property on a DOM element,
+ * e.g. `el.style.filter = "brightness(0.85)"` or `el.style.boxShadow = "..."`.
+ * Any value assigned to `*.style.*` is a CSS value and never user-visible text.
+ */
+function isStylePropertyAssignment(node: TSESTree.Node): boolean {
+  const parent = node.parent
+  if (
+    parent?.type === AST_NODE_TYPES.AssignmentExpression &&
+    parent.right === node &&
+    parent.left.type === AST_NODE_TYPES.MemberExpression &&
+    parent.left.object.type === AST_NODE_TYPES.MemberExpression &&
+    !parent.left.object.computed &&
+    parent.left.object.property.type === AST_NODE_TYPES.Identifier &&
+    parent.left.object.property.name === "style"
+  ) {
+    return true
+  }
+  return false
 }
 
 /**
@@ -2002,6 +2034,7 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       if (isIgnoredProperty(node, options.ignoreProperties)) return true
       if (isInsideStylingPropertyValue(node, options.ignoreProperties, typeChecker, parserServices)) return true
       if (isInsideStylingConstant(node)) return true
+      if (isStylePropertyAssignment(node)) return true
       if (isTechnicalStringType(node, typeChecker, parserServices)) return true
       return false
     }
@@ -2302,6 +2335,7 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
 
       if (ignoreRegex?.test(value) === true) return
       if (!looksLikeUIString(value)) return
+      if (isInTypeContext(node)) return
       if (isInsideLinguiContext(node, typeChecker, parserServices)) return
       if (isInSwitchCase(node)) return
       if (isBinaryComparison(node)) return
@@ -2315,6 +2349,7 @@ export const noUnlocalizedStrings = createRule<[Options], MessageId>({
       if (isIgnoredProperty(node, options.ignoreProperties)) return
       if (isInsideStylingPropertyValue(node, options.ignoreProperties, typeChecker, parserServices)) return
       if (isInsideStylingConstant(node)) return
+      if (isStylePropertyAssignment(node)) return
 
       context.report({
         node,

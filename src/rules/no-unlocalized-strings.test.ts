@@ -977,6 +977,33 @@ ruleTester.run("no-unlocalized-strings", noUnlocalizedStrings, {
       filename: "test.tsx"
     },
 
+    // Template literal with as-assertion should be ignored
+    {
+      code: `
+        type UnlocalizedStyle = string & { readonly __linguiIgnore?: "UnlocalizedStyle" }
+        declare const markerColor: string
+        declare const el: HTMLDivElement
+        el.style.boxShadow = \`0 4px 12px rgba(0,0,0,0.4), 0 0 12px \${markerColor}60\` as UnlocalizedStyle
+      `,
+      filename: "test.tsx"
+    },
+
+    // Member expression assignment to style property
+    {
+      code: `
+        declare const el: HTMLDivElement
+        el.style.filter = "brightness(0.85)"
+      `,
+      filename: "test.tsx"
+    },
+    {
+      code: `
+        declare const el: HTMLDivElement
+        el.style.boxShadow = "0 4px 12px rgba(0,0,0,0.4)"
+      `,
+      filename: "test.tsx"
+    },
+
     // Record<UnlocalizedText, UnlocalizedText> with UI-like keys and ALL_CAPS values
     // Keys like "czech republic" need the brand (looksLikeUIString returns true for them)
     // Values like "CZ" don't need it (ALL_CAPS heuristic skips them)
