@@ -39,6 +39,20 @@ This rule detects `t` tagged template literals used inside JSX and suggests usin
 const msg = t`Save changes`
 ```
 
+## SVG Text-Only Elements
+
+The rule does **not** flag `` t`...` `` inside SVG elements that only accept text content — specifically `<title>` and `<desc>`. Inserting a `<Trans>` component inside these elements would produce invalid DOM and cause hydration or rendering issues.
+
+```tsx
+// ✅ Valid — t is the correct choice here
+<svg><title>{t`Icon label`}</title></svg>
+<svg><desc>{t`Icon description`}</desc></svg>
+<svg><title>{show && t`Label`}</title></svg>
+<svg><g><title>{t`Nested title`}</title></g></svg>
+```
+
+This applies regardless of nesting depth — any `<title>` or `<desc>` ancestor triggers the exception.
+
 ## Auto-Fix
 
 When `` {t`...`} `` is the direct expression inside a JSX expression container, the rule provides an auto-fix that:

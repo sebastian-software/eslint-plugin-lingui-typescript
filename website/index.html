@@ -258,7 +258,10 @@ element.<span class="function">addEventListener</span>(<span class="string">"cli
 fetch(url, { mode: <span class="string">"cors"</span> })
 
 <span class="keyword">type</span> <span class="type">Status</span> = <span class="string">"idle"</span> | <span class="string">"loading"</span> | <span class="string">"error"</span>
-<span class="keyword">const</span> status: <span class="type">Status</span> = <span class="string">"loading"</span>  <span class="check">// ✅ ignored</span>
+<span class="keyword">const</span> status: <span class="type">Status</span> = <span class="string">"loading"</span>  <span class="check">// ✅ union type</span>
+
+<span class="keyword">if</span> (status === <span class="string">"active"</span>) {}    <span class="check">// ✅ comparison</span>
+el.style.filter = <span class="string">"blur(4px)"</span>  <span class="check">// ✅ style assignment</span>
 
 <span class="comment">// ❌ Reported — actual user text</span>
 <span class="keyword">const</span> message = <span class="string">"Welcome to our app"</span>  <span class="error">// 🚨</span>
@@ -274,11 +277,11 @@ fetch(url, { mode: <span class="string">"cors"</span> })
       <div class="text-center mb-16">
         <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-slate-900">What the types already know</h2>
         <p class="text-slate-600 max-w-2xl mx-auto">
-          These patterns are recognized automatically from your TypeScript definitions.
-          Nothing to configure.
+          These patterns are recognized automatically — from TypeScript type definitions,
+          code structure, and naming conventions. Nothing to configure.
         </p>
       </div>
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         <!-- Feature 1 -->
         <div class="feature-card rounded-2xl p-6 border border-slate-100" style="--card-color: #3b82f6; --card-color-end: #6366f1;">
           <div class="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center mb-4">
@@ -337,6 +340,36 @@ fetch(url, { mode: <span class="string">"cors"</span> })
           <h3 class="text-lg font-semibold mb-2 text-slate-900">Package Verification</h3>
           <p class="text-slate-600 text-sm">
             Verifies <code class="text-cyan-600 bg-cyan-50 px-1 rounded">t</code>, <code class="text-cyan-600 bg-cyan-50 px-1 rounded">Trans</code> come from <code class="text-cyan-600 bg-cyan-50 px-1 rounded">@lingui/*</code> — no false positives.
+          </p>
+        </div>
+        <!-- Feature 7 -->
+        <div class="feature-card rounded-2xl p-6 border border-slate-100" style="--card-color: #ef4444; --card-color-end: #f97316;">
+          <div class="w-12 h-12 bg-gradient-to-br from-red-100 to-orange-100 rounded-xl flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-2 text-slate-900">String Search Methods</h3>
+          <p class="text-slate-600 text-sm">
+            <code class="text-red-600 bg-red-50 px-1 rounded">includes()</code>, <code class="text-red-600 bg-red-50 px-1 rounded">indexOf()</code>, <code class="text-red-600 bg-red-50 px-1 rounded">replace()</code> search arguments — technical, not UI text.
+          </p>
+        </div>
+        <!-- Feature 8 -->
+        <div class="feature-card rounded-2xl p-6 border border-slate-100" style="--card-color: #84cc16; --card-color-end: #22c55e;">
+          <div class="w-12 h-12 bg-gradient-to-br from-lime-100 to-green-100 rounded-xl flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-lime-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-2 text-slate-900">Object Keys &amp; Style Assignments</h3>
+          <p class="text-slate-600 text-sm">
+            Object keys are structural, <code class="text-lime-600 bg-lime-50 px-1 rounded">el.style.*</code> assignments are CSS — both always ignored.
+          </p>
+        </div>
+        <!-- Feature 9 -->
+        <div class="feature-card rounded-2xl p-6 border border-slate-100" style="--card-color: #6366f1; --card-color-end: #8b5cf6;">
+          <div class="w-12 h-12 bg-gradient-to-br from-indigo-100 to-violet-100 rounded-xl flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </div>
+          <h3 class="text-lg font-semibold mb-2 text-slate-900">Comparisons &amp; Binary Ops</h3>
+          <p class="text-slate-600 text-sm">
+            Strings in <code class="text-indigo-600 bg-indigo-50 px-1 rounded">===</code>, <code class="text-indigo-600 bg-indigo-50 px-1 rounded">!==</code> comparisons are technical checks, not translatable text.
           </p>
         </div>
       </div>
@@ -438,6 +471,21 @@ logger.<span class="function">error</span>(<span class="string">"Connection fail
             </tr>
             <tr class="border-t border-slate-100">
               <td class="py-4 px-6 text-slate-800">Numeric/symbolic strings</td>
+              <td class="py-4 px-6 text-slate-500">Manual whitelist</td>
+              <td class="py-4 px-6 text-brand-600 font-medium">✓ Auto-detected</td>
+            </tr>
+            <tr class="border-t border-slate-100 bg-slate-50">
+              <td class="py-4 px-6 text-slate-800">Object keys</td>
+              <td class="py-4 px-6 text-slate-500">Manual whitelist</td>
+              <td class="py-4 px-6 text-brand-600 font-medium">✓ Auto-ignored</td>
+            </tr>
+            <tr class="border-t border-slate-100">
+              <td class="py-4 px-6 text-slate-800">String search methods</td>
+              <td class="py-4 px-6 text-slate-500">Manual whitelist</td>
+              <td class="py-4 px-6 text-brand-600 font-medium">✓ Auto-detected</td>
+            </tr>
+            <tr class="border-t border-slate-100 bg-slate-50">
+              <td class="py-4 px-6 text-slate-800">Style property assignments</td>
               <td class="py-4 px-6 text-slate-500">Manual whitelist</td>
               <td class="py-4 px-6 text-brand-600 font-medium">✓ Auto-detected</td>
             </tr>

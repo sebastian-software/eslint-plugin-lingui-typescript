@@ -141,6 +141,20 @@ Wildcard examples:
 - `"logger.*"` matches `logger.debug`, `logger.info`, etc.
 - `"*.track"` matches `analytics.track`, `events.track`, etc.
 
+**Chained method calls**: For APIs like Supabase where methods are chained, the rule resolves the trailing method name. Adding `"select"` to `ignoreFunctions` ignores strings in any `.select()` call, regardless of the chain before it:
+
+```ts
+{
+  "ignoreFunctions": ["require", "import", "select"]
+}
+```
+
+```tsx
+// "select" is resolved from the chained call
+supabase.from("users").select("id, name, email")  // ✅ Not flagged
+db.query("orders").select("*")                      // ✅ Not flagged
+```
+
 ### `ignoreProperties`
 
 Array of property/attribute names whose string values should be ignored.
@@ -257,7 +271,7 @@ userEmail = "Primary account owner contact address"
 ```
 
 ```tsx
-// camelCase variables with technical suffixes
+// camelCase variables with technical suffixes — any expression type
 const colorClasses = {
   Solar: "bg-orange-100 text-orange-800",
   Wind: "bg-blue-100 text-blue-800",
@@ -267,6 +281,11 @@ const buttonStyles = {
   primary: "px-4 py-2 bg-blue-500",
   secondary: "px-4 py-2 bg-gray-200",
 }
+
+// Ternaries, logical expressions, and string concatenation all work
+const baseClassNames = isCompact ? "px-2 py-1 text-sm" : "px-4 py-2 text-base"
+let buttonClassNames = "rounded border"
+buttonClassNames += " bg-blue-500 text-white"
 ```
 
 **Technical helper functions** (singular suffixes for return values):
@@ -481,6 +500,43 @@ const arrows = "→ ← ↑ ↓"
 
 This uses Unicode letter detection (`\p{L}`), so accented characters like `ä`, `ö`, `ü`, `é` are correctly recognized as letters.
 
+### Object Keys
+
+String literal keys in object expressions are always ignored — they are structural identifiers, not user-facing text:
+
+```tsx
+// All automatically ignored — keys are structural
+const countries: Record<string, CountryData> = {
+  "United States": { code: "US", population: 331000000 },
+  "United Kingdom": { code: "GB", population: 67000000 },
+}
+
+const config = {
+  "Content-Type": "application/json",
+  "Accept-Language": "en-US",
+}
+```
+
+Object *values* are still checked normally. Only the key position is exempt.
+
+### Style Property Assignments
+
+Direct assignments to `*.style.*` properties are automatically ignored — these are CSS values, not user-facing text:
+
+```tsx
+// All automatically ignored
+el.style.filter = "brightness(0.85)"
+el.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)"
+el.style.transform = "translateX(-50%)"
+element.style.transition = "all 0.3s ease"
+```
+
+This also works with template literals:
+
+```tsx
+el.style.gridTemplateColumns = `repeat(${cols}, 1fr)`  // ✅ Not flagged
+```
+
 ## Branded Types
 
 This plugin exports branded types that you can use to mark parameters or properties as "no translation needed". The rule automatically detects these types and ignores strings passed to them.
@@ -648,7 +704,13 @@ These types use TypeScript's branded type pattern with two different markers:
 type UnlocalizedLog = string & { readonly __linguiIgnore?: "UnlocalizedLog" }
 ```
 
-The rule checks if the parameter's contextual type has this property.
+The rule checks if the parameter's contextual type has this property. This works for both string literals and template literals:
+
+```ts
+declare function log(msg: UnlocalizedLog): void
+log("Server started")           // ✅ String literal — not flagged
+log(`Server started on ${port}`) // ✅ Template literal — not flagged
+```
 
 **Function-level branding** (`__linguiIgnoreArgs`):
 

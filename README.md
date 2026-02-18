@@ -51,6 +51,8 @@ const letterSpacing = "-0.02em"                         // CSS numeric unit valu
 if (status === "active") {}                             // Binary comparison
 if (error.message.includes("User not found")) {}        // String search on string receiver
 const code = error.message.replace("User not found", "E_USER_NOT_FOUND") // replace(searchValue)
+el.style.filter = "brightness(0.85)"                    // Direct style assignments
+const data = { "United States": info }                  // Object keys (always structural)
 
 // These actually need translation — and get reported
 const message = "Welcome to our app"
@@ -217,6 +219,7 @@ Drop-in alternative to [eslint-plugin-lingui](https://github.com/lingui/eslint-p
 | **Intl method arguments** | Manual whitelist | Auto-detected |
 | **Styling props** | Manual whitelist | Auto-detected |
 | **Styling constants** | Manual whitelist | Auto-detected |
+| **Object keys** | Manual whitelist | Auto-ignored |
 | **Numeric strings** | Manual whitelist | Auto-detected |
 | **Custom ignores** | `ignoreFunctions` only | `ignoreFunctions`, `ignoreProperties`, `ignoreNames`, branded types (`unlocalized()`) |
 | **Macro verification** | Name-based | Package-origin verification |
